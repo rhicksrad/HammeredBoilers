@@ -14,7 +14,7 @@ export default function Playground() {
     <div className="stack-lg">
       <section className="card playground-head">
         <h1 className="display">🍻 The Playground</h1>
-        <p className="muted">General nonsense, any day of the week. Paste a GIF or image link and it shows up inline.</p>
+        <p className="muted">General nonsense, any day of the week. Hit <b>GIF</b> to post a GIF or pic, paste one right in, or drop a Giphy/Tenor link.</p>
         <p className="prompt">Today's prompt: <b>{prompt}</b></p>
       </section>
       <section className="card gp-chat tall">

@@ -1,12 +1,15 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import { supabase } from '../lib/supabase'
+import { BUCKET, supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
+import { extOf } from '../lib/images'
 import { clock, TZ } from '../lib/format'
 import type { Message } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
+import { useSignedUrls } from './Photos'
 
 const PAGE = 100
+const MAX_IMAGE_MB = 15
 const dayKey = (iso: string) => new Intl.DateTimeFormat('en-US', { timeZone: TZ, dateStyle: 'full' }).format(new Date(iso))
 
 /** One chat room: a game's thread (gameId) or the Playground (gameId = null). */
@@ -16,6 +19,9 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
   const [hasMore, setHasMore] = useState(false)
   const [text, setText] = useState('')
   const [err, setErr] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [dragging, setDragging] = useState(false)
+  const fileInput = useRef<HTMLInputElement>(null)
   const scroller = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const keepOffset = useRef<number | null>(null)
@@ -65,6 +71,11 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     }
   }, [msgs])
 
+  const scrollDown = () => {
+    const el = scroller.current
+    if (el) el.scrollTop = el.scrollHeight
+  }
+
   const onScroll = () => {
     const el = scroller.current
     if (el) stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
@@ -82,14 +93,47 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     setMsgs((cur) => (cur && !cur.some((x) => x.id === data.id) ? [...cur, data as Message] : cur))
   }
 
-  const remove = async (id: string) => {
+  /** Upload a GIF/pic (from the picker, a paste, a drop, or a phone's GIF keyboard) and post it. */
+  const sendImages = async (files: File[]) => {
+    const images = files.filter((f) => f.type.startsWith('image/'))
+    if (!images.length || !me) return
+    setErr(null)
+    setUploading(true)
+    stickToBottom.current = true
+    const caption = text.trim()
+    for (const [i, file] of images.entries()) {
+      if (file.size > MAX_IMAGE_MB * 1024 * 1024) { setErr(`${file.name || 'That image'} is over ${MAX_IMAGE_MB} MB.`); continue }
+      const path = `${me.id}/chat/${crypto.randomUUID()}.${extOf(file)}`
+      const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type })
+      if (up.error) { setErr(up.error.message); continue }
+      const { data, error } = await supabase.from('messages')
+        .insert({ game_id: gameId, body: i === 0 ? caption : '', image_path: path }).select().single()
+      if (error) { setErr(error.message); continue }
+      if (i === 0 && caption) setText('')
+      setMsgs((cur) => (cur && !cur.some((x) => x.id === data.id) ? [...cur, data as Message] : cur))
+    }
+    setUploading(false)
+    if (fileInput.current) fileInput.current.value = ''
+  }
+
+  const remove = async (m: Message) => {
     if (!confirm('Delete this message?')) return
-    const { error } = await supabase.from('messages').delete().eq('id', id)
-    if (!error) setMsgs((cur) => cur?.filter((m) => m.id !== id) ?? cur)
+    const { error } = await supabase.from('messages').delete().eq('id', m.id)
+    if (error) return
+    if (m.image_path) supabase.storage.from(BUCKET).remove([m.image_path])
+    setMsgs((cur) => cur?.filter((x) => x.id !== m.id) ?? cur)
   }
 
   return (
-    <div className="chat">
+    <div
+      className={`chat ${dragging ? 'dragging' : ''}`}
+      onDragOver={(e) => { if (e.dataTransfer.types.includes('Files')) { e.preventDefault(); setDragging(true) } }}
+      onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setDragging(false) }}
+      onDrop={(e) => {
+        if (!e.dataTransfer.files.length) return
+        e.preventDefault(); setDragging(false); sendImages([...e.dataTransfer.files])
+      }}
+    >
       <div className="chat-scroll" ref={scroller} onScroll={onScroll}>
         {msgs === null && <div className="loading">Loading chat…</div>}
         {hasMore && <button className="btn ghost sm older" onClick={loadOlder}>Load older messages</button>}
@@ -113,9 +157,10 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
                       <span className="msg-time">{clock(m.created_at)}</span>
                     </div>
                   )}
-                  <div className="msg-body"><RichText text={m.body} /></div>
+                  {m.body && <div className="msg-body"><RichText text={m.body} /></div>}
+                  {m.image_path && <ChatImage path={m.image_path} onLoad={() => stickToBottom.current && scrollDown()} />}
                 </div>
-                {mine && <button className="msg-del" title="Delete" onClick={() => remove(m.id)}>✕</button>}
+                {mine && <button className="msg-del" title="Delete" onClick={() => remove(m)}>✕</button>}
               </div>
             </Fragment>
           )
@@ -123,6 +168,12 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
       </div>
       {readOnlyNote && <div className="chat-note muted small">{readOnlyNote}</div>}
       <form className="chat-input" onSubmit={send}>
+        <button type="button" className="btn ghost gif-btn" title="Post a GIF or pic" disabled={uploading}
+          onClick={() => fileInput.current?.click()}>
+          {uploading ? '…' : 'GIF'}
+        </button>
+        <input ref={fileInput} type="file" accept="image/*" multiple hidden
+          onChange={(e) => sendImages([...(e.target.files ?? [])])} />
         <textarea
           className="input"
           rows={1}
@@ -130,6 +181,11 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
           value={text}
           maxLength={2000}
           onChange={(e) => setText(e.target.value)}
+          onPaste={(e) => {
+            // Copied GIFs/pics and phone GIF keyboards arrive as pasted files.
+            const files = [...e.clipboardData.files].filter((f) => f.type.startsWith('image/'))
+            if (files.length) { e.preventDefault(); sendImages(files) }
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() }
           }}
@@ -142,24 +198,67 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
 }
 
 const URL_RE = /(https?:\/\/[^\s<]+[^\s<.,:;"')\]!?])/g
-const IMG_RE = /\.(gif|png|jpe?g|webp)(\?.*)?$/i
+const IMG_RE = /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i
 
-/** Plain text with clickable links; a bare image/GIF link renders inline (Playground essential). */
-function RichText({ text }: { text: string }) {
-  const trimmed = text.trim()
-  if (/^https?:\/\/\S+$/.test(trimmed) && (IMG_RE.test(trimmed) || /giphy\.com\/media|media\.tenor\.com/.test(trimmed))) {
-    return (
-      <a href={trimmed} target="_blank" rel="noreferrer">
-        <img className="msg-img" src={trimmed} alt="" loading="lazy" />
-      </a>
-    )
+type Embed = { kind: 'img' | 'iframe'; src: string }
+
+/** Turns GIF-ish links (direct images, Giphy pages, Tenor pages) into something we can show inline. */
+function embedFor(url: string): Embed | null {
+  let u: URL
+  try { u = new URL(url) } catch { return null }
+  const host = u.hostname.replace(/^www\./, '')
+  if (host.endsWith('giphy.com')) {
+    // giphy.com/gifs/some-slug-ID, giphy.com/embed/ID, media*.giphy.com/media/ID/…
+    const m = u.pathname.match(/^\/(?:gifs|stickers|clips|embed)\/(?:[^/]*-)?([A-Za-z0-9]+)\/?$/) ??
+      u.pathname.match(/\/media\/(?:v1\.[^/]+\/)?([A-Za-z0-9]+)\//)
+    if (m) return { kind: 'img', src: `https://media.giphy.com/media/${m[1]}/giphy.gif` }
+    if (host === 'i.giphy.com' && IMG_RE.test(u.pathname)) return { kind: 'img', src: url }
+    return null
   }
+  if (host === 'tenor.com') {
+    // tenor.com/view/some-slug-gif-12345 → Tenor's own embed player
+    const m = u.pathname.match(/\/view\/.*?(\d+)\/?$/)
+    return m ? { kind: 'iframe', src: `https://tenor.com/embed/${m[1]}` } : null
+  }
+  return IMG_RE.test(u.pathname) ? { kind: 'img', src: url } : null
+}
+
+/** Plain text with clickable links, plus an inline preview of the first GIF/image link. */
+function RichText({ text }: { text: string }) {
+  const urls: string[] = [...(text.match(URL_RE) ?? [])]
+  const embed = urls.map(embedFor).find(Boolean) ?? null
+  const justTheLink = embed && urls.length === 1 && text.trim() === urls[0]
   const parts = text.split(URL_RE)
   return (
     <>
-      {parts.map((part, i) =>
+      {!justTheLink && parts.map((part, i) =>
         i % 2 === 1 ? <a key={i} href={part} target="_blank" rel="noreferrer">{part}</a> : <Fragment key={i}>{part}</Fragment>,
       )}
+      {embed && <EmbedView embed={embed} fallback={urls.find((u) => embedFor(u)) ?? ""} />}
     </>
+  )
+}
+
+function EmbedView({ embed, fallback }: { embed: Embed; fallback: string }) {
+  const [broken, setBroken] = useState(false)
+  if (broken) return <a href={fallback} target="_blank" rel="noreferrer">{fallback}</a>
+  if (embed.kind === 'iframe') {
+    return <iframe className="msg-embed" src={embed.src} title="GIF" loading="lazy" allowFullScreen />
+  }
+  return (
+    <a href={fallback} target="_blank" rel="noreferrer">
+      <img className="msg-img" src={embed.src} alt="" loading="lazy" onError={() => setBroken(true)} />
+    </a>
+  )
+}
+
+/** A GIF/pic someone posted straight into chat (private storage → signed URL). */
+function ChatImage({ path, onLoad }: { path: string; onLoad: () => void }) {
+  const url = useSignedUrls([path])(path)
+  if (!url) return <div className="msg-img placeholder" />
+  return (
+    <a href={url} target="_blank" rel="noreferrer">
+      <img className="msg-img" src={url} alt="" onLoad={onLoad} />
+    </a>
   )
 }

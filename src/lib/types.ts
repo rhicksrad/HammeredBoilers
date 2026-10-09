@@ -51,6 +51,7 @@ export type Message = {
   game_id: string | null
   author_id: string
   body: string
+  image_path: string | null
   created_at: string
 }
 

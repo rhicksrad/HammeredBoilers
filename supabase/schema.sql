@@ -160,6 +160,12 @@ create table if not exists public.messages (
 );
 create index if not exists messages_game_idx on public.messages (game_id, created_at desc);
 
+-- GIFs / pics posted in chat (stored in the gallery bucket under <user id>/chat/, not shown in the Gallery).
+alter table public.messages add column if not exists image_path text;
+alter table public.messages drop constraint if exists messages_body_check;
+alter table public.messages add constraint messages_body_check
+  check (char_length(body) <= 2000 and (char_length(body) >= 1 or image_path is not null));
+
 -- ---------------------------------------------------------------------------
 -- Gallery. Files live in the private "gallery" storage bucket.
 -- ---------------------------------------------------------------------------

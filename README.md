@@ -13,7 +13,8 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   - **Game thread:** chat for that game. It stays with the game, so past tailgates keep their conversations.
   - **Pics:** photos and videos from that game.
   - **Our spot** and **Notes:** lot, meet time, whatever.
-- **Playground:** general nonsense chat, any day. Paste a GIF or image link and it shows up inline.
+- **Playground:** general nonsense chat, any day. GIFs work everywhere in chat: tap **GIF** to post one from your
+  phone, paste one straight in, or drop a Giphy or Tenor link.
 - **Gallery:** everyone's pics and videos, filterable by game. Originals stay full-size, and you can download one
   or zip a whole game.
 - **Crew:** your name and emoji. Add buddies by email here.

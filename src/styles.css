@@ -335,3 +335,9 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .crew-list li:last-child { border-bottom: 0; }
 .modal-backdrop { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.75); display: grid; place-items: center; padding: 16px; }
 .modal { width: 100%; max-width: 440px; border-color: var(--aged); }
+
+/* ---------- chat GIFs ---------- */
+.gif-btn { flex: none; min-width: 52px; padding: 0 10px; font-size: 14px; }
+.msg-img.placeholder { width: 220px; height: 160px; background: var(--card-2); border-radius: 10px; margin-top: 4px; }
+.msg-embed { display: block; width: min(320px, 100%); aspect-ratio: 1; border: 0; border-radius: 10px; margin-top: 4px; background: var(--card-2); }
+.chat.dragging { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: 12px; }
