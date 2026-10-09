@@ -14,7 +14,8 @@ export default function Crew() {
   const [invite, setInvite] = useState('')
   const [err, setErr] = useState<string | null>(null)
   const [note, setNote] = useState<string | null>(null)
-  const [sending, setSending] = useState<string | null>(null)
+  const [newPw, setNewPw] = useState('')
+  const [pwNote, setPwNote] = useState<string | null>(null)
 
   useEffect(() => { if (me) { setName(me.display_name); setEmoji(me.emoji) } }, [me])
 
@@ -22,25 +23,24 @@ export default function Crew() {
     supabase.from('members').select('email, created_at').order('created_at').then(({ data }) => setMembers((data ?? []) as Member[]))
   useEffect(() => { loadMembers() }, [])
 
-  /** Adds them to the list and emails an invite (or a sign-in link if they already have an account). */
-  const sendInvite = async (raw: string) => {
+  const SITE = 'https://rhicksrad.github.io/HammeredBoilers/'
+
+  const addMember = async (raw: string) => {
     const email = raw.trim().toLowerCase()
-    setErr(null); setNote(null); setSending(email)
-    const { data, error } = await supabase.functions.invoke('invite', { body: { email } })
-    setSending(null)
+    setErr(null); setNote(null)
+    const { error } = await supabase.from('members').insert({ email, invited_by: me?.id })
+    if (error) { setErr(error.code === '23505' ? 'Already on the list.' : error.message); return false }
+    setNote(`${email} is in. Send them ${SITE} and they'll pick a password the first time they sign in.`)
     loadMembers()
-    if (error) {
-      // Non-2xx: the function's own message is in the response body.
-      const body = await (error as { context?: Response }).context?.json?.().catch(() => null)
-      setErr(body?.error ?? error.message)
-      return false
-    }
-    if (data?.error) {
-      setNote(`${email} is on the list, but the email didn't send (${data.error}). Tell them to go to the site and sign in with that address.`)
-    } else {
-      setNote(`✉️ ${data?.sent === 'signin' ? 'Sign-in link' : 'Invite'} sent to ${email}.`)
-    }
     return true
+  }
+
+  const resetPassword = async (email: string) => {
+    if (!confirm(`Reset the password for ${email}? They'll pick a new one next time they sign in.`)) return
+    setErr(null); setNote(null)
+    const { error } = await supabase.rpc('reset_member_password', { p_email: email })
+    if (error) setErr(error.message)
+    else setNote(`Done. ${email} can sign in and pick a new password.`)
   }
 
   const byEmail = Object.fromEntries(Object.values(profiles).map((p) => [p.email, p]))
@@ -74,15 +74,15 @@ export default function Crew() {
       <section className="card stack">
         <h2 className="display">The crew</h2>
         <p className="muted small">
-          Add a buddy and they get an email invite. Tapping it signs them right in. Anyone on this list can also just go
-          to the site and enter their email.
+          Add a buddy's email, then send them the site link. They enter that email and pick a password the first time.
+          Forgot a password? Hit <b>Reset</b> next to their name and they choose a new one.
         </p>
         <form className="row" onSubmit={async (e) => {
           e.preventDefault()
-          if (await sendInvite(invite)) setInvite('')
+          if (await addMember(invite)) setInvite('')
         }}>
           <input className="input" type="email" required placeholder="buddy@example.com" value={invite} onChange={(e) => setInvite(e.target.value)} />
-          <button className="btn gold" disabled={Boolean(sending)}>{sending && sending === invite.trim().toLowerCase() ? 'Sending…' : 'Invite'}</button>
+          <button className="btn gold">Add</button>
         </form>
         {note && <p className="muted small">{note}</p>}
         {err && <p className="error">{err}</p>}
@@ -96,10 +96,8 @@ export default function Crew() {
                   <div>{p?.display_name ?? <span className="muted">Hasn't signed in yet</span>}</div>
                   <div className="muted small">{m.email}</div>
                 </div>
-                {!p && (
-                  <button className="btn ghost sm" disabled={Boolean(sending)} onClick={() => sendInvite(m.email)}>
-                    {sending === m.email ? 'Sending…' : 'Resend'}
-                  </button>
+                {p && m.email !== myEmail && (
+                  <button className="btn ghost sm" onClick={() => resetPassword(m.email)}>Reset</button>
                 )}
                 {m.email !== myEmail && (
                   <button className="btn ghost sm" onClick={async () => {
@@ -112,6 +110,23 @@ export default function Crew() {
             )
           })}
         </ul>
+      </section>
+
+      <section className="card stack">
+        <h2 className="display">Your password</h2>
+        <form className="row" onSubmit={async (e) => {
+          e.preventDefault()
+          if (newPw.length < 6) return setPwNote('At least 6 characters.')
+          const { error } = await supabase.auth.updateUser({ password: newPw })
+          setPwNote(error ? error.message : 'Password changed.')
+          if (!error) setNewPw('')
+        }}>
+          <input type="email" autoComplete="username" value={myEmail ?? ''} readOnly hidden />
+          <input className="input" type="password" autoComplete="new-password" minLength={6} placeholder="New password"
+            value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+          <button className="btn ghost" disabled={!newPw}>Change</button>
+        </form>
+        {pwNote && <p className="muted small">{pwNote}</p>}
       </section>
 
       <button className="btn ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>

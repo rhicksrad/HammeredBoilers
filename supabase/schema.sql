@@ -182,6 +182,89 @@ create table if not exists public.photos (
 create index if not exists photos_game_idx on public.photos (game_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
+-- Password sign-in (no emails). Email confirmation is off in the auth settings,
+-- so these are what keep accounts to the crew:
+--   * only emails on the crew list can create an account
+--   * the sign-in page asks email_status() whether to show "password" or "pick a password"
+--   * accounts with no password yet (or reset by a crew mate) pick one on next sign-in
+-- ---------------------------------------------------------------------------
+create or replace function public.only_crew_signups()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if not exists (select 1 from public.members where email = lower(new.email)) then
+    raise exception 'That email is not on the crew list';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists only_crew_signups on auth.users;
+create trigger only_crew_signups
+  before insert on auth.users
+  for each row execute function public.only_crew_signups();
+
+-- 'not_member' | 'new' (no account yet) | 'set_password' (account, no password) | 'password'
+create or replace function public.email_status(p_email text)
+returns text
+language sql stable security definer set search_path = public, auth
+as $$
+  select case
+    when not exists (select 1 from public.members where email = lower(trim(p_email))) then 'not_member'
+    when not exists (select 1 from auth.users where lower(email) = lower(trim(p_email))) then 'new'
+    when exists (select 1 from auth.users where lower(email) = lower(trim(p_email))
+                 and coalesce(encrypted_password, '') <> '') then 'password'
+    else 'set_password'
+  end;
+$$;
+
+-- First password for an account that doesn't have one (made by an old email link, or reset).
+create or replace function public.set_first_password(p_email text, p_password text)
+returns void
+language plpgsql security definer set search_path = public, auth, extensions
+as $$
+begin
+  if char_length(coalesce(p_password, '')) < 6 then
+    raise exception 'Password needs at least 6 characters';
+  end if;
+  if not exists (select 1 from public.members where email = lower(trim(p_email))) then
+    raise exception 'That email is not on the crew list';
+  end if;
+  update auth.users
+     set encrypted_password = extensions.crypt(p_password, extensions.gen_salt('bf', 10)),
+         email_confirmed_at = coalesce(email_confirmed_at, now()),
+         updated_at = now()
+   where lower(email) = lower(trim(p_email))
+     and coalesce(encrypted_password, '') = '';
+  if not found then
+    raise exception 'That account already has a password';
+  end if;
+end;
+$$;
+
+-- Forgot it? Any crew member can clear someone's password; they pick a new one next sign-in.
+create or replace function public.reset_member_password(p_email text)
+returns void
+language plpgsql security definer set search_path = public, auth
+as $$
+begin
+  if not public.is_member() then
+    raise exception 'Only crew members can reset passwords';
+  end if;
+  update auth.users set encrypted_password = '', updated_at = now()
+   where lower(email) = lower(trim(p_email));
+end;
+$$;
+
+revoke all on function public.email_status(text) from public;
+revoke all on function public.set_first_password(text, text) from public;
+revoke all on function public.reset_member_password(text) from public;
+grant execute on function public.email_status(text) to anon, authenticated;
+grant execute on function public.set_first_password(text, text) to anon, authenticated;
+grant execute on function public.reset_member_password(text) to authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Per-game rollup for the schedule cards.
 -- ---------------------------------------------------------------------------
 create or replace view public.game_stats

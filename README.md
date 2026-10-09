@@ -19,7 +19,7 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   or zip a whole game.
 - **Crew:** your name and emoji. Add buddies by email here.
 
-Everything updates live for everyone. Login is by email: no passwords, and only emails on the crew list get in.
+Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.
 
 ## Stack
 
@@ -30,32 +30,29 @@ Everything updates live for everyone. Login is by email: no passwords, and only 
 - [`public/config.js`](public/config.js) holds the Supabase URL and **publishable** key. Those are meant to be public.
   Row-level security in [`supabase/schema.sql`](supabase/schema.sql) is what keeps the data private.
 
-## Adding people
+## Signing in
 
-Anyone already in the crew: **Crew → Add to crew → their email**. Then they go to the site, enter that email, and
-tap the link Supabase sends them.
+No emails are sent. Enter your email:
 
-## Email: read this before inviting the crew ⚠️
+- **On the crew list, first time:** pick a password and you're in.
+- **Been here before:** enter your password.
+- **Not on the list:** you're told to ask the crew.
 
-Supabase's built-in email sender is for testing only. It sends **only to members of your Supabase org** and only
-a few emails per hour. Your own login works now. Your buddies won't get their sign-in emails until you hook up a real
-sender (free options):
+**Adding people:** **Crew → Add**, then send them the site link.
 
-- **Resend** (resend.com): 3,000 emails a month free. You'll need a domain you can add DNS records to.
-- **Gmail**: turn on 2-step verification, then make an *App password*. Host `smtp.gmail.com`, port `465`,
-  user = your Gmail address, pass = the app password.
-- **Brevo** (brevo.com): 300 a day free, and no domain needed (it verifies your sender address).
+**Forgot a password:** anyone in the crew hits **Reset** next to that person on the Crew page. The next time they
+sign in, they pick a new one. You can also change your own password on the Crew page.
 
-Put the details in **Supabase → Authentication → Emails → SMTP Settings**. Also raise
-**Authentication → Rate Limits → emails per hour** to something like 30.
+How it's enforced (all in [`supabase/schema.sql`](supabase/schema.sql)):
 
-Once SMTP is on, you can switch on the branded email, which also carries a 6-digit code (handy when the link opens
-in the wrong browser):
-uncomment the two `[auth.email.template.*]` blocks in [`supabase/config.toml`](supabase/config.toml), then run
+- A trigger on `auth.users` refuses accounts for emails that aren't on the crew list.
+- `email_status()` tells the sign-in page which screen to show.
+- `set_first_password()` and `reset_member_password()` handle first and forgotten passwords.
 
-```bash
-supabase config push --project-ref noyvywdgqugdvsuvtwty
-```
+Supabase's email confirmation is turned off (`enable_confirmations = false` in `supabase/config.toml`).
+
+The trade-off: whoever first signs in with a crew email picks that account's password. That's fine for a tailgate
+site. If it ever goes wrong, hit Reset.
 
 ## Changing things
 

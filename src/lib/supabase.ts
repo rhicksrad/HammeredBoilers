@@ -12,9 +12,8 @@ const key = window.HB_CONFIG?.supabaseKey || import.meta.env.VITE_SUPABASE_ANON_
 
 export const isConfigured = Boolean(url && key)
 
-// Implicit flow: the emailed link carries the session itself, so it works even if it's opened
-// in a different browser than the one that asked for it (phone mail apps love doing that).
-// supabase-js reads the #access_token=… fragment before the hash router ever sees it.
+// Email + password sign-in (see Login.tsx). Implicit flow keeps any auth redirect in the #fragment,
+// which supabase-js reads before the hash router sees it.
 export const supabase: SupabaseClient = isConfigured
   ? createClient(url, key, { auth: { flowType: 'implicit', persistSession: true, detectSessionInUrl: true } })
   : (null as unknown as SupabaseClient)
