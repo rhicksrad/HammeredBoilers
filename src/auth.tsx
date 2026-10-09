@@ -1,0 +1,72 @@
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import type { Session } from '@supabase/supabase-js'
+import { supabase } from './lib/supabase'
+import { useLiveTable } from './lib/realtime'
+import type { Profile } from './lib/types'
+
+type AuthState = {
+  session: Session | null
+  loading: boolean
+  member: boolean | null // null = still checking
+  me: Profile | null
+  profiles: Record<string, Profile>
+  refreshMember: () => Promise<void>
+  saveProfile: (patch: Partial<Pick<Profile, 'display_name' | 'emoji'>>) => Promise<string | null>
+}
+
+const Ctx = createContext<AuthState>(null as unknown as AuthState)
+export const useAuth = () => useContext(Ctx)
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [session, setSession] = useState<Session | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [member, setMember] = useState<boolean | null>(null)
+  const [profiles, setProfiles] = useState<Record<string, Profile>>({})
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session)
+      setLoading(false)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setSession(s))
+    return () => sub.subscription.unsubscribe()
+  }, [])
+
+  const userId = session?.user.id
+
+  const refreshMember = useCallback(async () => {
+    if (!userId) return setMember(null)
+    const { data, error } = await supabase.rpc('is_member')
+    setMember(error ? false : Boolean(data))
+  }, [userId])
+
+  useEffect(() => { refreshMember() }, [refreshMember])
+
+  useEffect(() => {
+    if (!member) return
+    supabase.from('profiles').select('*').then(({ data }) => {
+      setProfiles(Object.fromEntries((data ?? []).map((p) => [p.id, p as Profile])))
+    })
+  }, [member])
+
+  useLiveTable<Profile>('profiles', undefined, {
+    onUpsert: (p) => setProfiles((all) => ({ ...all, [p.id]: p })),
+  }, Boolean(member))
+
+  const saveProfile: AuthState['saveProfile'] = async (patch) => {
+    if (!userId) return 'Not signed in'
+    const { data, error } = await supabase
+      .from('profiles').update({ ...patch, onboarded: true }).eq('id', userId).select().single()
+    if (error) return error.message
+    setProfiles((all) => ({ ...all, [userId]: data as Profile }))
+    return null
+  }
+
+  const me = userId ? profiles[userId] ?? null : null
+
+  return (
+    <Ctx.Provider value={{ session, loading, member, me, profiles, refreshMember, saveProfile }}>
+      {children}
+    </Ctx.Provider>
+  )
+}
