@@ -25,7 +25,7 @@ export default function Login() {
     if (error) return setErr(error.message)
     const s = data as Status
     setStatus(s)
-    if (s === 'not_member') return setErr("That email isn't on the crew list. Ask anyone in the crew to add you on the Crew page.")
+    if (s === 'not_member') return setErr(`"${clean}" isn't on the crew list. Check for a typo, or ask anyone in the crew to add you on the Crew page.`)
     setPassword(''); setConfirm('')
     setStep(s === 'password' ? 'password' : 'create')
   }
