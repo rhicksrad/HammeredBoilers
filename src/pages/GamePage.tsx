@@ -65,7 +65,7 @@ export default function GamePage() {
         </div>
         {!past && <Countdown game={game} />}
         <div className="grid-2">
-          <EditableField game={game} field="lot" label="📍 Our spot" placeholder="Lot / spot, e.g. Slayter Hill by the tree" />
+          <EditableField game={game} field="lot" label="📍 Our spot" placeholder="W Lot (add a row or landmark)" />
           <EditableField game={game} field="notes" label="📝 Notes" placeholder="Meet time, who's driving, anything else" />
         </div>
       </section>

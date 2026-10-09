@@ -74,11 +74,12 @@ create table if not exists public.games (
   status        text not null default 'scheduled' check (status in ('scheduled', 'in', 'final')),
   purdue_score  int,
   opp_score     int,
-  lot           text,                        -- where the tailgate is set up
+  lot           text default 'W Lot',        -- where the tailgate is set up (we're always in W Lot)
   notes         text,                        -- meet time, anything else
   created_at    timestamptz not null default now()
 );
 create index if not exists games_kickoff_idx on public.games (kickoff);
+alter table public.games alter column lot set default 'W Lot';
 
 -- ---------------------------------------------------------------------------
 -- The two-part list for each game: food & drink, and asks / logistics.
