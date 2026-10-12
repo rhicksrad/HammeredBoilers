@@ -4,20 +4,28 @@ import { supabase } from '../lib/supabase'
 import { gameDay, gameTime, isGameday, isPast, result } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, Photo } from '../lib/types'
-import GameLists from '../components/GameLists'
+import GameList from '../components/GameLists'
 import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
 import { Lightbox, PhotoGrid, Uploader } from '../components/Photos'
 
-type Tab = 'lists' | 'dj' | 'chat' | 'pics'
+type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
+
+const TABS: { id: Tab; icon: string; label: string }[] = [
+  { id: 'food', icon: '🍔', label: 'Food' },
+  { id: 'asks', icon: '🔌', label: 'Asks' },
+  { id: 'dj', icon: '🎧', label: 'DJ' },
+  { id: 'chat', icon: '💬', label: 'Chat' },
+  { id: 'pics', icon: '📸', label: 'Pics' },
+]
 
 export default function GamePage() {
   const { id } = useParams()
   const [game, setGame] = useState<Game | null | undefined>(undefined)
   const [photos, setPhotos] = useState<Photo[]>([])
   const [params] = useSearchParams()
-  const [tab, setTab] = useState<Tab>('lists')
+  const [tab, setTab] = useState<Tab>('food')
   const chatRef = useRef<HTMLElement>(null)
   const [open, setOpen] = useState<number | null>(null)
 
@@ -83,15 +91,20 @@ export default function GamePage() {
       </section>
 
       <div className="tabs">
-        <button className={tab === 'lists' ? 'on' : ''} onClick={() => setTab('lists')}>🍔 Lists</button>
-        <button className={tab === 'dj' ? 'on' : ''} onClick={() => setTab('dj')}>🎧 DJ</button>
-        <button className={tab === 'chat' ? 'on' : ''} onClick={() => setTab('chat')}>💬 Chat</button>
-        <button className={tab === 'pics' ? 'on' : ''} onClick={() => setTab('pics')}>📸 Pics ({photos.length})</button>
+        {TABS.map((t) => (
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
+            <span className="tab-ic">{t.icon}</span>
+            <span>{t.label}{t.id === 'pics' && photos.length ? ` ${photos.length}` : ''}</span>
+          </button>
+        ))}
       </div>
 
       <div className="game-grid">
-        <div className={`gp-section gp-lists ${tab === 'lists' ? 'active' : ''}`}>
-          <GameLists gameId={game.id} />
+        <div className={`gp-section gp-food ${tab === 'food' ? 'active' : ''}`}>
+          <GameList gameId={game.id} kind="food" />
+        </div>
+        <div className={`gp-section gp-asks ${tab === 'asks' ? 'active' : ''}`}>
+          <GameList gameId={game.id} kind="ask" />
         </div>
         <div className={`gp-section gp-dj ${tab === 'dj' ? 'active' : ''}`}>
           <DjBooth game={game} />

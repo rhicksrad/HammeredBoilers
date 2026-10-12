@@ -224,24 +224,23 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .game-head .countdown { justify-content: flex-start; }
 
 .tabs { display: none; }
-.game-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: 'lists lists' 'dj dj' 'chat pics'; }
-.gp-lists { grid-area: lists; }
+.game-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: 'food asks' 'dj dj' 'chat pics'; }
+.gp-food { grid-area: food; }
+.gp-asks { grid-area: asks; }
 .gp-dj { grid-area: dj; }
 .gp-chat { grid-area: chat; }
 .gp-pics { grid-area: pics; display: flex; flex-direction: column; gap: 12px; }
 @media (max-width: 899px) {
-  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; position: sticky; top: 64px; z-index: 10; }
-  .tabs button { min-height: 40px; padding: 0 4px; white-space: nowrap; font-size: 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
+  .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; position: sticky; top: 64px; z-index: 10; }
+  .tabs button { min-height: 48px; padding: 4px 2px; white-space: nowrap; font-size: 12.5px; line-height: 1.1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
   .tabs button.on { background: var(--gold); color: var(--ink); }
+  .tab-ic { font-size: 18px; }
   .game-grid { grid-template-columns: 1fr; grid-template-areas: none; }
   .gp-section { grid-area: auto; }
   .gp-section:not(.active) { display: none; }
 }
 
 /* ---------- lists ---------- */
-.lists { display: grid; gap: 18px; grid-template-columns: 1fr 1fr; }
-@media (max-width: 899px) { .lists { grid-template-columns: 1fr; } }
-.lists > .error { grid-column: 1 / -1; }
 .panel { display: flex; flex-direction: column; gap: 10px; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .panel-title { margin-bottom: 10px; }

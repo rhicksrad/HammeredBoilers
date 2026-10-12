@@ -7,21 +7,22 @@ import { nameOf } from './Avatar'
 
 const bySort = (a: ListItem, b: ListItem) => a.sort - b.sort || a.created_at.localeCompare(b.created_at)
 
-/** The two-part board for one game: who's bringing what, and the logistics questions. */
-export default function GameLists({ gameId }: { gameId: string }) {
+/** One of a game's lists: who's bringing what (food), or the logistics questions (ask). */
+export default function GameList({ gameId, kind }: { gameId: string; kind: ListKind }) {
   const [items, setItems] = useState<ListItem[] | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
   useEffect(() => {
     setItems(null)
-    supabase.from('list_items').select('*').eq('game_id', gameId).then(({ data, error }) => {
+    supabase.from('list_items').select('*').eq('game_id', gameId).eq('kind', kind).then(({ data, error }) => {
       if (error) setErr(error.message)
       setItems((data ?? []) as ListItem[])
     })
-  }, [gameId])
+  }, [gameId, kind])
 
+  // Realtime takes one filter, so the other list's rows come through too; skip them here.
   useLiveTable<ListItem>('list_items', `game_id=eq.${gameId}`, {
-    onUpsert: (row) => setItems((cur) => (cur ? upsertById(cur, row) : cur)),
+    onUpsert: (row) => row.kind === kind && setItems((cur) => (cur ? upsertById(cur, row) : cur)),
     onDelete: (id) => setItems((cur) => cur?.filter((x) => x.id !== id) ?? cur),
   })
 
@@ -31,7 +32,7 @@ export default function GameLists({ gameId }: { gameId: string }) {
     const { error } = await supabase.from('list_items').update(changes).eq('id', id)
     setErr(error?.message ?? null)
   }
-  const add = async (kind: ListKind, label: string) => {
+  const add = async (label: string) => {
     const { data, error } = await supabase
       .from('list_items').insert({ game_id: gameId, kind, label, sort: 1000 }).select().single()
     if (error) return setErr(error.message)
@@ -43,38 +44,38 @@ export default function GameLists({ gameId }: { gameId: string }) {
     setErr(error?.message ?? null)
   }
 
-  if (!items) return <div className="loading">Loading the list…</div>
-  const food = items.filter((x) => x.kind === 'food').sort(bySort)
-  const asks = items.filter((x) => x.kind === 'ask').sort(bySort)
+  if (!items) return <section className="panel card"><div className="loading">Loading the list…</div></section>
+  const sorted = items.slice().sort(bySort)
   const ops = { patch, remove }
 
-  return (
-    <div className="lists">
-      {err && <p className="error">{err}</p>}
-      <Panel
-        title="Food & Drink"
-        icon="🍔"
-        summary={`${food.filter((x) => x.owner_id || x.owner_name).length}/${food.length} covered`}
-        addPlaceholder="Add something to bring…"
-        onAdd={(l) => add('food', l)}
-      >
-        {food.map((item) => <FoodRow key={item.id} item={item} {...ops} />)}
-      </Panel>
-      <Panel
-        title="Asks & Logistics"
-        icon="🔌"
-        summary={`${asks.filter((x) => x.status === 'open').length} open`}
-        addPlaceholder="Ask the crew something…"
-        onAdd={(l) => add('ask', l)}
-      >
-        {asks.map((item) => <AskRow key={item.id} item={item} {...ops} />)}
-      </Panel>
-    </div>
+  return kind === 'food' ? (
+    <Panel
+      title="Food & Drink"
+      icon="🍔"
+      summary={`${sorted.filter((x) => x.owner_id || x.owner_name).length}/${sorted.length} covered`}
+      addPlaceholder="Add something to bring…"
+      onAdd={add}
+      err={err}
+    >
+      {sorted.map((item) => <FoodRow key={item.id} item={item} {...ops} />)}
+    </Panel>
+  ) : (
+    <Panel
+      title="Asks & Logistics"
+      icon="🔌"
+      summary={`${sorted.filter((x) => x.status === 'open').length} open`}
+      addPlaceholder="Ask the crew something…"
+      onAdd={add}
+      err={err}
+    >
+      {sorted.map((item) => <AskRow key={item.id} item={item} {...ops} />)}
+    </Panel>
   )
 }
 
-function Panel({ title, icon, summary, addPlaceholder, onAdd, children }: {
-  title: string; icon: string; summary: string; addPlaceholder: string; onAdd: (label: string) => void; children: React.ReactNode
+function Panel({ title, icon, summary, addPlaceholder, onAdd, err, children }: {
+  title: string; icon: string; summary: string; addPlaceholder: string; onAdd: (label: string) => void
+  err: string | null; children: React.ReactNode
 }) {
   const [label, setLabel] = useState('')
   return (
@@ -83,6 +84,7 @@ function Panel({ title, icon, summary, addPlaceholder, onAdd, children }: {
         <h3 className="display">{icon} {title}</h3>
         <span className="chip">{summary}</span>
       </header>
+      {err && <p className="error">{err}</p>}
       <ul className="items">{children}</ul>
       <form
         className="add-row"
