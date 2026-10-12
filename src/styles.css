@@ -224,13 +224,14 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .game-head .countdown { justify-content: flex-start; }
 
 .tabs { display: none; }
-.game-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: 'lists lists' 'chat pics'; }
+.game-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: 'lists lists' 'dj dj' 'chat pics'; }
 .gp-lists { grid-area: lists; }
+.gp-dj { grid-area: dj; }
 .gp-chat { grid-area: chat; }
 .gp-pics { grid-area: pics; display: flex; flex-direction: column; gap: 12px; }
 @media (max-width: 899px) {
-  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; position: sticky; top: 64px; z-index: 10; }
-  .tabs button { min-height: 40px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
+  .tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; padding: 4px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; position: sticky; top: 64px; z-index: 10; }
+  .tabs button { min-height: 40px; padding: 0 4px; white-space: nowrap; font-size: 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; cursor: pointer; }
   .tabs button.on { background: var(--gold); color: var(--ink); }
   .game-grid { grid-template-columns: 1fr; grid-template-areas: none; }
   .gp-section { grid-area: auto; }
@@ -270,6 +271,16 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .seg button + button { border-left: 1px solid var(--line); }
 .seg button.on.yes { background: var(--ok); color: var(--ink); }
 .seg button.on.no { background: var(--bad); color: var(--ink); }
+.who-pick {
+  max-width: 190px; min-height: 28px; padding: 2px 24px 2px 8px; border-radius: 999px; cursor: pointer;
+  border: 1px dashed var(--steel); background: transparent; color: var(--gold); font: inherit; font-size: 13.5px; font-weight: 600;
+  appearance: none; text-overflow: ellipsis;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%), linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position: calc(100% - 13px) 12px, calc(100% - 9px) 12px; background-size: 4px 4px; background-repeat: no-repeat;
+}
+.who-pick.set { border-style: solid; border-color: rgba(127, 196, 127, 0.45); color: var(--ok); }
+.who-pick:focus { outline: none; border-color: var(--gold); }
+.who-pick option { background: var(--card); color: var(--text); }
 .add-row { display: flex; gap: 8px; }
 .add-row .btn { flex: none; }
 
@@ -341,3 +352,64 @@ select.input { appearance: none; background-image: linear-gradient(45deg, transp
 .msg-img.placeholder { width: 220px; height: 160px; background: var(--card-2); border-radius: 10px; margin-top: 4px; }
 .msg-embed { display: block; width: min(320px, 100%); aspect-ratio: 1; border: 0; border-radius: 10px; margin-top: 4px; background: var(--card-2); }
 .chat.dragging { outline: 2px dashed var(--gold); outline-offset: 6px; border-radius: 12px; }
+
+/* ---------- DJ booth ---------- */
+.dj { display: flex; flex-direction: column; gap: 14px; }
+.dj-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.stack-sm { display: flex; flex-direction: column; gap: 4px; }
+.dj-grid { display: grid; gap: 22px; grid-template-columns: 1fr 1fr; align-items: start; }
+@media (max-width: 899px) { .dj-grid { grid-template-columns: 1fr; } }
+.dj-sub { margin: 4px 0 0; font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--gold); font-size: 15px; }
+.dj-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 12px; }
+.dj-form-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
+@media (max-width: 480px) { .dj-form-row { grid-template-columns: 1fr; } }
+.item.song { border-left: 3px solid var(--warn); padding-left: 10px; }
+.item.song.approved { border-left-color: var(--ok); }
+.item.song.denied { border-left-color: var(--bad); }
+.item.song.denied .item-label { color: var(--muted); text-decoration: line-through; }
+.song-artist { font-weight: 500; color: var(--muted); }
+.note.static { cursor: default; }
+.dj-note { color: var(--gold); font-style: normal; }
+.dj-decide { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.dj-decide .note-input { flex: 1; min-width: 160px; width: auto; }
+.btn.approve { background: var(--ok); color: var(--ink); }
+.btn.deny { background: transparent; color: var(--bad); border-color: var(--bad); }
+.btn.deny:hover { background: var(--bad); color: var(--ink); }
+.btn.ghost.on { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+.dj-denied summary { cursor: pointer; color: var(--muted); font-size: 13.5px; font-weight: 600; }
+.dj-denied .items { margin-top: 6px; }
+
+/* ---------- printed DJ list (only while the DJ booth is printing) ---------- */
+.print-sheet { display: none; }
+@media print {
+  @page { margin: 0.5in; }
+  body.printing { background: #fff !important; color: #000; }
+  body.printing > :not(.print-sheet) { display: none !important; }
+  body.printing .print-sheet { display: block; color: #000; font-family: var(--body); }
+  .ps-head { border-bottom: 4px solid #000; padding-bottom: 10px; margin-bottom: 14px; }
+  .ps-kicker { font-family: var(--display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.14em; font-size: 13pt; }
+  .ps-head h1 { font-family: var(--display); font-weight: 800; text-transform: uppercase; font-size: 30pt; line-height: 1.05; margin: 4px 0; }
+  .ps-when { font-size: 12pt; }
+  .ps-table { width: 100%; border-collapse: collapse; }
+  .ps-table th { text-align: left; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.08em; font-size: 10pt; border-bottom: 2px solid #000; padding: 4px 6px; }
+  .ps-table td { vertical-align: top; padding: 8px 6px; border-bottom: 1px solid #999; }
+  .ps-table tr { break-inside: avoid; }
+  .ps-box { display: inline-block; width: 16pt; height: 16pt; border: 2px solid #000; border-radius: 3px; }
+  .ps-n { font-weight: 700; font-size: 13pt; width: 2.2em; }
+  .ps-song { font-weight: 700; font-size: 15pt; line-height: 1.15; }
+  .ps-artist { font-size: 12pt; }
+  .ps-for { font-size: 11pt; white-space: nowrap; }
+  .ps-notes { font-size: 10.5pt; font-style: italic; max-width: 2.6in; }
+  .ps-foot { margin-top: 16px; font-size: 9pt; text-align: center; }
+}
+
+/* ---------- hourly temps, tailgate → game ---------- */
+.temp-strip { display: flex; gap: 4px; overflow-x: auto; max-width: 100%; padding-bottom: 2px; scrollbar-width: thin; }
+.hero .temp-strip { justify-content: safe center; }
+.ts-hour { flex: none; min-width: 52px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 6px 4px; background: var(--ink); border: 1px solid var(--line); border-radius: 10px; }
+.ts-hour.kick { border-color: var(--gold); background: rgba(207, 185, 145, 0.1); }
+.ts-time { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+.ts-hour.kick .ts-time { color: var(--gold); font-weight: 700; }
+.ts-icon { font-size: 17px; line-height: 1.2; }
+.ts-temp { font-family: var(--display); font-weight: 800; font-size: 19px; line-height: 1; }
+.ts-rain { font-size: 10.5px; color: #8fb8e8; }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { kickoffForecast, type Forecast } from '../lib/weather'
+import { clock } from '../lib/format'
 import type { Game } from '../lib/types'
 
 export function TeamLogo({ src, alt, size = 48 }: { src?: string | null; alt: string; size?: number }) {
@@ -40,17 +41,56 @@ export function Countdown({ game }: { game: Game }) {
   )
 }
 
-export function WeatherChip({ game }: { game: Game }) {
+// One fetch per game per page load, shared by the chip and the hourly strip.
+const forecasts = new Map<string, Promise<Forecast | null>>()
+function useForecast(game: Game) {
   const [f, setF] = useState<Forecast | null>(null)
   useEffect(() => {
     let live = true
-    kickoffForecast(game).then((x) => live && setF(x)).catch(() => {})
+    const key = `${game.id}:${game.kickoff}:${game.time_tbd}`
+    if (!forecasts.has(key)) forecasts.set(key, kickoffForecast(game).catch(() => null))
+    forecasts.get(key)!.then((x) => live && setF(x))
     return () => { live = false }
   }, [game.id, game.kickoff, game.time_tbd])
+  return f
+}
+
+// "3 PM" / "10 PM"
+const hourLabel = (t: number) => clock(new Date(t * 1000).toISOString()).replace(':00', '')
+
+export function WeatherChip({ game }: { game: Game }) {
+  const f = useForecast(game)
   if (!f) return null
+  let span = ''
+  if (f.hours.length) {
+    const a = hourLabel(f.hours[0].t), b = hourLabel(f.hours[f.hours.length - 1].t)
+    span = `${a.slice(-2) === b.slice(-2) ? a.slice(0, -3) : a}–${b}` // "3–10 PM", "11 AM–2 PM"
+  }
   return (
-    <span className="chip weather" title={f.daily ? 'Daily forecast (kickoff time TBA)' : 'Forecast at kickoff'}>
-      {f.icon} {f.temp}°F{f.daily ? ' high' : ''} · {f.rain}% rain · {f.wind} mph
+    <span className="chip weather" title={f.daily ? 'Daily forecast (kickoff time TBA)' : `Tailgate through the game, ${span}`}>
+      {f.icon} {f.daily ? `${f.temp}°F high` : `${f.temp}°→${f.endTemp}°F`}{span && ` · ${span}`} · {f.rain}% rain · {f.wind} mph
     </span>
+  )
+}
+
+/** Hour-by-hour temps from when the tailgate starts through the game. */
+export function TempStrip({ game }: { game: Game }) {
+  const f = useForecast(game)
+  if (!f?.hours.length) return null
+  const kick = new Date(game.kickoff).getTime() / 1000
+  return (
+    <div className="temp-strip" aria-label="Hourly forecast, tailgate through the game">
+      {f.hours.map((h) => {
+        const isKick = Math.abs(h.t - kick) < 1800
+        return (
+          <div key={h.t} className={`ts-hour ${isKick ? 'kick' : ''}`} title={`${h.rain}% rain`}>
+            <span className="ts-time">{isKick ? 'Kick' : hourLabel(h.t)}</span>
+            <span className="ts-icon">{h.icon}</span>
+            <span className="ts-temp">{h.temp}°</span>
+            {h.rain >= 20 && <span className="ts-rain">{h.rain}%</span>}
+          </div>
+        )
+      })}
+    </div>
   )
 }

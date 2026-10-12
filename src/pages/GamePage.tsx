@@ -6,10 +6,11 @@ import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, Photo } from '../lib/types'
 import GameLists from '../components/GameLists'
 import Chat from '../components/Chat'
-import { Countdown, PURDUE_LOGO, TeamLogo, WeatherChip } from '../components/GameBits'
+import DjBooth from '../components/DjBooth'
+import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
 import { Lightbox, PhotoGrid, Uploader } from '../components/Photos'
 
-type Tab = 'lists' | 'chat' | 'pics'
+type Tab = 'lists' | 'dj' | 'chat' | 'pics'
 
 export default function GamePage() {
   const { id } = useParams()
@@ -63,6 +64,7 @@ export default function GamePage() {
             </div>
           </div>
         </div>
+        {!past && <TempStrip game={game} />}
         {!past && <Countdown game={game} />}
         <div className="grid-2">
           <EditableField game={game} field="lot" label="📍 Our spot" placeholder="W Lot (add a row or landmark)" />
@@ -72,6 +74,7 @@ export default function GamePage() {
 
       <div className="tabs">
         <button className={tab === 'lists' ? 'on' : ''} onClick={() => setTab('lists')}>🍔 Lists</button>
+        <button className={tab === 'dj' ? 'on' : ''} onClick={() => setTab('dj')}>🎧 DJ</button>
         <button className={tab === 'chat' ? 'on' : ''} onClick={() => setTab('chat')}>💬 Chat</button>
         <button className={tab === 'pics' ? 'on' : ''} onClick={() => setTab('pics')}>📸 Pics ({photos.length})</button>
       </div>
@@ -79,6 +82,9 @@ export default function GamePage() {
       <div className="game-grid">
         <div className={`gp-section gp-lists ${tab === 'lists' ? 'active' : ''}`}>
           <GameLists gameId={game.id} />
+        </div>
+        <div className={`gp-section gp-dj ${tab === 'dj' ? 'active' : ''}`}>
+          <DjBooth game={game} />
         </div>
         <section className={`gp-section gp-chat card ${tab === 'chat' ? 'active' : ''}`}>
           <h3 className="display panel-title">💬 Game thread</h3>

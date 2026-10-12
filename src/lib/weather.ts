@@ -5,7 +5,22 @@ import type { Game } from './types'
 const LAT = 40.4343
 const LON = -86.9184
 
-export type Forecast = { temp: number; rain: number; wind: number; icon: string; label: string; daily: boolean }
+// The window we care about: from when the tailgate starts until we're inside watching.
+// 8:00 PM kickoff → 3 PM to 10 PM.
+export const TAILGATE_LEAD_H = 5
+export const AFTER_KICKOFF_H = 2
+
+export type Hour = { t: number; temp: number; rain: number; icon: string }
+export type Forecast = {
+  temp: number      // first hour of the window (or the day's high when kickoff is TBA)
+  endTemp: number   // last hour of the window
+  rain: number      // worst chance in the window
+  wind: number      // strongest wind in the window
+  icon: string
+  label: string
+  daily: boolean
+  hours: Hour[]     // hour by hour, tailgate through the game (empty when kickoff is TBA)
+}
 
 const CODES: [number[], string, string][] = [
   [[0], '☀️', 'Clear'],
@@ -17,6 +32,7 @@ const CODES: [number[], string, string][] = [
   [[71, 73, 75, 77, 85, 86], '🌨️', 'Snow'],
   [[95, 96, 99], '⛈️', 'Storms'],
 ]
+// Codes run roughly mild → nasty, so the biggest one is the worst weather in the window.
 const describe = (code: number) => {
   const hit = CODES.find(([codes]) => codes.includes(code))
   return hit ? { icon: hit[1], label: hit[2] } : { icon: '🌡️', label: '' }
@@ -43,17 +59,25 @@ export async function kickoffForecast(g: Game): Promise<Forecast | null> {
   const d = await res.json()
 
   if (!g.time_tbd) {
-    const target = kickoff.getTime() / 1000
-    const times: number[] = d.hourly.time
-    let best = 0
-    times.forEach((t, i) => { if (Math.abs(t - target) < Math.abs(times[best] - target)) best = i })
-    if (Math.abs(times[best] - target) < 3 * 3600) {
+    const k = kickoff.getTime() / 1000
+    const from = k - TAILGATE_LEAD_H * 3600 - 1800 // include the hour the tailgate starts in
+    const to = k + AFTER_KICKOFF_H * 3600
+    const idx = (d.hourly.time as number[]).flatMap((t, i) => (t >= from && t <= to ? [i] : []))
+    if (idx.length) {
+      const hours: Hour[] = idx.map((i) => ({
+        t: d.hourly.time[i],
+        temp: Math.round(d.hourly.temperature_2m[i]),
+        rain: d.hourly.precipitation_probability[i] ?? 0,
+        icon: describe(d.hourly.weather_code[i]).icon,
+      }))
       return {
-        temp: Math.round(d.hourly.temperature_2m[best]),
-        rain: d.hourly.precipitation_probability[best] ?? 0,
-        wind: Math.round(d.hourly.wind_speed_10m[best]),
-        ...describe(d.hourly.weather_code[best]),
+        temp: hours[0].temp,
+        endTemp: hours[hours.length - 1].temp,
+        rain: Math.max(...hours.map((h) => h.rain)),
+        wind: Math.round(Math.max(...idx.map((i) => d.hourly.wind_speed_10m[i]))),
+        ...describe(Math.max(...idx.map((i) => d.hourly.weather_code[i]))),
         daily: false,
+        hours,
       }
     }
   }
@@ -63,11 +87,14 @@ export async function kickoffForecast(g: Game): Promise<Forecast | null> {
     (t) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(t * 1000)) === day,
   )
   if (dayIdx < 0) return null
+  const high = Math.round(d.daily.temperature_2m_max[dayIdx])
   return {
-    temp: Math.round(d.daily.temperature_2m_max[dayIdx]),
+    temp: high,
+    endTemp: high,
     rain: d.daily.precipitation_probability_max[dayIdx] ?? 0,
     wind: Math.round(d.daily.wind_speed_10m_max[dayIdx]),
     ...describe(d.daily.weather_code[dayIdx]),
     daily: true,
+    hours: [],
   }
 }

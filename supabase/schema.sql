@@ -130,6 +130,9 @@ create table if not exists public.list_items (
   created_at timestamptz not null default now()
 );
 create index if not exists list_items_game_idx on public.list_items (game_id);
+-- Whoever runs the list can say who's bringing what, even for people who aren't on the site.
+-- owner_id = a crew member · owner_name = anyone else ("Uncle Bob"). The site sets one and clears the other.
+alter table public.list_items add column if not exists owner_name text check (char_length(owner_name) <= 40);
 
 create or replace function public.seed_game_list()
 returns trigger
@@ -180,6 +183,68 @@ create table if not exists public.photos (
   created_at  timestamptz not null default now()
 );
 create index if not exists photos_game_idx on public.photos (game_id, created_at desc);
+
+-- ---------------------------------------------------------------------------
+-- DJ booth. Anyone in the crew can request a song for a game; whoever is
+-- flagged as DJ on the crew list (Crew page → DJ) approves or denies it with a
+-- note, then prints the approved list for the booth.
+-- ---------------------------------------------------------------------------
+alter table public.members add column if not exists dj boolean not null default false;
+
+create or replace function public.is_dj()
+returns boolean
+language sql stable security definer set search_path = public
+as $$
+  select exists (
+    select 1 from public.members
+    where email = lower(coalesce(auth.jwt() ->> 'email', '')) and dj
+  );
+$$;
+
+create table if not exists public.song_requests (
+  id           uuid primary key default gen_random_uuid(),
+  game_id      uuid not null references public.games(id) on delete cascade,
+  requested_by uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  song         text not null check (char_length(song) between 1 and 200),
+  artist       text check (char_length(artist) <= 200),
+  note         text check (char_length(note) <= 300),       -- from the requester ("after the first TD")
+  status       text not null default 'pending' check (status in ('pending', 'approved', 'denied')),
+  dj_note      text check (char_length(dj_note) <= 300),    -- from the DJ, approve or deny
+  decided_at   timestamptz,
+  created_at   timestamptz not null default now()
+);
+create index if not exists song_requests_game_idx on public.song_requests (game_id, created_at);
+
+-- Only a DJ can rule on a request. Non-DJ inserts always start out pending
+-- (a DJ's own adds can go straight on the list), and nobody can move a
+-- request to another game or another requester.
+create or replace function public.song_request_guard()
+returns trigger
+language plpgsql set search_path = public
+as $$
+begin
+  if tg_op = 'INSERT' then
+    if not public.is_dj() then
+      new.status := 'pending';
+      new.dj_note := null;
+    end if;
+    new.decided_at := case when new.status = 'pending' then null else now() end;
+  else
+    new.game_id := old.game_id;
+    new.requested_by := old.requested_by;
+    new.created_at := old.created_at;
+    if new.status is distinct from old.status then
+      new.decided_at := case when new.status = 'pending' then null else now() end;
+    end if;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists song_request_guard on public.song_requests;
+create trigger song_request_guard
+  before insert or update on public.song_requests
+  for each row execute function public.song_request_guard();
 
 -- ---------------------------------------------------------------------------
 -- Password sign-in (no emails). Email confirmation is off in the auth settings,
@@ -274,7 +339,8 @@ select
   (select count(*) from public.messages m where m.game_id = g.id)                                     as message_count,
   (select count(*) from public.photos p where p.game_id = g.id)                                       as photo_count,
   (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'food')               as food_total,
-  (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'food' and i.owner_id is not null) as food_claimed,
+  (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'food'
+     and (i.owner_id is not null or i.owner_name is not null))                                       as food_claimed,
   (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'ask' and i.status = 'open')       as asks_open
 from public.games g;
 
@@ -288,13 +354,19 @@ alter table public.list_template enable row level security;
 alter table public.list_items    enable row level security;
 alter table public.messages      enable row level security;
 alter table public.photos        enable row level security;
+alter table public.song_requests enable row level security;
 
--- members: crew can see the list and invite people; remove anyone but yourself
+-- members: crew can see the list, invite people, and pick the DJ; remove anyone but yourself
 drop policy if exists members_select on public.members;
 drop policy if exists members_insert on public.members;
+drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
 create policy members_select on public.members for select to authenticated using (public.is_member());
 create policy members_insert on public.members for insert to authenticated with check (public.is_member());
+create policy members_update on public.members for update to authenticated using (public.is_member()) with check (public.is_member());
+-- …but the DJ flag is the only column anyone can change.
+revoke update on public.members from anon, authenticated;
+grant update (dj) on public.members to authenticated;
 create policy members_delete on public.members for delete to authenticated
   using (public.is_member() and email <> lower(coalesce(auth.jwt() ->> 'email', '')));
 
@@ -352,6 +424,19 @@ create policy photos_update on public.photos for update to authenticated
 create policy photos_delete on public.photos for delete to authenticated
   using (public.is_member() and uploader_id = auth.uid());
 
+-- song requests: request as yourself; only the DJ approves/denies; delete your own (the DJ can delete any)
+drop policy if exists song_requests_select on public.song_requests;
+drop policy if exists song_requests_insert on public.song_requests;
+drop policy if exists song_requests_update on public.song_requests;
+drop policy if exists song_requests_delete on public.song_requests;
+create policy song_requests_select on public.song_requests for select to authenticated using (public.is_member());
+create policy song_requests_insert on public.song_requests for insert to authenticated
+  with check (public.is_member() and requested_by = auth.uid());
+create policy song_requests_update on public.song_requests for update to authenticated
+  using (public.is_dj()) with check (public.is_dj());
+create policy song_requests_delete on public.song_requests for delete to authenticated
+  using (public.is_member() and (requested_by = auth.uid() or public.is_dj()));
+
 -- ---------------------------------------------------------------------------
 -- Storage bucket for the gallery (private; the site uses signed URLs).
 -- Files go under "<your user id>/…", so you can only write/delete your own.
@@ -382,7 +467,7 @@ create policy gallery_delete on storage.objects for delete to authenticated
 do $$
 declare t text;
 begin
-  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles'] loop
+  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

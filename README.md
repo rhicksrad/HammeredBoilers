@@ -4,12 +4,18 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
 
 **Live:** https://rhicksrad.github.io/HammeredBoilers/
 
-- **Gameday:** Purdue's home schedule, pulled from ESPN on its own. The next home game gets a countdown, the
-  kickoff forecast, and a quick read on how much food is covered and how many asks are still open.
+- **Gameday:** Purdue's home schedule, pulled from ESPN on its own. The next home game gets a countdown, an
+  hour-by-hour forecast from when the tailgate starts through the game (5 hours before kickoff to 2 hours after,
+  so an 8 PM kickoff shows 3 to 10 PM), and a quick read on how much food is covered and how many asks are still open.
 - **Gameday board** (one per game):
-  - **Food & Drink:** who's bringing what. Tap the box to claim an item; add a note like "2 dozen brats".
+  - **Food & Drink:** who's bringing what. Tap the box to claim an item yourself, or use the **Who's bringing it?**
+    dropdown to put anyone on it, so whoever runs the list can fill it in for everybody. **Someone else…** covers
+    people who aren't on the site. Add a note like "2 dozen brats".
   - **Asks & Logistics:** "Do we have power?", the parking pass, the tent, the grill, the ride plan… Mark each
-    Yes or No, say "I'll handle it", and add the answer.
+    Yes or No, pick who's on it, and add the answer.
+  - **DJ Booth:** song requests for that game. Anyone requests a song (with an optional note); the DJ approves or
+    denies each one with a note back, then hits **Print the list** for a black-and-white sheet to post in the booth.
+    Make someone the DJ with the **🎧 DJ** button on the Crew page. Only DJs can approve or deny.
   - **Game thread:** chat for that game. It stays with the game, so past tailgates keep their conversations.
   - **Pics:** photos and videos from that game.
   - **Our spot** and **Notes:** lot, meet time, whatever.
@@ -17,7 +23,7 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   phone, paste one straight in, or drop a Giphy or Tenor link.
 - **Gallery:** everyone's pics and videos, filterable by game. Originals stay full-size, and you can download one
   or zip a whole game.
-- **Crew:** your name and emoji. Add buddies by email here.
+- **Crew:** your name and emoji. Add buddies by email here, and pick who's the DJ.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.
 

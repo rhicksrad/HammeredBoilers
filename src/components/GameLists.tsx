@@ -54,7 +54,7 @@ export default function GameLists({ gameId }: { gameId: string }) {
       <Panel
         title="Food & Drink"
         icon="🍔"
-        summary={`${food.filter((x) => x.owner_id).length}/${food.length} covered`}
+        summary={`${food.filter((x) => x.owner_id || x.owner_name).length}/${food.length} covered`}
         addPlaceholder="Add something to bring…"
         onAdd={(l) => add('food', l)}
       >
@@ -104,21 +104,21 @@ function FoodRow({ item, patch, remove }: RowProps) {
   const { me, profiles } = useAuth()
   const owner = item.owner_id ? profiles[item.owner_id] : null
   const mine = item.owner_id === me?.id
+  const taken = Boolean(item.owner_id || item.owner_name)
   return (
-    <li className={`item ${item.owner_id ? 'done' : ''}`}>
+    <li className={`item ${taken ? 'done' : ''}`}>
       <button
-        className={`claim ${item.owner_id ? 'on' : ''}`}
-        title={mine ? 'Unclaim' : item.owner_id ? `${nameOf(owner)} has it` : "I'll bring it"}
-        onClick={() => patch(item.id, { owner_id: mine ? null : item.owner_id ?? me!.id })}
-        disabled={Boolean(item.owner_id) && !mine}
+        className={`claim ${taken ? 'on' : ''}`}
+        title={mine ? 'Unclaim' : taken ? `${owner ? nameOf(owner) : item.owner_name} has it` : "I'll bring it"}
+        onClick={() => patch(item.id, { owner_id: mine ? null : me!.id, owner_name: null })}
+        disabled={taken && !mine}
       >
-        {item.owner_id ? owner?.emoji ?? '✓' : ''}
+        {owner ? owner.emoji : taken ? '✓' : ''}
       </button>
       <div className="item-main">
         <div className="item-label">{item.label}</div>
         <div className="item-sub">
-          {owner ? <span className="who">{mine ? "You've got it" : `${nameOf(owner)}'s got it`}</span>
-            : <button className="link-btn" onClick={() => patch(item.id, { owner_id: me!.id })}>I'll bring it</button>}
+          <WhoPicker item={item} patch={patch} unset="Who's bringing it?" />
           <Note item={item} patch={patch} placeholder="details (how much, what kind)" />
         </div>
       </div>
@@ -128,9 +128,6 @@ function FoodRow({ item, patch, remove }: RowProps) {
 }
 
 function AskRow({ item, patch, remove }: RowProps) {
-  const { me, profiles } = useAuth()
-  const owner = item.owner_id ? profiles[item.owner_id] : null
-  const mine = item.owner_id === me?.id
   const set = (status: ListItem['status']) => patch(item.id, { status: item.status === status ? 'open' : status })
   return (
     <li className={`item ask ${item.status}`}>
@@ -141,16 +138,47 @@ function AskRow({ item, patch, remove }: RowProps) {
             <button className={item.status === 'yes' ? 'on yes' : ''} onClick={() => set('yes')}>Yes</button>
             <button className={item.status === 'no' ? 'on no' : ''} onClick={() => set('no')}>No</button>
           </div>
-          {owner
-            ? <button className="link-btn who" onClick={() => mine && patch(item.id, { owner_id: null })} title={mine ? 'Tap to drop it' : ''}>
-                {owner.emoji} {mine ? "You're on it" : `${nameOf(owner)}'s on it`}
-              </button>
-            : <button className="link-btn" onClick={() => patch(item.id, { owner_id: me!.id })}>I'll handle it</button>}
+          <WhoPicker item={item} patch={patch} unset="Who's on it?" />
         </div>
         <Note item={item} patch={patch} placeholder="answer / details" />
       </div>
       <RowMenu onDelete={() => remove(item.id)} />
     </li>
+  )
+}
+
+/**
+ * Anyone can say who's got an item, not just claim it themselves, so whoever runs the list
+ * can fill it in for everybody. "Someone else…" covers people who aren't on the site.
+ */
+function WhoPicker({ item, patch, unset }: { item: ListItem; patch: RowProps['patch']; unset: string }) {
+  const { me, profiles } = useAuth()
+  const crew = Object.values(profiles)
+    .filter((p) => p.id !== me?.id)
+    .sort((a, b) => a.display_name.localeCompare(b.display_name))
+  const value = item.owner_id ?? (item.owner_name ? 'name' : '')
+  return (
+    <select
+      className={`who-pick ${value ? 'set' : ''}`}
+      value={value}
+      title={unset}
+      onChange={(e) => {
+        const v = e.target.value
+        if (v === 'name') return
+        if (v === 'other') {
+          const n = prompt("Who's got it? (someone who isn't on the site)", item.owner_name ?? '')?.trim()
+          if (n) patch(item.id, { owner_id: null, owner_name: n.slice(0, 40) })
+          return
+        }
+        patch(item.id, { owner_id: v || null, owner_name: null })
+      }}
+    >
+      <option value="">{unset}</option>
+      {me && <option value={me.id}>{me.emoji} Me</option>}
+      {crew.map((p) => <option key={p.id} value={p.id}>{p.emoji} {p.display_name}</option>)}
+      {item.owner_name && <option value="name">👤 {item.owner_name}</option>}
+      <option value="other">+ Someone else…</option>
+    </select>
   )
 }
 

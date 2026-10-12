@@ -40,6 +40,7 @@ export type ListItem = {
   label: string
   note: string | null
   owner_id: string | null
+  owner_name: string | null // someone not on the site
   status: 'open' | 'yes' | 'no'
   sort: number
   created_by: string | null
@@ -63,5 +64,20 @@ export type Photo = {
   thumb_path: string | null
   mime: string
   caption: string | null
+  created_at: string
+}
+
+export type SongStatus = 'pending' | 'approved' | 'denied'
+
+export type SongRequest = {
+  id: string
+  game_id: string
+  requested_by: string
+  song: string
+  artist: string | null
+  note: string | null
+  status: SongStatus
+  dj_note: string | null
+  decided_at: string | null
   created_at: string
 }

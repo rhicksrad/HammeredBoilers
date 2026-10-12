@@ -5,7 +5,7 @@ import { lastSync, syncHomeGames } from '../lib/schedule'
 import { gameDay, gameTime, isGameday, isPast, result, when } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, GameStats } from '../lib/types'
-import { Countdown, PURDUE_LOGO, TeamLogo, WeatherChip } from '../components/GameBits'
+import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
 
 export default function Home() {
   const [games, setGames] = useState<Game[] | null>(null)
@@ -112,6 +112,7 @@ function Hero({ game, stats }: { game: Game; stats?: GameStats }) {
         {game.tv && <><span className="dot">•</span><span>{game.tv}</span></>}
       </div>
       {game.lot && <div className="hero-lot">📍 {game.lot}</div>}
+      <TempStrip game={game} />
       <Countdown game={game} />
       {stats && (
         <div className="hero-stats">
