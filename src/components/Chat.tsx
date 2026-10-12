@@ -3,7 +3,8 @@ import { BUCKET, supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { extOf } from '../lib/images'
 import { clock, TZ } from '../lib/format'
-import type { Message } from '../lib/types'
+import { CREW, encodeMentions, mentionsMe, TOKEN_RE } from '../lib/mentions'
+import type { Message, Profile } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
 import { useSignedUrls } from './Photos'
@@ -22,6 +23,9 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
   const [uploading, setUploading] = useState(false)
   const [dragging, setDragging] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
+  const input = useRef<HTMLTextAreaElement>(null)
+  const [tag, setTag] = useState<{ start: number; end: number; query: string } | null>(null)
+  const [tagSel, setTagSel] = useState(0)
   const scroller = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const keepOffset = useRef<number | null>(null)
@@ -81,15 +85,41 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     if (el) stickToBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
   }
 
+  // @ tagging: while the word at the cursor starts with @, offer matching crew (and @crew for everybody).
+  const findTag = (value: string, caret: number | null) => {
+    const m = caret == null ? null : value.slice(0, caret).match(/(?:^|\s)@([^\s@<>]{0,24})$/)
+    setTag(m ? { start: caret! - m[1].length - 1, end: caret!, query: m[1].toLowerCase() } : null)
+    setTagSel(0)
+  }
+  const tagOptions: Pick<Profile, 'id' | 'emoji' | 'display_name'>[] = []
+  if (tag) {
+    const q = tag.query
+    const starts = (p: Profile) => (p.display_name.toLowerCase().startsWith(q) ? 0 : 1)
+    tagOptions.push(...Object.values(profiles)
+      .filter((p) => p.id !== me?.id && p.display_name.toLowerCase().includes(q))
+      .sort((a, b) => starts(a) - starts(b) || a.display_name.localeCompare(b.display_name))
+      .slice(0, 6))
+    if (CREW.startsWith(q)) tagOptions.push({ id: CREW, emoji: '📣', display_name: CREW })
+  }
+  const pickTag = (p: { display_name: string }) => {
+    if (!tag) return
+    const ins = `@${p.display_name} `
+    setText(text.slice(0, tag.start) + ins + text.slice(tag.end))
+    setTag(null)
+    const caret = tag.start + ins.length
+    requestAnimationFrame(() => { input.current?.focus(); input.current?.setSelectionRange(caret, caret) })
+  }
+
   const send = async (e?: React.FormEvent) => {
     e?.preventDefault()
-    const body = text.trim()
-    if (!body) return
+    const typed = text.trim()
+    if (!typed) return
+    const body = encodeMentions(typed, Object.values(profiles))
     setText('')
     setErr(null)
     stickToBottom.current = true
     const { data, error } = await supabase.from('messages').insert({ game_id: gameId, body }).select().single()
-    if (error) { setErr(error.message); setText(body); return }
+    if (error) { setErr(error.message); setText(typed); return }
     setMsgs((cur) => (cur && !cur.some((x) => x.id === data.id) ? [...cur, data as Message] : cur))
   }
 
@@ -100,7 +130,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     setErr(null)
     setUploading(true)
     stickToBottom.current = true
-    const caption = text.trim()
+    const caption = encodeMentions(text.trim(), Object.values(profiles))
     for (const [i, file] of images.entries()) {
       if (file.size > MAX_IMAGE_MB * 1024 * 1024) { setErr(`${file.name || 'That image'} is over ${MAX_IMAGE_MB} MB.`); continue }
       const path = `${me.id}/chat/${crypto.randomUUID()}.${extOf(file)}`
@@ -148,7 +178,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
           return (
             <Fragment key={m.id}>
               {newDay && <div className="day-sep"><span>{dayKey(m.created_at)}</span></div>}
-              <div className={`msg ${grouped ? 'grouped' : ''} ${mine ? 'mine' : ''}`}>
+              <div className={`msg ${grouped ? 'grouped' : ''} ${mine ? 'mine' : ''} ${!mine && mentionsMe(m.body, me?.id) ? 'tagged' : ''}`}>
                 <div className="msg-avatar">{!grouped && <Avatar p={p} size={34} />}</div>
                 <div className="msg-main">
                   {!grouped && (
@@ -168,6 +198,19 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
       </div>
       {readOnlyNote && <div className="chat-note muted small">{readOnlyNote}</div>}
       <form className="chat-input" onSubmit={send}>
+        {tagOptions.length > 0 && (
+          <ul className="tag-pop" role="listbox" aria-label="Tag someone">
+            {tagOptions.map((p, i) => (
+              <li key={p.id}>
+                <button type="button" role="option" aria-selected={i === tagSel} className={i === tagSel ? 'on' : ''}
+                  onMouseDown={(e) => e.preventDefault()} onClick={() => pickTag(p)}>
+                  <span className="tag-emoji">{p.emoji}</span> {p.display_name}
+                  {p.id === CREW && <span className="muted small"> · tags everybody</span>}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
         <button type="button" className="btn ghost gif-btn" title="Post a GIF or pic" disabled={uploading}
           onClick={() => fileInput.current?.click()}>
           {uploading ? '…' : 'GIF'}
@@ -175,18 +218,31 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
         <input ref={fileInput} type="file" accept="image/*" multiple hidden
           onChange={(e) => sendImages([...(e.target.files ?? [])])} />
         <textarea
+          ref={input}
           className="input"
           rows={1}
           placeholder={placeholder}
           value={text}
           maxLength={2000}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => { setText(e.target.value); findTag(e.target.value, e.target.selectionStart) }}
+          onSelect={(e) => findTag(e.currentTarget.value, e.currentTarget.selectionStart)}
+          onBlur={() => setTag(null)}
           onPaste={(e) => {
             // Copied GIFs/pics and phone GIF keyboards arrive as pasted files.
             const files = [...e.clipboardData.files].filter((f) => f.type.startsWith('image/'))
             if (files.length) { e.preventDefault(); sendImages(files) }
           }}
           onKeyDown={(e) => {
+            if (tagOptions.length) {
+              if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                e.preventDefault()
+                const n = tagOptions.length
+                setTagSel((i) => (i + (e.key === 'ArrowDown' ? 1 : n - 1)) % n)
+                return
+              }
+              if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pickTag(tagOptions[tagSel] ?? tagOptions[0]); return }
+              if (e.key === 'Escape') { setTag(null); return }
+            }
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() }
           }}
         />
@@ -232,9 +288,25 @@ function RichText({ text }: { text: string }) {
   return (
     <>
       {!justTheLink && parts.map((part, i) =>
-        i % 2 === 1 ? <a key={i} href={part} target="_blank" rel="noreferrer">{part}</a> : <Fragment key={i}>{part}</Fragment>,
+        i % 2 === 1 ? <a key={i} href={part} target="_blank" rel="noreferrer">{part}</a> : <Tags key={i} text={part} />,
       )}
       {embed && <EmbedView embed={embed} fallback={urls.find((u) => embedFor(u)) ?? ""} />}
+    </>
+  )
+}
+
+/** <@id> tokens → highlighted @Names (yours stands out). */
+function Tags({ text }: { text: string }) {
+  const { me, profiles } = useAuth()
+  const parts = text.split(TOKEN_RE) // odd entries are the ids
+  return (
+    <>
+      {parts.map((part, i) => {
+        if (i % 2 === 0) return <Fragment key={i}>{part}</Fragment>
+        const name = part === CREW ? CREW : profiles[part]?.display_name ?? 'someone'
+        const isMe = part === me?.id || part === CREW
+        return <span key={i} className={`tag ${isMe ? 'me' : ''}`}>@{name}</span>
+      })}
     </>
   )
 }

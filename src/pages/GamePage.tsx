@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Link, useParams, useSearchParams } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { gameDay, gameTime, isGameday, isPast, result } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
@@ -16,7 +16,9 @@ export default function GamePage() {
   const { id } = useParams()
   const [game, setGame] = useState<Game | null | undefined>(undefined)
   const [photos, setPhotos] = useState<Photo[]>([])
+  const [params] = useSearchParams()
   const [tab, setTab] = useState<Tab>('lists')
+  const chatRef = useRef<HTMLElement>(null)
   const [open, setOpen] = useState<number | null>(null)
 
   useEffect(() => {
@@ -31,6 +33,14 @@ export default function GamePage() {
     onUpsert: (p) => setPhotos((cur) => (cur.some((x) => x.id === p.id) ? upsertById(cur, p) : [p, ...cur])),
     onDelete: (pid) => setPhotos((cur) => cur.filter((x) => x.id !== pid)),
   }, Boolean(id))
+
+  // ?tab=chat (from a tag in the 🔔) opens the thread: the tab on phones, a scroll on wider screens.
+  const wantTab = params.get('tab')
+  useEffect(() => {
+    if (wantTab !== 'chat' || !game) return
+    setTab('chat')
+    requestAnimationFrame(() => chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+  }, [wantTab, game?.id])
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
 
@@ -86,7 +96,7 @@ export default function GamePage() {
         <div className={`gp-section gp-dj ${tab === 'dj' ? 'active' : ''}`}>
           <DjBooth game={game} />
         </div>
-        <section className={`gp-section gp-chat card ${tab === 'chat' ? 'active' : ''}`}>
+        <section ref={chatRef} className={`gp-section gp-chat card ${tab === 'chat' ? 'active' : ''}`}>
           <h3 className="display panel-title">💬 Game thread</h3>
           <Chat
             gameId={game.id}

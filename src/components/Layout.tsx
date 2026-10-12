@@ -3,6 +3,7 @@ import { NavLink } from 'react-router'
 import { useAuth } from '../auth'
 import Logo from './Logo'
 import { EMOJIS } from './Avatar'
+import TagBell from './TagBell'
 
 const NAV = [
   { to: '/', label: 'Gameday', icon: '🏈', end: true },
@@ -28,6 +29,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <NavLink key={n.to} to={n.to} end={n.end}>{n.label}</NavLink>
           ))}
         </nav>
+        <TagBell />
         {me && (
           <NavLink to="/crew" className="me-chip" title="Your profile">
             <span className="emoji">{me.emoji}</span>
