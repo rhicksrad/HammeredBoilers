@@ -75,8 +75,8 @@ export default function Crew() {
         <h2 className="display">The crew</h2>
         <p className="muted small">
           Add a buddy's email, then send them the site link. They enter that email and pick a password the first time.
-          Forgot a password? Hit <b>Reset</b> next to their name and they choose a new one. Flip on <b>🎧 DJ</b> for whoever
-          runs the music: they approve song requests on each gameday board and print the list for the booth.
+          Forgot a password? Hit <b>Reset</b> next to their name and they choose a new one. <b>🎧 DJ</b> marks the DJ, who
+          approves song requests on each gameday board.
         </p>
         <form className="row" onSubmit={async (e) => {
           e.preventDefault()
@@ -97,12 +97,7 @@ export default function Crew() {
                   <div>{p?.display_name ?? <span className="muted">Hasn't signed in yet</span>}</div>
                   <div className="muted small">{m.email}</div>
                 </div>
-                <button className={`btn ghost sm ${m.dj ? 'on' : ''}`} title={m.dj ? 'Takes song requests (tap to turn off)' : 'Make the DJ'}
-                  onClick={async () => {
-                    setMembers((cur) => cur.map((x) => (x.email === m.email ? { ...x, dj: !m.dj } : x)))
-                    const { error } = await supabase.from('members').update({ dj: !m.dj }).eq('email', m.email)
-                    if (error) { setErr(error.message); loadMembers() }
-                  }}>🎧 DJ</button>
+                {m.dj && <span className="badge">🎧 DJ</span>}
                 {p && m.email !== myEmail && (
                   <button className="btn ghost sm" onClick={() => resetPassword(m.email)}>Reset</button>
                 )}

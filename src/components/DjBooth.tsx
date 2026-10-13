@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Link } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import { gameDay, gameTime, when } from '../lib/format'
@@ -94,7 +93,7 @@ export default function DjBooth({ game }: { game: Game }) {
         <div className="stack-sm">
           <h3 className="display">🎧 DJ Booth</h3>
           <div className="muted small">
-            {!djLabel ? <>No DJ picked yet. Flip someone to <b>DJ</b> on the <Link to="/crew">Crew page</Link>.</>
+            {!djLabel ? 'No DJ set up yet.'
               : amDj ? "You're on the decks. Approve or deny with a note, then print the list for the booth."
               : <>Requests go to <b>{djLabel}</b>.</>}
           </div>

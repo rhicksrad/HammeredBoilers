@@ -185,9 +185,10 @@ create table if not exists public.photos (
 create index if not exists photos_game_idx on public.photos (game_id, created_at desc);
 
 -- ---------------------------------------------------------------------------
--- DJ booth. Anyone in the crew can request a song for a game; whoever is
--- flagged as DJ on the crew list (Crew page → DJ) approves or denies it with a
--- note, then prints the approved list for the booth.
+-- DJ booth. Anyone in the crew can request a song for a game; the DJ approves
+-- or denies it with a note, then prints the approved list for the booth.
+-- DJ KevDad is the DJ. The flag can't be changed from the site; set it here:
+--   update public.members set dj = (email = 'his@email') ;
 -- ---------------------------------------------------------------------------
 alter table public.members add column if not exists dj boolean not null default false;
 
@@ -356,17 +357,15 @@ alter table public.messages      enable row level security;
 alter table public.photos        enable row level security;
 alter table public.song_requests enable row level security;
 
--- members: crew can see the list, invite people, and pick the DJ; remove anyone but yourself
+-- members: crew can see the list and invite people; remove anyone but yourself. Nothing is editable
+-- from the site (the DJ flag is set in SQL only).
 drop policy if exists members_select on public.members;
 drop policy if exists members_insert on public.members;
 drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
 create policy members_select on public.members for select to authenticated using (public.is_member());
 create policy members_insert on public.members for insert to authenticated with check (public.is_member());
-create policy members_update on public.members for update to authenticated using (public.is_member()) with check (public.is_member());
--- …but the DJ flag is the only column anyone can change.
 revoke update on public.members from anon, authenticated;
-grant update (dj) on public.members to authenticated;
 create policy members_delete on public.members for delete to authenticated
   using (public.is_member() and email <> lower(coalesce(auth.jwt() ->> 'email', '')));
 
