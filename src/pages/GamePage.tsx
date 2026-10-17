@@ -59,12 +59,13 @@ export default function GamePage() {
     onResync: loadPhotos,
   }, Boolean(id))
 
-  // ?tab=chat (from a tag in the bell) opens the thread: the tab on phones, a scroll on wider screens.
+  // ?tab=… (from the bell) opens that tab on phones; ?tab=chat also scrolls to the thread on wider screens.
   const wantTab = params.get('tab')
   useEffect(() => {
-    if (wantTab !== 'chat' || !game) return
-    setTab('chat')
-    requestAnimationFrame(() => chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+    const t = TABS.find((x) => x.id === wantTab)?.id
+    if (!t || !game) return
+    setTab(t)
+    if (t === 'chat') requestAnimationFrame(() => chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }, [wantTab, game?.id])
 
   // Phones: switching tabs brings the tab bar to the top so the list or chat is right there, not below the game info.

@@ -3,6 +3,7 @@ import { supabase } from './supabase'
 
 type Row = { id: string } & Record<string, unknown>
 type Handlers<T extends Row> = {
+  onInsert?: (row: T) => void // new rows only; falls back to onUpsert when not given
   onUpsert?: (row: T) => void
   onDelete?: (id: string) => void
   onResync?: () => void // the connection dropped and came back (phone slept, signal blipped): changes may have been missed
@@ -21,7 +22,7 @@ export function useLiveTable<T extends Row>(table: string, filter: string | unde
     const ch = supabase.channel(`${table}:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
     let joined = false
     const base = { schema: 'public', table, ...(filter ? { filter } : {}) }
-    ch.on('postgres_changes', { event: 'INSERT', ...base }, (p) => handlers.current.onUpsert?.(p.new as T))
+    ch.on('postgres_changes', { event: 'INSERT', ...base }, (p) => (handlers.current.onInsert ?? handlers.current.onUpsert)?.(p.new as T))
       .on('postgres_changes', { event: 'UPDATE', ...base }, (p) => handlers.current.onUpsert?.(p.new as T))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table }, (p) => {
         const id = (p.old as Row)?.id
