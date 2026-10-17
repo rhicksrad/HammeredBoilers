@@ -410,6 +410,88 @@ create policy list_items_insert on public.list_items for insert to authenticated
 create policy list_items_update on public.list_items for update to authenticated using ((select public.is_member())) with check ((select public.is_member()));
 create policy list_items_delete on public.list_items for delete to authenticated using ((select public.is_member()));
 
+-- ---------------------------------------------------------------------------
+-- Food ratings, 1–10, anonymous. One rating per crew member per food item; change or clear it any time.
+-- Nobody can read anyone else's rating, not even through the API: you only ever see your own row.
+-- The total and count live on list_items (rating_sum / rating_count), kept up by a trigger, so the
+-- average reaches everyone live with the list and never says who gave what.
+-- ---------------------------------------------------------------------------
+alter table public.list_items add column if not exists rating_sum   int not null default 0;
+alter table public.list_items add column if not exists rating_count int not null default 0;
+
+create table if not exists public.food_ratings (
+  item_id uuid not null references public.list_items(id) on delete cascade,
+  user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  score   smallint not null check (score between 1 and 10),
+  primary key (item_id, user_id)
+);
+alter table public.food_ratings enable row level security;
+
+-- Adjust the totals by the change (not a recount), so two people rating at once can't lose a vote.
+create or replace function public.sync_food_rating()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  perform set_config('hb.rating_sync', 'on', true);
+  if tg_op in ('UPDATE', 'DELETE') then
+    update public.list_items set rating_sum = rating_sum - old.score, rating_count = rating_count - 1
+    where id = old.item_id;
+  end if;
+  if tg_op in ('INSERT', 'UPDATE') then
+    update public.list_items set rating_sum = rating_sum + new.score, rating_count = rating_count + 1
+    where id = new.item_id;
+  end if;
+  perform set_config('hb.rating_sync', 'off', true);
+  return null;
+end;
+$$;
+
+drop trigger if exists food_ratings_sync on public.food_ratings;
+create trigger food_ratings_sync
+  after insert or update or delete on public.food_ratings
+  for each row execute function public.sync_food_rating();
+
+-- Anyone can edit list items, so only the trigger above may touch the totals.
+create or replace function public.guard_rating_totals()
+returns trigger
+language plpgsql
+as $$
+begin
+  if tg_op = 'INSERT' then
+    new.rating_sum := 0;
+    new.rating_count := 0;
+  elsif coalesce(current_setting('hb.rating_sync', true), '') <> 'on' then
+    new.rating_sum := old.rating_sum;
+    new.rating_count := old.rating_count;
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists list_items_guard_ratings on public.list_items;
+create trigger list_items_guard_ratings
+  before insert or update on public.list_items
+  for each row execute function public.guard_rating_totals();
+
+-- food ratings: see, add, change and clear only your own, and only on food
+drop policy if exists food_ratings_select on public.food_ratings;
+drop policy if exists food_ratings_insert on public.food_ratings;
+drop policy if exists food_ratings_update on public.food_ratings;
+drop policy if exists food_ratings_delete on public.food_ratings;
+create policy food_ratings_select on public.food_ratings for select to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()));
+create policy food_ratings_insert on public.food_ratings for insert to authenticated
+  with check ((select public.is_member()) and user_id = (select auth.uid())
+              and exists (select 1 from public.list_items i where i.id = item_id and i.kind = 'food'));
+create policy food_ratings_update on public.food_ratings for update to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid())
+              and exists (select 1 from public.list_items i where i.id = item_id and i.kind = 'food'));
+create policy food_ratings_delete on public.food_ratings for delete to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()));
+revoke all on public.food_ratings from anon;
+
 -- messages: post as yourself; delete only your own
 drop policy if exists messages_select on public.messages;
 drop policy if exists messages_insert on public.messages;
