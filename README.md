@@ -26,7 +26,7 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   highlighted, and they're called out as "Tagged you" in the bell.
 - **Playground:** general nonsense chat, any day. GIFs work everywhere in chat: tap **GIF** to post one from your
   phone, paste one straight in, or drop a Giphy or Tenor link.
-- **Gallery:** everyone's pics and videos, filterable by game, in the order they were taken (the photo's own date,
+- **Gallery:** everyone's pics and videos, filterable by game and by who added them, in the order they were taken (the photo's own date,
   not when it was uploaded). The same pic added by more than one person shows once, stacked, with everyone who
   added it. That covers re-shared copies (texted or AirDropped, so the file changed) and quick runs of the same
   shot: pics taken within three seconds that look alike stack, and every copy can still be opened. Originals stay full-size, and you can download one or zip a whole game.
