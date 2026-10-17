@@ -34,15 +34,19 @@ const reader = async (path) => {
   }
 }
 
-const res = await fetch(`${SUPABASE_URL}/rest/v1/photos?select=id,path,mime,created_at&taken_at=is.null`, { headers: auth })
+// Missing a date, or holding the upload time as a stand-in (the Gallery's own backfill does that when it can't
+// read a file); the stand-ins only change if the file turns out to have a real date.
+const res = await fetch(`${SUPABASE_URL}/rest/v1/photos?select=id,path,mime,created_at,taken_at`, { headers: auth })
 if (!res.ok) throw new Error(`list: ${res.status} ${await res.text()}`)
-const rows = await res.json()
+const placeholder = (p) => p.taken_at && new Date(p.taken_at).getTime() === new Date(p.created_at).getTime()
+const rows = (await res.json()).filter((p) => !p.taken_at || placeholder(p))
 console.log(`${rows.length} photos missing a taken date.`)
 
 let fromFile = 0, fromUpload = 0, failed = 0
 for (const p of rows) {
   try {
     const t = await takenAt(await reader(p.path), p.mime)
+    if (!t && placeholder(p)) { fromUpload++; continue }
     const up = await fetch(`${SUPABASE_URL}/rest/v1/photos?id=eq.${p.id}`, {
       method: 'PATCH', headers: { ...auth, 'content-type': 'application/json', prefer: 'return=minimal' },
       body: JSON.stringify({ taken_at: t ?? p.created_at }),
