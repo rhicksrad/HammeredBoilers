@@ -6,6 +6,7 @@ import Logo from './Logo'
 import { Avatar, badgeFor, DEFAULT_BADGE } from './Avatar'
 import AvatarPicker from './AvatarPicker'
 import TagBell from './TagBell'
+import PullToRefresh from './PullToRefresh'
 
 const NAV = [
   { to: '/', label: 'Gameday', Icon: CalendarDays, end: true },
@@ -42,6 +43,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           </NavLink>
         )}
       </header>
+      <PullToRefresh />
       <main className="page">{children}</main>
       <nav className="tabbar">
         {NAV.map((n) => (
