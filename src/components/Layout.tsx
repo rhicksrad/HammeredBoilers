@@ -5,7 +5,7 @@ import { useAuth } from '../auth'
 import Logo from './Logo'
 import { Avatar, badgeFor, DEFAULT_BADGE } from './Avatar'
 import AvatarPicker from './AvatarPicker'
-import TagBell from './TagBell'
+import ActivityBell from './ActivityBell'
 import PullToRefresh from './PullToRefresh'
 
 const NAV = [
@@ -35,7 +35,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             <NavLink key={n.to} to={n.to} end={n.end}><n.Icon size={17} strokeWidth={1.9} aria-hidden="true" />{n.label}</NavLink>
           ))}
         </nav>
-        <TagBell />
+        <ActivityBell />
         {me && (
           <NavLink to="/crew" className="me-chip" title="Your profile">
             <Avatar p={me} size={30} />
