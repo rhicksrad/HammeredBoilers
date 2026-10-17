@@ -86,27 +86,38 @@ export function useContentHashes(photos: Photo[] | null) {
 }
 
 /**
- * A pic re-shared by text or AirDrop comes back re-saved: different bytes, so a different hash, but the same
- * capture time from the camera. Two people's pics taken within a couple of seconds of each other that also look
- * alike (a tiny fingerprint of the preview) are treated as the same shot. One person's own pics never fold this
- * way, so bursts stay separate. Every copy in a stack can still be opened from the lightbox.
+ * Near-duplicates: a pic re-shared by text or AirDrop (re-saved, so a different hash) or a quick run of
+ * near-identical shots of the same moment. Pics whose camera times are within a few seconds and whose previews
+ * look alike (a tiny 64-bit fingerprint) stack, whoever added them. Every copy can still be opened from the
+ * lightbox. Tuned on real gameday pics: re-shared copies differ by 0 bits, a run of the same shot by up to 15,
+ * different shots seconds apart by 22 or more.
  */
-const NEAR_MS = 2000
-const LOOK_ALIKE = 10 // of 64 bits that may differ
-const SAME_SECOND_LOOK_ALIKE = 20 // looser when the camera times match to the second: re-saving can shift the look
+const NEAR_MS = 3000
+const LOOK_ALIKE = 16 // of 64 bits that may differ
+const SAME_SECOND_LOOK_ALIKE = 20 // two people, camera times to the same second: almost surely one pic re-shared
 const looks = new Map<string, Uint8Array | null>() // preview path -> 64-bit difference hash
 
 async function lookOf(url: string) {
   const res = await fetch(url)
   if (!res.ok) return null
   const bmp = await createImageBitmap(await res.blob())
+  // Shrink to 72x64, then average each 8x8 block down to 9x8: a straight shrink to 9x8 samples only a few
+  // pixels, which makes the fingerprint jumpy.
   const canvas = document.createElement('canvas')
-  canvas.width = 9; canvas.height = 8
+  canvas.width = 72; canvas.height = 64
   const ctx = canvas.getContext('2d', { willReadFrequently: true })!
-  ctx.drawImage(bmp, 0, 0, 9, 8)
+  ctx.imageSmoothingQuality = 'high'
+  ctx.drawImage(bmp, 0, 0, 72, 64)
   bmp.close()
-  const px = ctx.getImageData(0, 0, 9, 8).data
-  const gray = (x: number, y: number) => { const i = (y * 9 + x) * 4; return px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114 }
+  const px = ctx.getImageData(0, 0, 72, 64).data
+  const gray = (x: number, y: number) => {
+    let sum = 0
+    for (let dy = 0; dy < 8; dy++) for (let dx = 0; dx < 8; dx++) {
+      const i = ((y * 8 + dy) * 72 + x * 8 + dx) * 4
+      sum += px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114
+    }
+    return sum
+  }
   const bits = new Uint8Array(64)
   for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) bits[y * 8 + x] = gray(x, y) < gray(x + 1, y) ? 1 : 0
   return bits
@@ -114,14 +125,14 @@ async function lookOf(url: string) {
 
 const realTime = (p: Photo) => (p.taken_at && p.taken_at !== p.created_at ? new Date(p.taken_at).getTime() : null)
 
-/** Pairs of different people's pics taken within NEAR_MS of each other: the ones worth comparing by look. */
+/** Pairs of pics taken within NEAR_MS of each other: the ones worth comparing by look. */
 function nearPairs(photos: Photo[]) {
   const timed = photos.filter((p) => p.thumb_path && realTime(p) !== null).sort((a, b) => realTime(a)! - realTime(b)!)
   const pairs: [Photo, Photo][] = []
   for (let i = 0; i < timed.length; i++) {
     for (let j = i + 1; j < timed.length && realTime(timed[j])! - realTime(timed[i])! <= NEAR_MS; j++) {
       const a = timed[i], b = timed[j]
-      if (a.uploader_id !== b.uploader_id && isVideo(a) === isVideo(b)) pairs.push([a, b])
+      if (isVideo(a) === isVideo(b)) pairs.push([a, b])
     }
   }
   return pairs
@@ -157,7 +168,7 @@ export function useStackKeys(photos: Photo[] | null) {
       if (!la || !lb) continue
       let diff = 0
       for (let i = 0; i < 64; i++) diff += la[i] ^ lb[i]
-      const sameSecond = Math.abs(realTime(a)! - realTime(b)!) < 1000
+      const sameSecond = a.uploader_id !== b.uploader_id && Math.abs(realTime(a)! - realTime(b)!) < 1000
       if (diff <= (sameSecond ? SAME_SECOND_LOOK_ALIKE : LOOK_ALIKE)) join(own(a), own(b))
     }
     return (p: Photo) => find(own(p))
@@ -183,9 +194,9 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Shot[]; games: Re
               : <img src={src} alt={p.caption ?? ''} loading="lazy" decoding="async" />)}
             {isVideo(p) && <span className="play"><span><Play size={18} fill="currentColor" aria-hidden="true" /></span></span>}
             {p.game_id && games[p.game_id] && <span className="tile-tag">{games[p.game_id].opponent}</span>}
-            {uploaders(p).length > 1 && (
-              <span className="tile-stack" title={`Added by ${uploaders(p).length} people`}>
-                <Layers size={11} aria-hidden="true" />{uploaders(p).length}
+            {p.copies.length > 1 && (
+              <span className="tile-stack" title={`${p.copies.length} copies of this pic`}>
+                <Layers size={11} aria-hidden="true" />{p.copies.length}
               </span>
             )}
           </button>
@@ -310,11 +321,13 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
           {p.caption && <div className="lb-caption">{p.caption}</div>}
           <div className="muted small icon-text">
             {switchable ? <>
-              Added by
+              {who.length > 1 ? 'Added by' : 'Copies'}
               {shot.copies.map((c) => (
                 <button key={c.id} className={`lb-copy ${c.id === p.id ? 'on' : ''}`} onClick={() => setPick(c.id)}
                   aria-pressed={c.id === p.id} title={`Show ${nameOf(profiles[c.uploader_id])}'s copy`}>
                   <Avatar p={profiles[c.uploader_id]} size={18} />{nameOf(profiles[c.uploader_id])}
+                  {shot.copies.filter((o) => o.uploader_id === c.uploader_id).length > 1 &&
+                    ` ${shot.copies.filter((o) => o.uploader_id === c.uploader_id).indexOf(c) + 1}`}
                 </button>
               ))}
             </> : <>
