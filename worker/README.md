@@ -30,7 +30,8 @@ Until `filesUrl` is set in `public/config.js`, the site keeps using Supabase sto
 
    The secret key is in Supabase → Project Settings → API Keys.
 5. **Switch the site over:** add `filesUrl: 'https://hammered-boilers-files.<your subdomain>.workers.dev'` to
-   `public/config.js` and push. Run step 4 once more right after, to catch anything uploaded in between.
+   `public/config.js` and push. This can come before or after step 4: until a file is copied, the Worker signs a
+   link to it in the old Supabase bucket instead, and deletes remove both copies.
 
 Once everything's on R2, the old files can be deleted from the Supabase bucket to free its 1 GB.
 
