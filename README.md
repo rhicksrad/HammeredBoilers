@@ -19,8 +19,11 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   - **Game thread:** chat for that game. It stays with the game, so past tailgates keep their conversations.
   - **Pics:** photos and videos from that game.
   - **Our spot** and **Notes:** lot, meet time, whatever.
+- **What's new:** the bell in the top bar lists what everyone else has been up to, with a count of new ones: new crew
+  members, chat posts, food and asks added to a game's lists, photos, and song requests. Tap one to jump there.
+  Edits like name changes don't show up as new.
 - **Tagging:** type **@** in any chat to tag someone (or **@crew** for everybody). Messages that tag you are
-  highlighted, and the bell in the top bar lists every tag with a count of new ones; tap one to jump to that chat.
+  highlighted, and they're called out as "Tagged you" in the bell.
 - **Playground:** general nonsense chat, any day. GIFs work everywhere in chat: tap **GIF** to post one from your
   phone, paste one straight in, or drop a Giphy or Tenor link.
 - **Gallery:** everyone's pics and videos, filterable by game, in the order they were taken (the photo's own date,

@@ -5,6 +5,7 @@ export type Profile = {
   emoji: string               // avatar badge key (older rows: an emoji, mapped in Avatar.tsx)
   avatar_path?: string | null // profile photo in the gallery bucket, under <user id>/avatar/
   onboarded: boolean
+  created_at?: string         // when they signed up
 }
 
 export type Game = {
