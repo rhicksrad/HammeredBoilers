@@ -64,7 +64,6 @@ export function useContentHashes(photos: Photo[] | null) {
     const todo = (photos ?? []).filter((p) => !p.content_hash && !knownHashes.has(p.path))
     if (!todo.length) return
     todo.forEach((p) => knownHashes.set(p.path, null))
-    let live = true
     ;(async () => {
       try {
         for (let i = 0; i < todo.length; i += 1000) {
@@ -72,13 +71,12 @@ export function useContentHashes(photos: Photo[] | null) {
           Object.entries(found).forEach(([path, h]) => knownHashes.set(path, h))
         }
       } catch { todo.forEach((p) => knownHashes.delete(p.path)); return } // try again next visit
-      if (live) bump((n) => n + 1)
+      bump((n) => n + 1) // even if the list changed meanwhile: these are cached, so no later run would show them
       for (const p of todo) {
         const h = knownHashes.get(p.path)
         if (h && p.uploader_id === me?.id) await supabase.from('photos').update({ content_hash: h }).eq('id', p.id)
       }
     })()
-    return () => { live = false }
   }, [photos, me?.id])
   // A new function once more hashes are in, so stacks built from it are redone.
   return useCallback((p: Photo) => p.content_hash ?? knownHashes.get(p.path) ?? null, [seen])
@@ -88,10 +86,11 @@ export function useContentHashes(photos: Photo[] | null) {
  * A pic re-shared by text or AirDrop comes back re-saved: different bytes, so a different hash, but the same
  * capture time from the camera. Two people's pics taken within a couple of seconds of each other that also look
  * alike (a tiny fingerprint of the preview) are treated as the same shot. One person's own pics never fold this
- * way, so bursts stay separate.
+ * way, so bursts stay separate. Every copy in a stack can still be opened from the lightbox.
  */
 const NEAR_MS = 2000
 const LOOK_ALIKE = 10 // of 64 bits that may differ
+const SAME_SECOND_LOOK_ALIKE = 20 // looser when the camera times match to the second: re-saving can shift the look
 const looks = new Map<string, Uint8Array | null>() // preview path -> 64-bit difference hash
 
 async function lookOf(url: string) {
@@ -134,15 +133,15 @@ export function useStackKeys(photos: Photo[] | null) {
     const todo = [...new Set(pairs.flat().map((p) => p.thumb_path!))].filter((t) => !looks.has(t))
     if (!todo.length) return
     todo.forEach((t) => looks.set(t, null))
-    let live = true
+    // Always re-render when done, even if the list changed meanwhile (saving hashes does that): the results are
+    // cached by path, so a later run skips them and nothing else would show them.
     ;(async () => {
       try {
         const links = await signFiles(todo, 600)
-        await Promise.all(links.map(async (l) => { try { looks.set(l.path, await lookOf(l.url)) } catch { /* leave unmatched */ } }))
+        await Promise.all(links.map(async (l) => { try { looks.set(l.path, await lookOf(l.url)) } catch { looks.delete(l.path) } }))
       } catch { todo.forEach((t) => looks.delete(t)); return }
-      if (live) bump((n) => n + 1)
+      bump((n) => n + 1)
     })()
-    return () => { live = false }
   }, [pairs])
 
   return useMemo(() => {
@@ -155,7 +154,8 @@ export function useStackKeys(photos: Photo[] | null) {
       if (!la || !lb) continue
       let diff = 0
       for (let i = 0; i < 64; i++) diff += la[i] ^ lb[i]
-      if (diff <= LOOK_ALIKE) join(own(a), own(b))
+      const sameSecond = Math.abs(realTime(a)! - realTime(b)!) < 1000
+      if (diff <= (sameSecond ? SAME_SECOND_LOOK_ALIKE : LOOK_ALIKE)) join(own(a), own(b))
     }
     return (p: Photo) => find(own(p))
   }, [pairs, hashOf, seen]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -217,7 +217,11 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
   onClose: () => void; onIndex: (i: number) => void; onDeleted: (id: string) => void
 }) {
   const { me, profiles } = useAuth()
-  const p = photos[index]
+  const shot = photos[index]
+  // Which copy of a stacked pic is on screen: the first upload, unless you tap someone else's.
+  const [pick, setPick] = useState<string | null>(null)
+  useEffect(() => { setPick(null) }, [shot?.id])
+  const p = shot && (shot.copies.find((c) => c.id === pick) ?? shot)
   // This one, its preview (already loaded by the grid, so it shows at once), and the ones either side, so a
   // swipe lands on a photo that's already on its way.
   const near = photos.length > 1 ? [photos[(index + 1) % photos.length], photos[(index - 1 + photos.length) % photos.length]] : []
@@ -254,8 +258,8 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
     if (link) saveAs(link.url, fileName(p, game))
   }
   // Your copies of it. Others who added the same file keep theirs, so it stays up until the last one goes.
-  const mine = p.copies.filter((c) => c.uploader_id === me?.id)
-  const others = p.copies.length > mine.length
+  const mine = shot.copies.filter((c) => c.uploader_id === me?.id)
+  const others = shot.copies.length > mine.length
   const del = async () => {
     if (!confirm(others ? 'Remove your copy? Others added this too, so it stays up for them.' : 'Delete this for everyone?')) return
     for (const c of mine) {
@@ -264,7 +268,9 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
       if (!error) onDeleted(c.id)
     }
   }
-  const who = uploaders(p)
+  const who = uploaders(shot)
+  // Re-shared copies aren't the exact same file, so each can be looked at (and saved) on its own.
+  const switchable = new Set(shot.copies.map((c) => c.content_hash ?? c.path)).size > 1
 
   return (
     <div className="lightbox" onClick={onClose}
@@ -295,8 +301,18 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
         <div>
           {p.caption && <div className="lb-caption">{p.caption}</div>}
           <div className="muted small icon-text">
-            {who.map((id) => <Avatar key={id} p={profiles[id]} size={18} />)}
-            {who.length > 1 ? `Added by ${who.map((id) => nameOf(profiles[id])).join(', ')}` : nameOf(profiles[p.uploader_id])}
+            {switchable ? <>
+              Added by
+              {shot.copies.map((c) => (
+                <button key={c.id} className={`lb-copy ${c.id === p.id ? 'on' : ''}`} onClick={() => setPick(c.id)}
+                  aria-pressed={c.id === p.id} title={`Show ${nameOf(profiles[c.uploader_id])}'s copy`}>
+                  <Avatar p={profiles[c.uploader_id]} size={18} />{nameOf(profiles[c.uploader_id])}
+                </button>
+              ))}
+            </> : <>
+              {who.map((id) => <Avatar key={id} p={profiles[id]} size={18} />)}
+              {who.length > 1 ? `Added by ${who.map((id) => nameOf(profiles[id])).join(', ')}` : nameOf(profiles[p.uploader_id])}
+            </>}
             {' · '}{when(shotAt(p, game))}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
