@@ -239,8 +239,9 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
   // pinched-in photo, also moves fingers sideways, so those never change the photo.
   const swipe = useRef<{ x: number; y: number; pinched: boolean } | null>(null)
   const zoomed = () => (window.visualViewport?.scale ?? 1) > 1.01
-  const reactions = useReactions('photo', p ? [p.id] : [])
-  const comments = usePhotoComments(p ? p.copies.map((c) => c.id) : [])
+  // Reactions and comments belong to the whole stack, whichever copy is on screen.
+  const reactions = useReactions('photo', shot ? [shot.id] : [])
+  const comments = usePhotoComments(shot ? shot.copies.map((c) => c.id) : [])
   const [talking, setTalking] = useState(false) // the comments panel stays open from one pic to the next
 
   const go = useCallback((d: number) => onIndex((index + d + photos.length) % photos.length), [index, photos.length, onIndex])
@@ -323,7 +324,7 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
             {' · '}{when(shotAt(p, game))}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
-          {reactions.ready && <ReactionBar always list={reactions.of(p.id)} onToggle={(e) => reactions.toggle(p.id, e)} />}
+          {reactions.ready && <ReactionBar always list={reactions.of(shot.id)} onToggle={(e) => reactions.toggle(shot.id, e)} />}
         </div>
         <div className="row">
           {comments.ready && (
@@ -343,7 +344,7 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
       {talking && comments.ready && (
         <div className="lb-comments-wrap" onClick={(e) => e.stopPropagation()}
           onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
-          <PhotoComments photoId={p.id} comments={comments} onClose={() => setTalking(false)} />
+          <PhotoComments photoId={shot.id} comments={comments} onClose={() => setTalking(false)} />
         </div>
       )}
     </div>
