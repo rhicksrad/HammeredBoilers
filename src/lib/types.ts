@@ -47,6 +47,9 @@ export type ListItem = {
   sort: number
   created_by: string | null
   created_at: string
+  // Food ratings, anonymous: just the total and how many rated (missing until the ratings migration has run).
+  rating_sum?: number
+  rating_count?: number
 }
 
 export type Message = {

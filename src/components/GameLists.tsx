@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { Check, ClipboardList, Plus, UtensilsCrossed, X, type LucideIcon } from 'lucide-react'
+import { Check, ClipboardList, Plus, Star, UtensilsCrossed, X, type LucideIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { ListItem, ListKind } from '../lib/types'
@@ -10,8 +10,10 @@ const bySort = (a: ListItem, b: ListItem) => a.sort - b.sort || a.created_at.loc
 
 /** One of a game's lists: who's bringing what (food), or the logistics questions (ask). */
 export default function GameList({ gameId, kind }: { gameId: string; kind: ListKind }) {
+  const { me } = useAuth()
   const [items, setItems] = useState<ListItem[] | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [myScores, setMyScores] = useState<Record<string, number>>({}) // food item id → my rating (only mine is readable)
 
   const load = useCallback(() => {
     supabase.from('list_items').select('*').eq('game_id', gameId).eq('kind', kind).then(({ data, error }) => {
@@ -19,6 +21,10 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
       if (!error) setItems((data ?? []) as ListItem[])
       else setItems((cur) => cur ?? [])
     })
+    if (kind === 'food') {
+      supabase.from('food_ratings').select('item_id, score, list_items!inner(game_id)').eq('list_items.game_id', gameId)
+        .then(({ data }) => setMyScores(Object.fromEntries((data ?? []).map((r) => [r.item_id, r.score]))))
+    }
   }, [gameId, kind])
 
   useEffect(() => { setItems(null); load() }, [load])
@@ -42,6 +48,28 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
     if (error) return setErr(error.message)
     setItems((cur) => (cur ? upsertById(cur, data as ListItem) : cur))
   }
+  // Anonymous 1–10 rating; null clears mine. The totals on the item are kept by the database and
+  // arrive for everyone over realtime; adjust them here too so the change shows straight away.
+  const rate = async (id: string, score: number | null) => {
+    const prev = myScores[id] as number | undefined
+    if (score === (prev ?? null)) return
+    setMyScores((cur) => {
+      const next = { ...cur }
+      if (score === null) delete next[id]
+      else next[id] = score
+      return next
+    })
+    setItems((cur) => cur?.map((x) => x.id !== id ? x : {
+      ...x,
+      rating_sum: (x.rating_sum ?? 0) - (prev ?? 0) + (score ?? 0),
+      rating_count: (x.rating_count ?? 0) - (prev === undefined ? 0 : 1) + (score === null ? 0 : 1),
+    }) ?? cur)
+    const { error } = score === null
+      ? await supabase.from('food_ratings').delete().eq('item_id', id).eq('user_id', me!.id)
+      : await supabase.from('food_ratings').upsert({ item_id: id, user_id: me!.id, score }, { onConflict: 'item_id,user_id' })
+    setErr(error?.message ?? null)
+    if (error) load()
+  }
   const remove = async (id: string) => {
     setItems((cur) => cur?.filter((x) => x.id !== id) ?? cur)
     const { error } = await supabase.from('list_items').delete().eq('id', id)
@@ -62,7 +90,7 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
       onAdd={add}
       err={err}
     >
-      {sorted.map((item) => <FoodRow key={item.id} item={item} {...ops} />)}
+      {sorted.map((item) => <FoodRow key={item.id} item={item} {...ops} myScore={myScores[item.id]} rate={rate} />)}
     </Panel>
   ) : (
     <Panel
@@ -110,7 +138,7 @@ function Panel({ title, Icon, empty, summary, addPlaceholder, onAdd, err, childr
 
 type RowProps = { item: ListItem; patch: (id: string, c: Partial<ListItem>) => void; remove: (id: string) => void }
 
-function FoodRow({ item, patch, remove }: RowProps) {
+function FoodRow({ item, patch, remove, myScore, rate }: RowProps & { myScore?: number; rate: (id: string, score: number | null) => void }) {
   const { me, profiles } = useAuth()
   const owner = item.owner_id ? profiles[item.owner_id] : null
   const mine = item.owner_id === me?.id
@@ -130,10 +158,37 @@ function FoodRow({ item, patch, remove }: RowProps) {
         <div className="item-sub">
           <WhoPicker item={item} patch={patch} unset="Who's bringing it?" />
           <Note item={item} patch={patch} placeholder="details (how much, what kind)" />
+          {item.rating_count !== undefined && <Rating item={item} myScore={myScore} rate={rate} />}
         </div>
       </div>
       <RowMenu onDelete={() => remove(item.id)} />
     </li>
+  )
+}
+
+/** The crew's average (never who gave what) and your own 1–10, which you can change or clear. */
+function Rating({ item, myScore, rate }: { item: ListItem; myScore?: number; rate: (id: string, score: number | null) => void }) {
+  const count = item.rating_count ?? 0
+  const avg = count ? (item.rating_sum ?? 0) / count : 0
+  return (
+    <span className="rating">
+      {count > 0 && (
+        <span className="rating-avg" title={`Average of ${count} anonymous rating${count === 1 ? '' : 's'}`}>
+          <Star size={13} aria-hidden="true" />{avg.toFixed(1)}<span className="rating-count">({count})</span>
+        </span>
+      )}
+      <select
+        className={`who-pick rate-pick ${myScore ? 'set' : ''}`}
+        value={myScore ?? ''}
+        title="Your rating is anonymous: the crew only sees the average"
+        aria-label={`Rate ${item.label}, 1 to 10`}
+        onChange={(e) => rate(item.id, e.target.value === 'clear' || e.target.value === '' ? null : Number(e.target.value))}
+      >
+        <option value="">Rate it</option>
+        {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{myScore === n ? `You: ${n}/10` : `${n}/10`}</option>)}
+        {myScore && <option value="clear">Clear my rating</option>}
+      </select>
+    </span>
   )
 }
 
