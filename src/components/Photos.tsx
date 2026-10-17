@@ -2,30 +2,12 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { downloadZip } from 'client-zip'
 import { ChevronLeft, ChevronRight, Download, ImagePlus, Play, Trash2, X } from 'lucide-react'
 import { BUCKET, supabase } from '../lib/supabase'
+import { useSignedUrls } from '../lib/signedUrls'
 import { extOf, makeThumb, saveAs } from '../lib/images'
 import { gameDay, when } from '../lib/format'
 import type { Game, Photo } from '../lib/types'
 import { useAuth } from '../auth'
-import { nameOf } from './Avatar'
-
-const URL_TTL = 6 * 3600
-
-/** Signed URLs for a set of storage paths, fetched in one batch and cached for the session. */
-const urlCache = new Map<string, string>()
-export function useSignedUrls(paths: string[]) {
-  const [, bump] = useState(0)
-  const key = paths.join('|')
-  useEffect(() => {
-    const missing = paths.filter((p) => !urlCache.has(p))
-    if (!missing.length) return
-    supabase.storage.from(BUCKET).createSignedUrls(missing, URL_TTL).then(({ data }) => {
-      data?.forEach((d) => d.signedUrl && d.path && urlCache.set(d.path, d.signedUrl))
-      bump((n) => n + 1)
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
-  return (path: string | null | undefined) => (path ? urlCache.get(path) : undefined)
-}
+import { Avatar, nameOf } from './Avatar'
 
 export const isVideo = (p: Photo) => p.mime.startsWith('video/')
 const fileName = (p: Photo, game?: Game) => {
@@ -105,8 +87,8 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
       <div className="lb-bar" onClick={(e) => e.stopPropagation()}>
         <div>
           {p.caption && <div className="lb-caption">{p.caption}</div>}
-          <div className="muted small">
-            {profiles[p.uploader_id]?.emoji} {nameOf(profiles[p.uploader_id])} · {when(p.created_at)}
+          <div className="muted small icon-text">
+            <Avatar p={profiles[p.uploader_id]} size={18} />{nameOf(profiles[p.uploader_id])} · {when(p.created_at)}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
         </div>

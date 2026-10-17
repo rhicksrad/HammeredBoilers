@@ -127,7 +127,6 @@ h3.display svg.lucide, h2.display svg.lucide { color: var(--gold); }
 .topnav a.active svg.lucide { color: var(--gold); opacity: 1; }
 .me-chip { display: flex; align-items: center; gap: 8px; color: var(--text); padding: 3px 12px 3px 3px; border: 1px solid var(--line); border-radius: 999px; transition: border-color 0.15s; }
 .me-chip:hover { color: var(--text); border-color: var(--line-2); }
-.me-chip .emoji { width: 30px; height: 30px; display: grid; place-items: center; background: var(--card-2); border-radius: 50%; font-size: 16px; }
 .me-name { font-weight: 600; font-size: 13.5px; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .tabbar { display: none; }
@@ -223,12 +222,23 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .result.L { color: var(--bad); }
 .loading { color: var(--muted); padding: 24px; text-align: center; font-size: 14px; }
 
-.avatar { display: inline-grid; place-items: center; border-radius: 50%; background: var(--card-3); box-shadow: inset 0 0 0 1px var(--line-2); flex: none; line-height: 1; }
-.avatar.big { width: 52px; height: 52px; font-size: 28px; }
-.emoji-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
-.emoji-grid button { height: 44px; font-size: 22px; border-radius: var(--radius-sm); background: var(--card-2); border: 1px solid var(--line); cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-.emoji-grid button:hover { border-color: var(--line-2); }
-.emoji-grid button.on { border-color: var(--gold); background: var(--gold-soft); }
+.avatar { display: inline-grid; place-items: center; border-radius: 50%; background: var(--card-3); box-shadow: inset 0 0 0 1px var(--line-2); flex: none; line-height: 1; overflow: hidden; user-select: none; }
+.avatar.photo { object-fit: cover; background: var(--card-3); }
+.avatar.badge-av { color: var(--tint); background: color-mix(in srgb, var(--tint) 16%, #121212); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 38%, transparent); }
+.avatar.initials { color: var(--gold); font-family: var(--display); font-weight: 700; letter-spacing: 0.02em; }
+.avatar.inline { display: inline-grid; vertical-align: -4px; margin-right: 6px; }
+
+/* avatar picker: photo on top, badge grid below */
+.av-picker { display: flex; flex-direction: column; gap: 12px; }
+.av-top { display: flex; align-items: center; gap: 14px; }
+.av-top-text { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.av-top-title { font-weight: 600; font-size: 14px; }
+.av-grid-label { margin-top: 2px; }
+.av-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(46px, 1fr)); gap: 2px; }
+.av-grid button { height: 50px; display: grid; place-items: center; padding: 0; border-radius: 12px; border: 1px solid transparent; background: transparent; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+.av-grid button:hover { background: var(--card-2); }
+.av-grid button.on { border-color: var(--gold); background: var(--gold-soft); }
+.modal .av-grid { max-height: 228px; overflow-y: auto; scrollbar-width: thin; }
 
 @keyframes pulse { 50% { opacity: 0.45; } }
 .pulse { animation: pulse 1.4s ease-in-out infinite; }
@@ -334,6 +344,7 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .claim:hover:not(:disabled) { border-color: var(--gold); background: var(--gold-soft); }
 .claim.on { border: 1.5px solid var(--ok); background: var(--ok-soft); cursor: default; }
 .claim.on:not(:disabled) { cursor: pointer; }
+.claim.has-av { border: 0; background: none; padding: 0; }
 .note { display: inline-flex; align-items: center; gap: 5px; background: none; border: 0; padding: 0; color: var(--text-2); font-style: italic; font-size: 13px; cursor: pointer; text-align: left; }
 .note:hover { color: var(--text); }
 .note-input { min-height: 32px; padding: 5px 10px; font-size: 13.5px; }
@@ -435,7 +446,7 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .crew-actions { display: flex; gap: 6px; }
 @media (max-width: 520px) { .crew-actions .btn-label { display: none; } .crew-actions .btn { width: 32px; padding: 0; } }
 .modal-backdrop { position: fixed; inset: 0; z-index: 90; background: rgba(0, 0, 0, 0.75); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 16px; }
-.modal { width: 100%; max-width: 440px; box-shadow: var(--shadow-pop); }
+.modal { width: 100%; max-width: 440px; max-height: calc(100dvh - 32px); overflow-y: auto; box-shadow: var(--shadow-pop); }
 
 /* ---------- chat GIFs ---------- */
 .gif-btn { flex: none; }

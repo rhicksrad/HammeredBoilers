@@ -2,14 +2,15 @@ import { useEffect, useState } from 'react'
 import { Headphones, KeyRound, LogOut, UserMinus, UserPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth'
-import { Avatar, EMOJIS } from '../components/Avatar'
+import { Avatar, badgeFor, DEFAULT_BADGE } from '../components/Avatar'
+import AvatarPicker from '../components/AvatarPicker'
 
 type Member = { email: string; created_at: string; dj: boolean }
 
 export default function Crew() {
   const { me, profiles, saveProfile, session } = useAuth()
   const [name, setName] = useState(me?.display_name ?? '')
-  const [emoji, setEmoji] = useState(me?.emoji ?? '🚂')
+  const [badge, setBadge] = useState(badgeFor(me?.emoji)?.key ?? DEFAULT_BADGE)
   const [saved, setSaved] = useState<string | null>(null)
   const [members, setMembers] = useState<Member[]>([])
   const [invite, setInvite] = useState('')
@@ -18,7 +19,12 @@ export default function Crew() {
   const [newPw, setNewPw] = useState('')
   const [pwNote, setPwNote] = useState<string | null>(null)
 
-  useEffect(() => { if (me) { setName(me.display_name); setEmoji(me.emoji) } }, [me])
+  // Fill the form once the profile loads; don't overwrite edits when a photo upload refreshes it.
+  const myId = me?.id
+  useEffect(() => {
+    if (me) { setName(me.display_name); setBadge(badgeFor(me.emoji)?.key ?? DEFAULT_BADGE) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [myId])
 
   const loadMembers = () =>
     supabase.from('members').select('email, created_at, dj').order('created_at').then(({ data }) => setMembers((data ?? []) as Member[]))
@@ -53,18 +59,14 @@ export default function Crew() {
         <h1 className="display">Your profile</h1>
         <form className="stack" onSubmit={async (e) => {
           e.preventDefault()
-          const r = await saveProfile({ display_name: name.trim().slice(0, 30) || 'Boiler', emoji })
+          const r = await saveProfile({ display_name: name.trim().slice(0, 30) || 'Boiler', emoji: badge })
           setSaved(r ?? 'Saved.')
         }}>
-          <div className="row">
-            <span className="avatar big">{emoji}</span>
-            <input className="input" value={name} maxLength={30} aria-label="Your name" onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div className="emoji-grid">
-            {EMOJIS.map((x) => (
-              <button type="button" key={x} className={x === emoji ? 'on' : ''} onClick={() => setEmoji(x)}>{x}</button>
-            ))}
-          </div>
+          <label className="field">
+            <span className="label">Name</span>
+            <input className="input" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <AvatarPicker badge={badge} onPick={(k) => { setBadge(k); setSaved(null) }} />
           <div className="row">
             <button className="btn gold">Save</button>
             {saved && <span className="muted small">{saved}</span>}

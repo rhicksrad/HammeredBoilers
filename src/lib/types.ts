@@ -2,7 +2,8 @@ export type Profile = {
   id: string
   email: string | null
   display_name: string
-  emoji: string
+  emoji: string               // avatar badge key (older rows: an emoji, mapped in Avatar.tsx)
+  avatar_path?: string | null // profile photo in the gallery bucket, under <user id>/avatar/
   onboarded: boolean
 }
 

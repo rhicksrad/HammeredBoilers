@@ -6,7 +6,7 @@ import { useLiveTable, upsertById } from '../lib/realtime'
 import { gameDay, gameTime, when } from '../lib/format'
 import type { Game, Profile, SongRequest, SongStatus } from '../lib/types'
 import { useAuth } from '../auth'
-import { nameOf } from './Avatar'
+import { Avatar, nameOf } from './Avatar'
 
 const byTime = (a: SongRequest, b: SongRequest) => a.created_at.localeCompare(b.created_at)
 // The approved list reads in the order the DJ said yes.
@@ -196,7 +196,7 @@ function SongRow({ r, amDj, meId, profiles, patch, remove }: RowProps) {
           {r.song}{r.artist && <span className="song-artist"> · {r.artist}</span>}
         </div>
         <div className="item-sub">
-          <span className="muted">{who?.emoji} {mine ? 'You' : nameOf(who)} · {when(r.created_at)}</span>
+          <span className="muted icon-text"><Avatar p={who} size={18} />{mine ? 'You' : nameOf(who)} · {when(r.created_at)}</span>
           {r.note && <span className="note static">“{r.note}”</span>}
         </div>
 

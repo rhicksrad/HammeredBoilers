@@ -11,7 +11,7 @@ type AuthState = {
   me: Profile | null
   profiles: Record<string, Profile>
   refreshMember: () => Promise<void>
-  saveProfile: (patch: Partial<Pick<Profile, 'display_name' | 'emoji'>>) => Promise<string | null>
+  saveProfile: (patch: Partial<Pick<Profile, 'display_name' | 'emoji' | 'avatar_path'>>) => Promise<string | null>
 }
 
 const Ctx = createContext<AuthState>(null as unknown as AuthState)
@@ -55,8 +55,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const saveProfile: AuthState['saveProfile'] = async (patch) => {
     if (!userId) return 'Not signed in'
+    // Saving a name finishes onboarding; a photo uploaded mid-onboarding doesn't close the welcome form.
+    const changes = 'display_name' in patch ? { ...patch, onboarded: true } : patch
     const { data, error } = await supabase
-      .from('profiles').update({ ...patch, onboarded: true }).eq('id', userId).select().single()
+      .from('profiles').update(changes).eq('id', userId).select().single()
     if (error) return error.message
     setProfiles((all) => ({ ...all, [userId]: data as Profile }))
     return null

@@ -8,7 +8,7 @@ import { CREW, encodeMentions, mentionsMe, TOKEN_RE } from '../lib/mentions'
 import type { Message, Profile } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
-import { useSignedUrls } from './Photos'
+import { useSignedUrls } from '../lib/signedUrls'
 
 const PAGE = 100
 const MAX_IMAGE_MB = 15
@@ -92,7 +92,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     setTag(m ? { start: caret! - m[1].length - 1, end: caret!, query: m[1].toLowerCase() } : null)
     setTagSel(0)
   }
-  const tagOptions: Pick<Profile, 'id' | 'emoji' | 'display_name'>[] = []
+  const tagOptions: Profile[] = []
   if (tag) {
     const q = tag.query
     const starts = (p: Profile) => (p.display_name.toLowerCase().startsWith(q) ? 0 : 1)
@@ -100,7 +100,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
       .filter((p) => p.id !== me?.id && p.display_name.toLowerCase().includes(q))
       .sort((a, b) => starts(a) - starts(b) || a.display_name.localeCompare(b.display_name))
       .slice(0, 6))
-    if (CREW.startsWith(q)) tagOptions.push({ id: CREW, emoji: '', display_name: CREW })
+    if (CREW.startsWith(q)) tagOptions.push({ id: CREW, email: null, emoji: '', display_name: CREW, onboarded: true })
   }
   const pickTag = (p: { display_name: string }) => {
     if (!tag) return
@@ -205,7 +205,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
               <li key={p.id}>
                 <button type="button" role="option" aria-selected={i === tagSel} className={i === tagSel ? 'on' : ''}
                   onMouseDown={(e) => e.preventDefault()} onClick={() => pickTag(p)}>
-                  <span className="tag-emoji">{p.id === CREW ? <Megaphone size={16} aria-hidden="true" /> : p.emoji}</span>{p.display_name}
+                  <span className="tag-emoji">{p.id === CREW ? <Megaphone size={16} aria-hidden="true" /> : <Avatar p={p} size={22} />}</span>{p.display_name}
                   {p.id === CREW && <span className="muted small"> · tags everybody</span>}
                 </button>
               </li>

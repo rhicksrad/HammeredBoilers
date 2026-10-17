@@ -7,7 +7,7 @@ import { CREW, mentionsMe, plainMentions } from '../lib/mentions'
 import { when } from '../lib/format'
 import type { Message } from '../lib/types'
 import { useAuth } from '../auth'
-import { nameOf } from './Avatar'
+import { Avatar, nameOf } from './Avatar'
 
 type Tagged = Pick<Message, 'id' | 'game_id' | 'author_id' | 'body' | 'created_at'>
 
@@ -84,7 +84,7 @@ export default function TagBell() {
                 <li key={t.id}>
                   <button className={t.created_at > seen ? 'new' : ''} onClick={() => go(t)}>
                     <span className="bell-head">
-                      <b>{who?.emoji} {nameOf(who)}</b>
+                      <Avatar p={who} size={18} className="inline" /><b>{nameOf(who)}</b>
                       <span className="muted"> · {t.game_id ? `vs ${games[t.game_id] ?? 'a game'}` : 'Playground'} · {when(t.created_at)}</span>
                     </span>
                     <span className="bell-body">{plainMentions(t.body, profiles) || <span className="icon-text"><Image size={13} aria-hidden="true" />Photo</span>}</span>

@@ -31,10 +31,14 @@ create table if not exists public.profiles (
   id           uuid primary key references auth.users(id) on delete cascade,
   email        text,
   display_name text not null default 'Boiler',
-  emoji        text not null default '🚂',
+  emoji        text not null default 'train', -- avatar badge key (older rows may still hold an emoji)
+  avatar_path  text,                          -- profile photo in the gallery bucket: <user id>/avatar/<uuid>.jpg
   onboarded    boolean not null default false,
   created_at   timestamptz not null default now()
 );
+-- Added after launch; safe to re-run.
+alter table public.profiles add column if not exists avatar_path text;
+alter table public.profiles alter column emoji set default 'train';
 
 create or replace function public.handle_new_user()
 returns trigger

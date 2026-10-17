@@ -3,7 +3,8 @@ import { NavLink, useLocation } from 'react-router'
 import { CalendarDays, Images, MessagesSquare, Users } from 'lucide-react'
 import { useAuth } from '../auth'
 import Logo from './Logo'
-import { EMOJIS } from './Avatar'
+import { Avatar, badgeFor, DEFAULT_BADGE } from './Avatar'
+import AvatarPicker from './AvatarPicker'
 import TagBell from './TagBell'
 
 const NAV = [
@@ -36,7 +37,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <TagBell />
         {me && (
           <NavLink to="/crew" className="me-chip" title="Your profile">
-            <span className="emoji">{me.emoji}</span>
+            <Avatar p={me} size={30} />
             <span className="me-name">{me.display_name}</span>
           </NavLink>
         )}
@@ -58,7 +59,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 function Onboard() {
   const { me, saveProfile } = useAuth()
   const [name, setName] = useState(me?.display_name ?? '')
-  const [emoji, setEmoji] = useState(me?.emoji ?? '🚂')
+  const [badge, setBadge] = useState(badgeFor(me?.emoji)?.key ?? DEFAULT_BADGE)
   const [err, setErr] = useState<string | null>(null)
   return (
     <div className="modal-backdrop">
@@ -67,17 +68,13 @@ function Onboard() {
         onSubmit={async (e) => {
           e.preventDefault()
           if (!name.trim()) return
-          setErr(await saveProfile({ display_name: name.trim().slice(0, 30), emoji }))
+          setErr(await saveProfile({ display_name: name.trim().slice(0, 30), emoji: badge }))
         }}
       >
         <h2 className="display">Welcome to the lot</h2>
         <p className="muted">What should the crew call you?</p>
-        <input className="input" value={name} onChange={(e) => setName(e.target.value)} maxLength={30} autoFocus />
-        <div className="emoji-grid">
-          {EMOJIS.map((x) => (
-            <button type="button" key={x} className={x === emoji ? 'on' : ''} onClick={() => setEmoji(x)}>{x}</button>
-          ))}
-        </div>
+        <input className="input" value={name} onChange={(e) => setName(e.target.value)} maxLength={30} aria-label="Your name" />
+        <AvatarPicker badge={badge} onPick={setBadge} />
         {err && <p className="error">{err}</p>}
         <button className="btn gold">Let's go</button>
       </form>

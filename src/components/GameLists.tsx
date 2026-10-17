@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { ListItem, ListKind } from '../lib/types'
 import { useAuth } from '../auth'
-import { nameOf } from './Avatar'
+import { Avatar, nameOf } from './Avatar'
 
 const bySort = (a: ListItem, b: ListItem) => a.sort - b.sort || a.created_at.localeCompare(b.created_at)
 
@@ -115,12 +115,12 @@ function FoodRow({ item, patch, remove }: RowProps) {
   return (
     <li className={`item ${taken ? 'done' : ''}`}>
       <button
-        className={`claim ${taken ? 'on' : ''}`}
+        className={`claim ${taken ? 'on' : ''} ${owner ? 'has-av' : ''}`}
         title={mine ? 'Unclaim' : taken ? `${owner ? nameOf(owner) : item.owner_name} has it` : "I'll bring it"}
         onClick={() => patch(item.id, { owner_id: mine ? null : me!.id, owner_name: null })}
         disabled={taken && !mine}
       >
-        {owner ? owner.emoji : taken ? <Check size={16} strokeWidth={2.5} aria-hidden="true" /> : ''}
+        {owner ? <Avatar p={owner} size={36} /> : taken ? <Check size={16} strokeWidth={2.5} aria-hidden="true" /> : ''}
       </button>
       <div className="item-main">
         <div className="item-label">{item.label}</div>
@@ -181,8 +181,8 @@ function WhoPicker({ item, patch, unset }: { item: ListItem; patch: RowProps['pa
       }}
     >
       <option value="">{unset}</option>
-      {me && <option value={me.id}>{me.emoji} Me</option>}
-      {crew.map((p) => <option key={p.id} value={p.id}>{p.emoji} {p.display_name}</option>)}
+      {me && <option value={me.id}>Me ({me.display_name})</option>}
+      {crew.map((p) => <option key={p.id} value={p.id}>{p.display_name}</option>)}
       {item.owner_name && <option value="name">{item.owner_name}</option>}
       <option value="other">+ Someone else…</option>
     </select>
