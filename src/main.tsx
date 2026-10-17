@@ -1,3 +1,4 @@
+import './lib/install' // first, so the browser's one-time install offer isn't missed
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App'

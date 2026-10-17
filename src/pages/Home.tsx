@@ -7,6 +7,7 @@ import { gameDay, gameTime, isGameday, isPast, result, when } from '../lib/forma
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, GameStats } from '../lib/types'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
+import { InstallBanner } from '../components/Install'
 
 export default function Home() {
   const [games, setGames] = useState<Game[] | null>(null)
@@ -53,6 +54,7 @@ export default function Home() {
   const last = lastSync()
   return (
     <div className="stack-lg">
+      <InstallBanner />
       {next ? <Hero game={next} stats={stats[next.id]} /> : (
         <div className="card hero-empty">
           <h2 className="display">No home games on the board</h2>

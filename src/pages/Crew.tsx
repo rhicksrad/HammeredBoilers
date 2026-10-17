@@ -4,11 +4,14 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth'
 import { Avatar, badgeFor, DEFAULT_BADGE } from '../components/Avatar'
 import AvatarPicker from '../components/AvatarPicker'
+import { InstallButton } from '../components/Install'
+import { useInstall } from '../lib/install'
 
 type Member = { email: string; created_at: string; dj: boolean }
 
 export default function Crew() {
   const { me, profiles, saveProfile, session } = useAuth()
+  const { mode: installMode } = useInstall()
   const [name, setName] = useState(me?.display_name ?? '')
   const [badge, setBadge] = useState(badgeFor(me?.emoji)?.key ?? DEFAULT_BADGE)
   const [saved, setSaved] = useState<string | null>(null)
@@ -140,6 +143,14 @@ export default function Crew() {
         </form>
         {pwNote && <p className="muted small">{pwNote}</p>}
       </section>
+
+      {installMode && (
+        <section className="card stack">
+          <h2 className="display">Get the app</h2>
+          <p className="muted small">Put Hammered Boilers on your home screen so it opens full screen, like any other app.</p>
+          <InstallButton className="btn gold" />
+        </section>
+      )}
 
       <button className="btn ghost" onClick={() => supabase.auth.signOut()}><LogOut size={16} aria-hidden="true" />Sign out</button>
     </div>

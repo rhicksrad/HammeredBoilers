@@ -552,3 +552,27 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 /* In the installed app, stop the page itself from rubber-banding under the indicator. */
 @media (display-mode: standalone) { html, body { overscroll-behavior-y: none; } }
+
+/* ---------- add to home screen ---------- */
+.install-banner { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-color: var(--gold-line);
+  background: linear-gradient(90deg, rgba(207, 185, 145, 0.10), transparent 70%), var(--card); }
+.install-title { font-weight: 700; font-size: 15px; }
+.install-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+@media (max-width: 520px) {
+  .install-banner { flex-wrap: wrap; }
+  .install-banner .grow { flex: 1 1 calc(100% - 60px); }
+  .install-actions { width: 100%; }
+  .install-actions .btn.gold { flex: 1; }
+}
+.install-guide { display: flex; flex-direction: column; gap: 14px; }
+.install-guide p { margin: 0; }
+.install-steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.install-steps li { display: flex; align-items: center; gap: 12px; padding: 10px 12px; background: var(--ink); border: 1px solid var(--line); border-radius: var(--radius-sm); font-size: 14.5px; }
+.step-ic { flex: none; width: 36px; height: 36px; display: grid; place-items: center; border-radius: 10px; background: var(--gold-soft); color: var(--gold); }
+.inline-ic { vertical-align: -3px; color: var(--gold); }
+/* On phones the guide slides up from the bottom, like iOS share sheets. */
+@media (max-width: 760px) {
+  .modal-backdrop.sheet { place-items: end center; padding: 0; }
+  .modal-backdrop.sheet .modal { max-width: none; border-radius: 18px 18px 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: sheet-up 0.22s ease-out; }
+}
+@keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }

@@ -33,10 +33,13 @@ Everything updates live for everyone. Sign in with your email and a password; on
 
 It installs like an app: its own icon, full screen, no browser bar.
 
+The site offers it itself: an **Add to Home Screen** banner on Gameday and a button on the Crew page. On Android
+it's one tap; on iPhone it shows the steps below (Apple doesn't let websites install themselves).
+
 - **iPhone:** open the site in Safari, tap **Share**, then **Add to Home Screen**.
 - **Android:** open it in Chrome, tap **⋮**, then **Add to Home screen** (or **Install app** if Chrome offers it).
 
-The home-screen app always loads the latest version when you have signal. With no signal it still opens, but
+Pull down from the top of any page in the home-screen app to refresh. The home-screen app always loads the latest version when you have signal. With no signal it still opens, but
 nothing live works until you're back online.
 
 ## Stack
