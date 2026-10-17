@@ -6,7 +6,7 @@ import { gameDay, isGameday, isPast, plural } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, Photo } from '../lib/types'
 import { storageUsage, type Usage } from '../lib/storage'
-import { byShot, downloadAll, Lightbox, PhotoGrid, stackDupes, Uploader, useBackfillTakenAt, useContentHashes } from '../components/Photos'
+import { byShot, downloadAll, Lightbox, PhotoGrid, stackDupes, Uploader, useBackfillTakenAt, useStackKeys } from '../components/Photos'
 
 export default function Gallery() {
   const [params, setParams] = useSearchParams()
@@ -34,14 +34,14 @@ export default function Gallery() {
   })
 
   const gamesById = useMemo(() => Object.fromEntries(games.map((g) => [g.id, g])), [games])
-  const hashOf = useContentHashes(photos)
-  // Counted the way they show: the same file added by two people is one.
+  const stackKey = useStackKeys(photos)
+  // Counted the way they show: the same pic added by two people is one.
   const counts = useMemo(() => {
     const seen: Record<string, Set<string>> = {}
-    photos?.forEach((p) => { const k = p.game_id ?? 'none'; (seen[k] ??= new Set()).add(hashOf(p) ?? p.id) })
+    photos?.forEach((p) => { const k = p.game_id ?? 'none'; (seen[k] ??= new Set()).add(stackKey(p) ?? p.id) })
     return Object.fromEntries(Object.entries(seen).map(([k, s]) => [k, s.size]))
-  }, [photos, hashOf])
-  const total = useMemo(() => new Set(photos?.map((p) => hashOf(p) ?? p.id)).size, [photos, hashOf])
+  }, [photos, stackKey])
+  const total = useMemo(() => new Set(photos?.map((p) => stackKey(p) ?? p.id)).size, [photos, stackKey])
 
   // Re-check storage whenever the number of files changes (an upload or delete, here or from someone else).
   const fileCount = photos?.length
@@ -53,10 +53,10 @@ export default function Gallery() {
 
   useBackfillTakenAt(photos)
   // In the order they were taken: one game reads start to finish; everything else shows the newest first.
-  // Duplicates (the same file from more than one person) stack into one tile.
+  // Duplicates (the same pic from more than one person) stack into one tile.
   const shown = useMemo(() => stackDupes(byShot((photos ?? []).filter((p) =>
-    filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), gamesById, filter === 'all' || filter === 'none'), hashOf),
-  [photos, gamesById, filter, hashOf])
+    filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), gamesById, filter === 'all' || filter === 'none'), stackKey),
+  [photos, gamesById, filter, stackKey])
   const open = openId ? shown.findIndex((p) => p.id === openId) : -1
 
   // Default upload target: the game in view, else today's / the most recent home game.

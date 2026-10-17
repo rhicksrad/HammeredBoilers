@@ -28,7 +28,8 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   phone, paste one straight in, or drop a Giphy or Tenor link.
 - **Gallery:** everyone's pics and videos, filterable by game, in the order they were taken (the photo's own date,
   not when it was uploaded). The same pic added by more than one person shows once, stacked, with everyone who
-  added it. Originals stay full-size, and you can download one or zip a whole game.
+  added it. That covers re-shared copies too (texted or AirDropped, so the file changed): two people's pics taken
+  within two seconds that look alike count as one. Originals stay full-size, and you can download one or zip a whole game.
 - **Crew:** your name and avatar: upload a photo, or pick a badge (hammer, train, beer…). Add buddies by email here.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.

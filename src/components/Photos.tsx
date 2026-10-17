@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { downloadZip } from 'client-zip'
 import { ChevronLeft, ChevronRight, Download, ImagePlus, Layers, Play, Trash2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -80,6 +80,83 @@ export function useContentHashes(photos: Photo[] | null) {
   }, [photos, me?.id])
   // A new function once more hashes are in, so stacks built from it are redone.
   return useCallback((p: Photo) => p.content_hash ?? knownHashes.get(p.path) ?? null, [seen])
+}
+
+/**
+ * A pic re-shared by text or AirDrop comes back re-saved: different bytes, so a different hash, but the same
+ * capture time from the camera. Two people's pics taken within a couple of seconds of each other that also look
+ * alike (a tiny fingerprint of the preview) are treated as the same shot. One person's own pics never fold this
+ * way, so bursts stay separate.
+ */
+const NEAR_MS = 2000
+const LOOK_ALIKE = 10 // of 64 bits that may differ
+const looks = new Map<string, Uint8Array | null>() // preview path -> 64-bit difference hash
+
+async function lookOf(url: string) {
+  const res = await fetch(url)
+  if (!res.ok) return null
+  const bmp = await createImageBitmap(await res.blob())
+  const canvas = document.createElement('canvas')
+  canvas.width = 9; canvas.height = 8
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!
+  ctx.drawImage(bmp, 0, 0, 9, 8)
+  bmp.close()
+  const px = ctx.getImageData(0, 0, 9, 8).data
+  const gray = (x: number, y: number) => { const i = (y * 9 + x) * 4; return px[i] * 0.299 + px[i + 1] * 0.587 + px[i + 2] * 0.114 }
+  const bits = new Uint8Array(64)
+  for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) bits[y * 8 + x] = gray(x, y) < gray(x + 1, y) ? 1 : 0
+  return bits
+}
+
+const realTime = (p: Photo) => (p.taken_at && p.taken_at !== p.created_at ? new Date(p.taken_at).getTime() : null)
+
+/** Pairs of different people's pics taken within NEAR_MS of each other: the ones worth comparing by look. */
+function nearPairs(photos: Photo[]) {
+  const timed = photos.filter((p) => p.thumb_path && realTime(p) !== null).sort((a, b) => realTime(a)! - realTime(b)!)
+  const pairs: [Photo, Photo][] = []
+  for (let i = 0; i < timed.length; i++) {
+    for (let j = i + 1; j < timed.length && realTime(timed[j])! - realTime(timed[i])! <= NEAR_MS; j++) {
+      const a = timed[i], b = timed[j]
+      if (a.uploader_id !== b.uploader_id && isVideo(a) === isVideo(b)) pairs.push([a, b])
+    }
+  }
+  return pairs
+}
+
+/** What to stack pics by: same file, or the same shot re-shared by someone else. */
+export function useStackKeys(photos: Photo[] | null) {
+  const hashOf = useContentHashes(photos)
+  const [seen, bump] = useState(0)
+  const pairs = useMemo(() => nearPairs(photos ?? []), [photos])
+  useEffect(() => {
+    const todo = [...new Set(pairs.flat().map((p) => p.thumb_path!))].filter((t) => !looks.has(t))
+    if (!todo.length) return
+    todo.forEach((t) => looks.set(t, null))
+    let live = true
+    ;(async () => {
+      try {
+        const links = await signFiles(todo, 600)
+        await Promise.all(links.map(async (l) => { try { looks.set(l.path, await lookOf(l.url)) } catch { /* leave unmatched */ } }))
+      } catch { todo.forEach((t) => looks.delete(t)); return }
+      if (live) bump((n) => n + 1)
+    })()
+    return () => { live = false }
+  }, [pairs])
+
+  return useMemo(() => {
+    const parent = new Map<string, string>()
+    const find = (k: string): string => { const up = parent.get(k); if (!up || up === k) return k; const r = find(up); parent.set(k, r); return r }
+    const join = (a: string, b: string) => { const ra = find(a), rb = find(b); if (ra !== rb) parent.set(rb, ra) }
+    const own = (p: Photo) => hashOf(p) ?? p.id
+    for (const [a, b] of pairs) {
+      const la = looks.get(a.thumb_path!), lb = looks.get(b.thumb_path!)
+      if (!la || !lb) continue
+      let diff = 0
+      for (let i = 0; i < 64; i++) diff += la[i] ^ lb[i]
+      if (diff <= LOOK_ALIKE) join(own(a), own(b))
+    }
+    return (p: Photo) => find(own(p))
+  }, [pairs, hashOf, seen]) // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 const fileName = (p: Photo, game?: Game) => {

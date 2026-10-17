@@ -12,7 +12,7 @@ import GameList from '../components/GameLists'
 import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
-import { byShot, Lightbox, PhotoGrid, stackDupes, Uploader, useContentHashes } from '../components/Photos'
+import { byShot, Lightbox, PhotoGrid, stackDupes, Uploader, useStackKeys } from '../components/Photos'
 
 type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
 
@@ -81,9 +81,9 @@ export default function GamePage() {
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
-  const hashOf = useContentHashes(photos)
-  // The day in the order it happened, with the same file from more than one person stacked into one tile.
-  const shots = useMemo(() => stackDupes(byShot(photos, gamesById), hashOf), [photos, gamesById, hashOf])
+  const stackKey = useStackKeys(photos)
+  // The day in the order it happened, with the same pic from more than one person stacked into one tile.
+  const shots = useMemo(() => stackDupes(byShot(photos, gamesById), stackKey), [photos, gamesById, stackKey])
   const open = openId ? shots.findIndex((p) => p.id === openId) : -1
 
   if (game === undefined) return <div className="loading">Loading…</div>

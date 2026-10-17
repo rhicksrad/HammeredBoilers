@@ -18,7 +18,6 @@ const MAX_BYTES = 100 * 1024 * 1024 // Workers' request body cap on the free pla
 const MAX_TTL = 24 * 3600
 const AUTH_TTL_MS = 60_000
 const FREE_BYTES = 10 * 1024 ** 3 // R2 free tier: 10 GB-month of storage
-const USAGE_TTL_MS = 5 * 60_000
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -92,9 +91,12 @@ const ownedBy = (uid, p) => validPath(p) && p.startsWith(`${uid}/`)
 // ---------------------------------------------------------------------------
 // Signed links
 // ---------------------------------------------------------------------------
+// The signing key, imported once per instance instead of once per link (a gallery signs hundreds at a time).
+let signingKey = null
 async function hmac(env, message) {
-  const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(env.SIGNING_SECRET),
+  signingKey ??= crypto.subtle.importKey('raw', new TextEncoder().encode(env.SIGNING_SECRET),
     { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+  const key = await signingKey
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message))
   return btoa(String.fromCharCode(...new Uint8Array(sig))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
@@ -113,7 +115,7 @@ async function sign(req, env, url) {
   const e = Math.ceil((Date.now() / 1000 + life) / 3600) * 3600
   const d = typeof download === 'string' ? download : ''
   const valid = paths.filter(validPath)
-  const inR2 = await Promise.all(valid.map((p) => env.FILES.head(p)))
+  const inR2 = await inBucket(env, valid)
   const urls = await Promise.all(valid.filter((_, i) => inR2[i]).map(async (p) => {
     const s = await hmac(env, `${p}\n${e}\n${d}`)
     const q = new URLSearchParams({ e: String(e), s, ...(d ? { d } : {}) })
@@ -153,7 +155,8 @@ async function serve(req, env, url, path) {
   obj.writeHttpMetadata(headers)
   headers.set('etag', obj.httpEtag)
   headers.set('accept-ranges', 'bytes')
-  headers.set('cache-control', `private, max-age=${Math.max(0, Math.floor(e - Date.now() / 1000))}`)
+  // A path never gets new contents (every upload is a new name), so the browser needn't re-check it while the link lives.
+  headers.set('cache-control', `private, max-age=${Math.max(0, Math.floor(e - Date.now() / 1000))}, immutable`)
   if (d) headers.set('content-disposition', `attachment; filename="${d.replace(/["\\\r\n]/g, '')}"`)
   if (!('body' in obj)) return new Response(null, { status: 304, headers })
 
@@ -178,7 +181,7 @@ async function putFile(req, env, path) {
   if (!size) return text('Missing file', 411)
   if (size > MAX_BYTES) return text(`Files can be up to ${MAX_BYTES / 1024 / 1024} MB`, 413)
   const obj = await env.FILES.put(path, req.body, { httpMetadata: { contentType: type } })
-  usageCache = null
+  dropIndex()
   return json({ path, hash: obj?.etag ?? null })
 }
 
@@ -195,7 +198,7 @@ async function remove(req, env) {
   const mine = paths.filter((p) => ownedBy(uid, p))
   if (mine.length) {
     await env.FILES.delete(mine)
-    usageCache = null
+    dropIndex()
     // Also drop any copy still in the old Supabase bucket, so the migration script doesn't bring it back.
     await fetch(`${env.SUPABASE_URL}/storage/v1/object/gallery`, {
       method: 'DELETE',
@@ -224,26 +227,50 @@ async function hashes(req, env) {
   const { paths } = await req.json()
   if (!Array.isArray(paths) || paths.length > 1000) return text('Bad request', 400)
   const valid = paths.filter(validPath)
-  const objs = await Promise.all(valid.map((p) => env.FILES.head(p)))
-  return json({ hashes: Object.fromEntries(valid.flatMap((p, i) => (objs[i] ? [[p, objs[i].etag]] : []))) })
+  const { etags } = await bucketIndex(env)
+  const objs = await Promise.all(valid.map((p) => (etags.has(p) ? null : env.FILES.head(p))))
+  return json({ hashes: Object.fromEntries(valid.flatMap((p, i) => {
+    const h = etags.get(p) ?? objs[i]?.etag
+    return h ? [[p, h]] : []
+  })) })
 }
 
 // ---------------------------------------------------------------------------
-// Storage used, for the meter on the Gallery page. Adds up every object in the bucket (1000 per page),
-// cached for a few minutes and cleared whenever this instance uploads or deletes something.
+// What's in the bucket: every file's MD5 (etag) and the total size, from listing it 1000 at a time. Cached for a
+// few minutes and dropped whenever this instance uploads or deletes something. Signing links and finding
+// duplicates read from it instead of looking up every file one by one.
 // ---------------------------------------------------------------------------
-let usageCache = null
+const INDEX_TTL_MS = 5 * 60_000
+let indexCache = null
 
+async function bucketIndex(env) {
+  if (!indexCache || indexCache.until < Date.now()) {
+    indexCache = (async () => {
+      const etags = new Map()
+      let bytes = 0, cursor
+      do {
+        const page = await env.FILES.list({ cursor, limit: 1000 })
+        for (const o of page.objects) { bytes += o.size; etags.set(o.key, o.etag) }
+        cursor = page.truncated ? page.cursor : undefined
+      } while (cursor)
+      return { etags, bytes }
+    })()
+    indexCache.until = Date.now() + INDEX_TTL_MS
+    indexCache.catch(() => { indexCache = null })
+  }
+  return indexCache
+}
+const dropIndex = () => { indexCache = null }
+
+/** Which of these paths are in R2. Only files newer than the cached listing are looked up one by one. */
+async function inBucket(env, paths) {
+  const { etags } = await bucketIndex(env)
+  return Promise.all(paths.map(async (p) => etags.has(p) || Boolean(await env.FILES.head(p))))
+}
+
+// Storage used, for the meter on the Gallery page.
 async function usage(req, env) {
   await crewMember(req, env)
-  if (!usageCache || usageCache.until < Date.now()) {
-    let bytes = 0, files = 0, cursor
-    do {
-      const page = await env.FILES.list({ cursor, limit: 1000 })
-      for (const o of page.objects) { bytes += o.size; files++ }
-      cursor = page.truncated ? page.cursor : undefined
-    } while (cursor)
-    usageCache = { body: { bytes, files, limit: FREE_BYTES }, until: Date.now() + USAGE_TTL_MS }
-  }
-  return json(usageCache.body)
+  const { etags, bytes } = await bucketIndex(env)
+  return json({ bytes, files: etags.size, limit: FREE_BYTES })
 }

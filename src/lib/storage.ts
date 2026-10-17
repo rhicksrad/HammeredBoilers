@@ -49,10 +49,13 @@ export async function signFiles(paths: string[], ttl: number, download?: string)
     const { data } = await supabase.storage.from(BUCKET).createSignedUrls(paths, ttl)
     return (data ?? []).flatMap((d) => (d.path && d.signedUrl ? [{ path: d.path, url: d.signedUrl }] : []))
   }
-  const { urls } = await call('sign', {
-    method: 'POST', body: JSON.stringify({ paths, ttl, download }), headers: { 'content-type': 'application/json' },
-  })
-  return urls
+  // The file service takes up to 1000 paths a call; a big gallery goes out in a few calls side by side.
+  const chunks: string[][] = []
+  for (let i = 0; i < paths.length; i += 500) chunks.push(paths.slice(i, i + 500))
+  const results = await Promise.all(chunks.map((chunk) => call('sign', {
+    method: 'POST', body: JSON.stringify({ paths: chunk, ttl, download }), headers: { 'content-type': 'application/json' },
+  })))
+  return results.flatMap((r) => r.urls ?? [])
 }
 
 export type Usage = { bytes: number; files: number; limit: number }
