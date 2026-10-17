@@ -1,3 +1,4 @@
+import { Lightbulb } from 'lucide-react'
 import Chat from '../components/Chat'
 
 const PROMPTS = [
@@ -12,11 +13,11 @@ export default function Playground() {
   const prompt = PROMPTS[new Date().getDate() % PROMPTS.length]
   return (
     <div className="stack-lg">
-      <section className="card playground-head">
-        <h1 className="display">🍻 The Playground</h1>
-        <p className="muted">General nonsense, any day of the week. Hit <b>GIF</b> to post a GIF or pic, paste one right in, or drop a Giphy/Tenor link.</p>
-        <p className="prompt">Today's prompt: <b>{prompt}</b></p>
-      </section>
+      <header className="page-head">
+        <h1 className="display">Playground</h1>
+        <p className="muted">The crew's group chat, any day of the week. Post a GIF or photo with the image button, paste one in, or drop a Giphy or Tenor link.</p>
+      </header>
+      <p className="playground-prompt"><Lightbulb size={17} aria-hidden="true" /><span>Today's prompt: <b>{prompt}</b></span></p>
       <section className="card gp-chat tall">
         <Chat gameId={null} placeholder="Say something dumb…" />
       </section>

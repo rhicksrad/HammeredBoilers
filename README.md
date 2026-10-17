@@ -20,7 +20,7 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   - **Pics:** photos and videos from that game.
   - **Our spot** and **Notes:** lot, meet time, whatever.
 - **Tagging:** type **@** in any chat to tag someone (or **@crew** for everybody). Messages that tag you are
-  highlighted, and the 🔔 in the top bar lists every tag with a count of new ones; tap one to jump to that chat.
+  highlighted, and the bell in the top bar lists every tag with a count of new ones; tap one to jump to that chat.
 - **Playground:** general nonsense chat, any day. GIFs work everywhere in chat: tap **GIF** to post one from your
   phone, paste one straight in, or drop a Giphy or Tenor link.
 - **Gallery:** everyone's pics and videos, filterable by game. Originals stay full-size, and you can download one

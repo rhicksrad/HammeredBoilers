@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { ImagePlus, Megaphone, MessageCircle, SendHorizontal, X } from 'lucide-react'
 import { BUCKET, supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { extOf } from '../lib/images'
@@ -99,7 +100,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
       .filter((p) => p.id !== me?.id && p.display_name.toLowerCase().includes(q))
       .sort((a, b) => starts(a) - starts(b) || a.display_name.localeCompare(b.display_name))
       .slice(0, 6))
-    if (CREW.startsWith(q)) tagOptions.push({ id: CREW, emoji: '📣', display_name: CREW })
+    if (CREW.startsWith(q)) tagOptions.push({ id: CREW, emoji: '', display_name: CREW })
   }
   const pickTag = (p: { display_name: string }) => {
     if (!tag) return
@@ -167,7 +168,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
       <div className="chat-scroll" ref={scroller} onScroll={onScroll}>
         {msgs === null && <div className="loading">Loading chat…</div>}
         {hasMore && <button className="btn ghost sm older" onClick={loadOlder}>Load older messages</button>}
-        {msgs?.length === 0 && <div className="chat-empty">Nothing yet. Say something dumb. 🍺</div>}
+        {msgs?.length === 0 && <div className="chat-empty"><MessageCircle size={26} aria-hidden="true" />No messages yet. Start it off.</div>}
         {msgs?.map((m, i) => {
           const prev = msgs[i - 1]
           const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at)
@@ -190,7 +191,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
                   {m.body && <div className="msg-body"><RichText text={m.body} /></div>}
                   {m.image_path && <ChatImage path={m.image_path} onLoad={() => stickToBottom.current && scrollDown()} />}
                 </div>
-                {mine && <button className="msg-del" title="Delete" onClick={() => remove(m)}>✕</button>}
+                {mine && <button className="msg-del" title="Delete" aria-label="Delete message" onClick={() => remove(m)}><X size={14} aria-hidden="true" /></button>}
               </div>
             </Fragment>
           )
@@ -204,16 +205,16 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
               <li key={p.id}>
                 <button type="button" role="option" aria-selected={i === tagSel} className={i === tagSel ? 'on' : ''}
                   onMouseDown={(e) => e.preventDefault()} onClick={() => pickTag(p)}>
-                  <span className="tag-emoji">{p.emoji}</span> {p.display_name}
+                  <span className="tag-emoji">{p.id === CREW ? <Megaphone size={16} aria-hidden="true" /> : p.emoji}</span>{p.display_name}
                   {p.id === CREW && <span className="muted small"> · tags everybody</span>}
                 </button>
               </li>
             ))}
           </ul>
         )}
-        <button type="button" className="btn ghost gif-btn" title="Post a GIF or pic" disabled={uploading}
-          onClick={() => fileInput.current?.click()}>
-          {uploading ? '…' : 'GIF'}
+        <button type="button" className="btn ghost icon gif-btn" title="Post a GIF or photo" aria-label="Post a GIF or photo"
+          disabled={uploading} onClick={() => fileInput.current?.click()}>
+          <ImagePlus size={18} className={uploading ? 'pulse' : ''} aria-hidden="true" />
         </button>
         <input ref={fileInput} type="file" accept="image/*" multiple hidden
           onChange={(e) => sendImages([...(e.target.files ?? [])])} />
@@ -246,7 +247,9 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send() }
           }}
         />
-        <button className="btn gold" disabled={!text.trim()}>Send</button>
+        <button className="btn gold icon" disabled={!text.trim()} title="Send" aria-label="Send">
+          <SendHorizontal size={18} aria-hidden="true" />
+        </button>
       </form>
       {err && <p className="error">{err}</p>}
     </div>

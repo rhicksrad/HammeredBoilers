@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Headphones, KeyRound, LogOut, UserMinus, UserPlus } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth'
 import { Avatar, EMOJIS } from '../components/Avatar'
@@ -49,7 +50,7 @@ export default function Crew() {
   return (
     <div className="stack-lg">
       <section className="card stack">
-        <h1 className="display">Your tailgate name</h1>
+        <h1 className="display">Your profile</h1>
         <form className="stack" onSubmit={async (e) => {
           e.preventDefault()
           const r = await saveProfile({ display_name: name.trim().slice(0, 30) || 'Boiler', emoji })
@@ -57,7 +58,7 @@ export default function Crew() {
         }}>
           <div className="row">
             <span className="avatar big">{emoji}</span>
-            <input className="input" value={name} maxLength={30} onChange={(e) => setName(e.target.value)} />
+            <input className="input" value={name} maxLength={30} aria-label="Your name" onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="emoji-grid">
             {EMOJIS.map((x) => (
@@ -74,16 +75,16 @@ export default function Crew() {
       <section className="card stack">
         <h2 className="display">The crew</h2>
         <p className="muted small">
-          Add a buddy's email, then send them the site link. They enter that email and pick a password the first time.
-          Forgot a password? Hit <b>Reset</b> next to their name and they choose a new one. <b>🎧 DJ</b> marks the DJ, who
-          approves song requests on each gameday board.
+          Add someone's email, then send them the site link. They sign in with that email and pick a password the first time.
+          If someone forgets their password, reset it here and they'll choose a new one. The DJ approves song requests on
+          each gameday board.
         </p>
         <form className="row" onSubmit={async (e) => {
           e.preventDefault()
           if (await addMember(invite)) setInvite('')
         }}>
           <input className="input" type="email" required placeholder="buddy@example.com" value={invite} onChange={(e) => setInvite(e.target.value)} />
-          <button className="btn gold">Add</button>
+          <button className="btn gold"><UserPlus size={16} aria-hidden="true" />Add</button>
         </form>
         {note && <p className="muted small">{note}</p>}
         {err && <p className="error">{err}</p>}
@@ -94,20 +95,27 @@ export default function Crew() {
               <li key={m.email}>
                 <Avatar p={p} size={36} />
                 <div className="grow">
-                  <div>{p?.display_name ?? <span className="muted">Hasn't signed in yet</span>}</div>
+                  <div className="crew-name">{p?.display_name ?? <span className="muted">Hasn't signed in yet</span>}</div>
                   <div className="muted small">{m.email}</div>
                 </div>
-                {m.dj && <span className="badge">🎧 DJ</span>}
-                {p && m.email !== myEmail && (
-                  <button className="btn ghost sm" onClick={() => resetPassword(m.email)}>Reset</button>
-                )}
-                {m.email !== myEmail && (
-                  <button className="btn ghost sm" onClick={async () => {
-                    if (!confirm(`Remove ${m.email} from the crew? They'll lose access.`)) return
-                    await supabase.from('members').delete().eq('email', m.email)
-                    loadMembers()
-                  }}>Remove</button>
-                )}
+                {m.dj && <span className="badge"><Headphones size={12} aria-hidden="true" />DJ</span>}
+                <div className="crew-actions">
+                  {p && m.email !== myEmail && (
+                    <button className="btn ghost sm" title="Reset password" aria-label={`Reset password for ${m.email}`}
+                      onClick={() => resetPassword(m.email)}>
+                      <KeyRound size={14} aria-hidden="true" /><span className="btn-label">Reset</span>
+                    </button>
+                  )}
+                  {m.email !== myEmail && (
+                    <button className="btn ghost sm danger" title="Remove from the crew" aria-label={`Remove ${m.email}`} onClick={async () => {
+                      if (!confirm(`Remove ${m.email} from the crew? They'll lose access.`)) return
+                      await supabase.from('members').delete().eq('email', m.email)
+                      loadMembers()
+                    }}>
+                      <UserMinus size={14} aria-hidden="true" /><span className="btn-label">Remove</span>
+                    </button>
+                  )}
+                </div>
               </li>
             )
           })}
@@ -131,7 +139,7 @@ export default function Crew() {
         {pwNote && <p className="muted small">{pwNote}</p>}
       </section>
 
-      <button className="btn ghost" onClick={() => supabase.auth.signOut()}>Sign out</button>
+      <button className="btn ghost" onClick={() => supabase.auth.signOut()}><LogOut size={16} aria-hidden="true" />Sign out</button>
     </div>
   )
 }

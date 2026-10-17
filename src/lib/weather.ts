@@ -10,32 +10,33 @@ const LON = -86.9184
 export const TAILGATE_LEAD_H = 5
 export const AFTER_KICKOFF_H = 2
 
-export type Hour = { t: number; temp: number; rain: number; icon: string }
+export type Sky = 'clear' | 'partly' | 'overcast' | 'fog' | 'drizzle' | 'rain' | 'snow' | 'storm' | 'unknown'
+export type Hour = { t: number; temp: number; rain: number; icon: Sky }
 export type Forecast = {
   temp: number      // first hour of the window (or the day's high when kickoff is TBA)
   endTemp: number   // last hour of the window
   rain: number      // worst chance in the window
   wind: number      // strongest wind in the window
-  icon: string
+  icon: Sky
   label: string
   daily: boolean
   hours: Hour[]     // hour by hour, tailgate through the game (empty when kickoff is TBA)
 }
 
-const CODES: [number[], string, string][] = [
-  [[0], '☀️', 'Clear'],
-  [[1, 2], '🌤️', 'Partly cloudy'],
-  [[3], '☁️', 'Overcast'],
-  [[45, 48], '🌫️', 'Fog'],
-  [[51, 53, 55, 56, 57], '🌦️', 'Drizzle'],
-  [[61, 63, 65, 66, 67, 80, 81, 82], '🌧️', 'Rain'],
-  [[71, 73, 75, 77, 85, 86], '🌨️', 'Snow'],
-  [[95, 96, 99], '⛈️', 'Storms'],
+const CODES: [number[], Sky, string][] = [
+  [[0], 'clear', 'Clear'],
+  [[1, 2], 'partly', 'Partly cloudy'],
+  [[3], 'overcast', 'Overcast'],
+  [[45, 48], 'fog', 'Fog'],
+  [[51, 53, 55, 56, 57], 'drizzle', 'Drizzle'],
+  [[61, 63, 65, 66, 67, 80, 81, 82], 'rain', 'Rain'],
+  [[71, 73, 75, 77, 85, 86], 'snow', 'Snow'],
+  [[95, 96, 99], 'storm', 'Storms'],
 ]
 // Codes run roughly mild → nasty, so the biggest one is the worst weather in the window.
 const describe = (code: number) => {
   const hit = CODES.find(([codes]) => codes.includes(code))
-  return hit ? { icon: hit[1], label: hit[2] } : { icon: '🌡️', label: '' }
+  return hit ? { icon: hit[1], label: hit[2] } : { icon: 'unknown' as Sky, label: '' }
 }
 
 export async function kickoffForecast(g: Game): Promise<Forecast | null> {

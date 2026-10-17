@@ -1,24 +1,28 @@
-import { useState, type ReactNode } from 'react'
-import { NavLink } from 'react-router'
+import { useEffect, useState, type ReactNode } from 'react'
+import { NavLink, useLocation } from 'react-router'
+import { CalendarDays, Images, MessagesSquare, Users } from 'lucide-react'
 import { useAuth } from '../auth'
 import Logo from './Logo'
 import { EMOJIS } from './Avatar'
 import TagBell from './TagBell'
 
 const NAV = [
-  { to: '/', label: 'Gameday', icon: '🏈', end: true },
-  { to: '/playground', label: 'Playground', icon: '🍻' },
-  { to: '/gallery', label: 'Gallery', icon: '📸' },
-  { to: '/crew', label: 'Crew', icon: '🚂' },
+  { to: '/', label: 'Gameday', Icon: CalendarDays, end: true },
+  { to: '/playground', label: 'Playground', Icon: MessagesSquare },
+  { to: '/gallery', label: 'Gallery', Icon: Images },
+  { to: '/crew', label: 'Crew', Icon: Users },
 ]
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { me } = useAuth()
+  // A new page starts at the top, like an app, instead of keeping the last page's scroll.
+  const { pathname } = useLocation()
+  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
   return (
     <div className="app">
       <header className="topbar">
         <NavLink to="/" className="brand">
-          <Logo size={38} />
+          <Logo size={36} />
           <span>
             <span className="brand-name">Hammered Boilers</span>
             <span className="brand-tag">Boiler Up. Bottoms Up.</span>
@@ -26,7 +30,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </NavLink>
         <nav className="topnav">
           {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end}>{n.label}</NavLink>
+            <NavLink key={n.to} to={n.to} end={n.end}><n.Icon size={17} strokeWidth={1.9} aria-hidden="true" />{n.label}</NavLink>
           ))}
         </nav>
         <TagBell />
@@ -37,12 +41,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           </NavLink>
         )}
       </header>
-      <div className="hazard" />
       <main className="page">{children}</main>
       <nav className="tabbar">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end}>
-            <span className="tab-icon">{n.icon}</span>
+            <n.Icon size={22} strokeWidth={1.8} aria-hidden="true" />
             <span>{n.label}</span>
           </NavLink>
         ))}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
+import { Download, Images } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { gameDay, isGameday, isPast, plural } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
@@ -45,10 +46,10 @@ export default function Gallery() {
 
   return (
     <div className="stack-lg">
-      <section className="card">
-        <h1 className="display">📸 Gallery</h1>
-        <p className="muted">Everybody's pics from every tailgate. Originals are kept full-size, so download what you want.</p>
-      </section>
+      <header className="page-head">
+        <h1 className="display">Gallery</h1>
+        <p className="muted">Everyone's photos and videos from every tailgate, kept at full size.</p>
+      </header>
 
       <Uploader games={uploadable.length ? uploadable : games} defaultGameId={defaultGame}
         onUploaded={(p) => setPhotos((cur) => cur && (cur.some((x) => x.id === p.id) ? cur : [p, ...cur]))} />
@@ -68,13 +69,14 @@ export default function Gallery() {
         </select>
         <button className="btn ghost" disabled={!shown.length || zipping}
           onClick={async () => { setZipping(true); try { await downloadAll(shown, gamesById, zipName) } finally { setZipping(false) } }}>
-          {zipping ? 'Zipping…' : `⬇ Download ${plural(shown.length, 'file')}`}
+          <Download size={16} aria-hidden="true" />
+          {zipping ? 'Zipping…' : `Download ${plural(shown.length, 'file')}`}
         </button>
       </div>
 
       {photos === null ? <div className="loading">Loading pics…</div>
         : shown.length ? <PhotoGrid photos={shown} games={gamesById} onOpen={setOpen} />
-        : <div className="card muted">Nothing here yet. Be the first.</div>}
+        : <div className="card empty"><Images size={26} aria-hidden="true" />Nothing here yet. Add the first photo above.</div>}
 
       {open != null && (
         <Lightbox photos={shown} index={open} games={gamesById} onClose={() => setOpen(null)} onIndex={setOpen}

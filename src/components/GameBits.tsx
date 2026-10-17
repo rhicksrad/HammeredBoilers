@@ -1,5 +1,9 @@
 import { useEffect, useState } from 'react'
-import { kickoffForecast, type Forecast } from '../lib/weather'
+import {
+  Cloud, CloudDrizzle, CloudFog, CloudLightning, CloudRain, CloudSnow, CloudSun, Droplets, Sun, Thermometer, Wind,
+  type LucideIcon,
+} from 'lucide-react'
+import { kickoffForecast, type Forecast, type Sky } from '../lib/weather'
 import { clock } from '../lib/format'
 import type { Game } from '../lib/types'
 
@@ -20,8 +24,8 @@ export function Countdown({ game }: { game: Game }) {
     return () => clearInterval(t)
   }, [])
   const ms = new Date(game.kickoff).getTime() - now
-  if (game.status === 'in') return <div className="countdown live">● GAME ON</div>
-  if (ms <= 0) return <div className="countdown live">{game.time_tbd ? "IT'S GAMEDAY" : 'KICKOFF'}</div>
+  if (game.status === 'in') return <div className="countdown live">Game on</div>
+  if (ms <= 0) return <div className="countdown live">{game.time_tbd ? "It's gameday" : 'Kickoff'}</div>
   const s = Math.floor(ms / 1000)
   const parts: [number, string][] = [
     [Math.floor(s / 86400), 'days'],
@@ -39,6 +43,15 @@ export function Countdown({ game }: { game: Game }) {
       ))}
     </div>
   )
+}
+
+const SKY: Record<Sky, LucideIcon> = {
+  clear: Sun, partly: CloudSun, overcast: Cloud, fog: CloudFog, drizzle: CloudDrizzle,
+  rain: CloudRain, snow: CloudSnow, storm: CloudLightning, unknown: Thermometer,
+}
+export function SkyIcon({ sky, size = 16 }: { sky: Sky; size?: number }) {
+  const Icon = SKY[sky]
+  return <Icon size={size} strokeWidth={1.75} aria-hidden="true" />
 }
 
 // One fetch per game per page load, shared by the chip and the hourly strip.
@@ -68,7 +81,10 @@ export function WeatherChip({ game }: { game: Game }) {
   }
   return (
     <span className="chip weather" title={f.daily ? 'Daily forecast (kickoff time TBA)' : `Tailgate through the game, ${span}`}>
-      {f.icon} {f.daily ? `${f.temp}°F high` : `${f.temp}°→${f.endTemp}°F`}{span && ` · ${span}`} · {f.rain}% rain · {f.wind} mph
+      <SkyIcon sky={f.icon} size={15} />
+      {f.daily ? `${f.temp}°F high` : `${f.temp}°→${f.endTemp}°F`}{span && ` · ${span}`}
+      <span className="icon-text"><Droplets size={13} aria-hidden="true" />{f.rain}%</span>
+      <span className="icon-text"><Wind size={13} aria-hidden="true" />{f.wind} mph</span>
     </span>
   )
 }
@@ -85,9 +101,9 @@ export function TempStrip({ game }: { game: Game }) {
         return (
           <div key={h.t} className={`ts-hour ${isKick ? 'kick' : ''}`} title={`${h.rain}% rain`}>
             <span className="ts-time">{isKick ? 'Kick' : hourLabel(h.t)}</span>
-            <span className="ts-icon">{h.icon}</span>
+            <span className="ts-icon"><SkyIcon sky={h.icon} size={18} /></span>
             <span className="ts-temp">{h.temp}°</span>
-            {h.rain >= 20 && <span className="ts-rain">{h.rain}%</span>}
+            {h.rain >= 20 && <span className="ts-rain"><Droplets size={10} aria-hidden="true" />{h.rain}%</span>}
           </div>
         )
       })}

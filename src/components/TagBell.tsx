@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
+import { AtSign, Bell, Image } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { CREW, mentionsMe, plainMentions } from '../lib/mentions'
@@ -68,12 +69,14 @@ export default function TagBell() {
   return (
     <div className="bell-wrap" ref={box}>
       <button className="bell" onClick={toggle} title="Where you've been tagged" aria-label={`Tags, ${unread} new`}>
-        🔔{unread > 0 && <span className="bell-n">{unread > 9 ? '9+' : unread}</span>}
+        <Bell size={18} strokeWidth={1.9} aria-hidden="true" />{unread > 0 && <span className="bell-n">{unread > 9 ? '9+' : unread}</span>}
       </button>
       {open && (
         <div className="bell-pop card">
-          <div className="bell-title">Tagged</div>
-          {tags.length === 0 && <p className="muted small">Nobody's tagged you yet. Type @ in any chat to tag someone.</p>}
+          <div className="bell-title">Mentions</div>
+          {tags.length === 0 && (
+            <div className="empty"><AtSign size={22} aria-hidden="true" />Nobody's tagged you yet. Type @ in any chat to tag someone.</div>
+          )}
           <ul>
             {tags.map((t) => {
               const who = profiles[t.author_id]
@@ -84,7 +87,7 @@ export default function TagBell() {
                       <b>{who?.emoji} {nameOf(who)}</b>
                       <span className="muted"> · {t.game_id ? `vs ${games[t.game_id] ?? 'a game'}` : 'Playground'} · {when(t.created_at)}</span>
                     </span>
-                    <span className="bell-body">{plainMentions(t.body, profiles) || '📷 a pic'}</span>
+                    <span className="bell-body">{plainMentions(t.body, profiles) || <span className="icon-text"><Image size={13} aria-hidden="true" />Photo</span>}</span>
                   </button>
                 </li>
               )

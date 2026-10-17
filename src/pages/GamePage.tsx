@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
+import {
+  ArrowLeft, ArrowRight, Camera, ClipboardList, Headphones, MapPin, MessageCircle, StickyNote, UtensilsCrossed,
+  type LucideIcon,
+} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { gameDay, gameTime, isGameday, isPast, result } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
@@ -12,12 +16,12 @@ import { Lightbox, PhotoGrid, Uploader } from '../components/Photos'
 
 type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
 
-const TABS: { id: Tab; icon: string; label: string }[] = [
-  { id: 'food', icon: '🍔', label: 'Food' },
-  { id: 'asks', icon: '🔌', label: 'Asks' },
-  { id: 'dj', icon: '🎧', label: 'DJ' },
-  { id: 'chat', icon: '💬', label: 'Chat' },
-  { id: 'pics', icon: '📸', label: 'Pics' },
+const TABS: { id: Tab; Icon: LucideIcon; label: string }[] = [
+  { id: 'food', Icon: UtensilsCrossed, label: 'Food' },
+  { id: 'asks', Icon: ClipboardList, label: 'Asks' },
+  { id: 'dj', Icon: Headphones, label: 'DJ' },
+  { id: 'chat', Icon: MessageCircle, label: 'Chat' },
+  { id: 'pics', Icon: Camera, label: 'Photos' },
 ]
 
 export default function GamePage() {
@@ -27,6 +31,7 @@ export default function GamePage() {
   const [params] = useSearchParams()
   const [tab, setTab] = useState<Tab>('food')
   const chatRef = useRef<HTMLElement>(null)
+  const tabsRef = useRef<HTMLDivElement>(null)
   const [open, setOpen] = useState<number | null>(null)
 
   useEffect(() => {
@@ -42,13 +47,25 @@ export default function GamePage() {
     onDelete: (pid) => setPhotos((cur) => cur.filter((x) => x.id !== pid)),
   }, Boolean(id))
 
-  // ?tab=chat (from a tag in the 🔔) opens the thread: the tab on phones, a scroll on wider screens.
+  // ?tab=chat (from a tag in the bell) opens the thread: the tab on phones, a scroll on wider screens.
   const wantTab = params.get('tab')
   useEffect(() => {
     if (wantTab !== 'chat' || !game) return
     setTab('chat')
     requestAnimationFrame(() => chatRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
   }, [wantTab, game?.id])
+
+  // Phones: switching tabs brings the tab bar to the top so the list or chat is right there, not below the game info.
+  const pickTab = (t: Tab) => {
+    setTab(t)
+    const el = tabsRef.current
+    if (!el || getComputedStyle(el).display === 'none') return
+    // Where the tabs sit when not stuck: just below the game header, plus the stack's gap.
+    const above = el.previousElementSibling!.getBoundingClientRect().bottom + window.scrollY
+    const gap = parseFloat(getComputedStyle(el.parentElement!).rowGap) || 0
+    const stuckAt = parseFloat(getComputedStyle(el).top) || 0
+    requestAnimationFrame(() => window.scrollTo({ top: Math.max(0, above + gap - stuckAt) }))
+  }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
 
@@ -60,23 +77,23 @@ export default function GamePage() {
 
   return (
     <div className="stack-lg">
-      <Link to="/" className="back">← All games</Link>
+      <Link to="/" className="back"><ArrowLeft size={16} aria-hidden="true" />All games</Link>
 
       <section className="game-head card">
         <div className="gh-top">
           <div className="matchup sm">
             <div className="team"><TeamLogo src={PURDUE_LOGO} alt="Purdue" size={56} /></div>
-            <div className="vs">VS</div>
+            <div className="vs">vs</div>
             <div className="team"><TeamLogo src={game.opponent_logo} alt={game.opponent} size={56} /></div>
           </div>
           <div className="gh-title">
             <h1 className="display">Purdue vs {game.opponent}</h1>
-            <div className="muted">
+            <div className="gh-meta">
               {gameDay(game, true)} · {gameTime(game)}{game.tv ? ` · ${game.tv}` : ''}{game.venue ? ` · ${game.venue}` : ''}
             </div>
             <div className="row wrap">
-              {isGameday(game) && <span className="badge live">GAMEDAY</span>}
-              {game.status === 'in' && <span className="badge live">LIVE</span>}
+              {isGameday(game) && <span className="badge live">Gameday</span>}
+              {game.status === 'in' && <span className="badge live">Live</span>}
               {r && <span className={`result big ${r.w}`}>{r.text}</span>}
               {!past && <WeatherChip game={game} />}
             </div>
@@ -85,15 +102,15 @@ export default function GamePage() {
         {!past && <TempStrip game={game} />}
         {!past && <Countdown game={game} />}
         <div className="grid-2">
-          <EditableField game={game} field="lot" label="📍 Our spot" placeholder="W Lot (add a row or landmark)" />
-          <EditableField game={game} field="notes" label="📝 Notes" placeholder="Meet time, who's driving, anything else" />
+          <EditableField game={game} field="lot" Icon={MapPin} label="Our spot" placeholder="W Lot (add a row or landmark)" />
+          <EditableField game={game} field="notes" Icon={StickyNote} label="Notes" placeholder="Meet time, who's driving, anything else" />
         </div>
       </section>
 
-      <div className="tabs">
+      <div className="tabs" ref={tabsRef}>
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
-            <span className="tab-ic">{t.icon}</span>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => pickTab(t.id)} aria-pressed={tab === t.id}>
+            <t.Icon size={20} strokeWidth={1.8} aria-hidden="true" />
             <span>{t.label}{t.id === 'pics' && photos.length ? ` ${photos.length}` : ''}</span>
           </button>
         ))}
@@ -110,7 +127,7 @@ export default function GamePage() {
           <DjBooth game={game} />
         </div>
         <section ref={chatRef} className={`gp-section gp-chat card ${tab === 'chat' ? 'active' : ''}`}>
-          <h3 className="display panel-title">💬 Game thread</h3>
+          <h3 className="display panel-title"><MessageCircle size={20} aria-hidden="true" />Game thread</h3>
           <Chat
             gameId={game.id}
             placeholder={past ? 'Post-game takes…' : `Talk ${game.opponent} week…`}
@@ -119,13 +136,13 @@ export default function GamePage() {
         </section>
         <section className={`gp-section gp-pics card ${tab === 'pics' ? 'active' : ''}`}>
           <div className="panel-head">
-            <h3 className="display">📸 Pics from this one</h3>
-            <Link to={`/gallery?game=${game.id}`} className="link-btn">Open in gallery →</Link>
+            <h3 className="display"><Camera size={20} aria-hidden="true" />Photos</h3>
+            <Link to={`/gallery?game=${game.id}`} className="link-btn">Open in gallery<ArrowRight size={14} aria-hidden="true" /></Link>
           </div>
           <Uploader games={[game]} defaultGameId={game.id}
             onUploaded={(p) => setPhotos((cur) => (cur.some((x) => x.id === p.id) ? cur : [p, ...cur]))} />
           {photos.length ? <PhotoGrid photos={photos} games={gamesById} onOpen={setOpen} />
-            : <p className="muted small">No pics yet. Get some.</p>}
+            : <div className="empty"><Camera size={22} aria-hidden="true" />No photos from this one yet.</div>}
         </section>
       </div>
 
@@ -137,7 +154,9 @@ export default function GamePage() {
   )
 }
 
-function EditableField({ game, field, label, placeholder }: { game: Game; field: 'lot' | 'notes'; label: string; placeholder: string }) {
+function EditableField({ game, field, Icon, label, placeholder }: {
+  game: Game; field: 'lot' | 'notes'; Icon: LucideIcon; label: string; placeholder: string
+}) {
   const [val, setVal] = useState(game[field] ?? '')
   const [focused, setFocused] = useState(false)
   useEffect(() => { if (!focused) setVal(game[field] ?? '') }, [game, field, focused])
@@ -148,7 +167,7 @@ function EditableField({ game, field, label, placeholder }: { game: Game; field:
   }
   return (
     <label className="field">
-      <span className="label">{label}</span>
+      <span className="label"><Icon size={14} aria-hidden="true" />{label}</span>
       <textarea className="input" rows={field === 'notes' ? 2 : 1} value={val} placeholder={placeholder} maxLength={500}
         onFocus={() => setFocused(true)} onChange={(e) => setVal(e.target.value)} onBlur={save} />
     </label>

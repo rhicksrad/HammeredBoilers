@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { ArrowRight, Camera, ChevronRight, ClipboardList, MapPin, MessageCircle, Plus, RefreshCw, UtensilsCrossed } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { lastSync, syncHomeGames } from '../lib/schedule'
 import { gameDay, gameTime, isGameday, isPast, result, when } from '../lib/format'
@@ -55,7 +56,7 @@ export default function Home() {
       {next ? <Hero game={next} stats={stats[next.id]} /> : (
         <div className="card hero-empty">
           <h2 className="display">No home games on the board</h2>
-          <p className="muted">Offseason. Hit the Playground, or add a game below.</p>
+          <p className="muted">It's the offseason. Hang out in the Playground, or add a game below.</p>
         </div>
       )}
 
@@ -71,7 +72,7 @@ export default function Home() {
       {past.length > 0 && (
         <section>
           <h2 className="section-title">Past tailgates</h2>
-          <p className="muted small section-sub">Every game keeps its lists, chat, and pics. Tap one to look back.</p>
+          <p className="muted small section-sub">Every game keeps its lists, chat, and photos.</p>
           <div className="game-list">
             {past.map((g) => <GameRow key={g.id} game={g} stats={stats[g.id]} />)}
           </div>
@@ -83,6 +84,7 @@ export default function Home() {
           {syncMsg ?? (last ? `Schedule synced from ESPN ${when(last.toISOString())}` : 'Schedule comes from ESPN')}
         </span>
         <button className="btn ghost sm" disabled={syncing} onClick={() => sync(true)}>
+          <RefreshCw size={14} className={syncing ? 'pulse' : ''} aria-hidden="true" />
           {syncing ? 'Syncing…' : 'Refresh schedule'}
         </button>
       </section>
@@ -97,12 +99,12 @@ function Hero({ game, stats }: { game: Game; stats?: GameStats }) {
   return (
     <section className="hero card">
       <div className="hero-kicker">
-        {today ? <span className="badge live">GAMEDAY</span> : <span className="badge">Next home tailgate</span>}
+        {today ? <span className="badge live">Gameday</span> : <span className="badge">Next home tailgate</span>}
         <WeatherChip game={game} />
       </div>
       <div className="matchup">
         <div className="team"><TeamLogo src={PURDUE_LOGO} alt="Purdue" size={84} /><span>Purdue</span></div>
-        <div className="vs">VS</div>
+        <div className="vs">vs</div>
         <div className="team"><TeamLogo src={game.opponent_logo} alt={game.opponent} size={84} /><span>{game.opponent}</span></div>
       </div>
       <div className="hero-when">
@@ -111,17 +113,17 @@ function Hero({ game, stats }: { game: Game; stats?: GameStats }) {
         <span>{gameTime(game)}</span>
         {game.tv && <><span className="dot">•</span><span>{game.tv}</span></>}
       </div>
-      {game.lot && <div className="hero-lot">📍 {game.lot}</div>}
+      {game.lot && <div className="hero-lot"><MapPin size={15} aria-hidden="true" />{game.lot}</div>}
       <TempStrip game={game} />
       <Countdown game={game} />
       {stats && (
         <div className="hero-stats">
-          <Stat n={`${stats.food_claimed}/${stats.food_total}`} label="food covered" ok={stats.food_claimed >= stats.food_total} />
-          <Stat n={String(stats.asks_open)} label="open asks" ok={stats.asks_open === 0} />
-          <Stat n={String(stats.message_count)} label="messages" />
+          <Stat n={`${stats.food_claimed}/${stats.food_total}`} label="Food covered" ok={stats.food_claimed >= stats.food_total} />
+          <Stat n={String(stats.asks_open)} label="Open asks" ok={stats.asks_open === 0} />
+          <Stat n={String(stats.message_count)} label="Messages" />
         </div>
       )}
-      <Link to={`/game/${game.id}`} className="btn gold big">Open the gameday board →</Link>
+      <Link to={`/game/${game.id}`} className="btn gold big">Open the gameday board<ArrowRight size={18} aria-hidden="true" /></Link>
     </section>
   )
 }
@@ -148,13 +150,18 @@ function GameRow({ game, stats }: { game: Game; stats?: GameStats }) {
       <div className="gr-meta">
         {r && <span className={`result ${r.w}`}>{r.text}</span>}
         {stats && (
-          <span className="muted small">
-            {past
-              ? `💬 ${stats.message_count} · 📸 ${stats.photo_count}`
-              : `🍔 ${stats.food_claimed}/${stats.food_total} · ❓ ${stats.asks_open}`}
+          <span className="gr-stats">
+            {past ? <>
+              <span title="Messages"><MessageCircle size={13} aria-hidden="true" />{stats.message_count}</span>
+              <span title="Photos"><Camera size={13} aria-hidden="true" />{stats.photo_count}</span>
+            </> : <>
+              <span title="Food covered"><UtensilsCrossed size={13} aria-hidden="true" />{stats.food_claimed}/{stats.food_total}</span>
+              <span title="Open asks"><ClipboardList size={13} aria-hidden="true" />{stats.asks_open}</span>
+            </>}
           </span>
         )}
       </div>
+      <ChevronRight size={18} className="chev" aria-hidden="true" />
     </Link>
   )
 }
@@ -169,7 +176,7 @@ function AddGame({ onAdded }: { onAdded: () => void }) {
   if (!open) {
     return (
       <button className="btn ghost sm add-game-toggle" onClick={() => setOpen(true)}>
-        + Add a game by hand (bowl game, road trip, hoops…)
+        <Plus size={15} aria-hidden="true" />Add a game (bowl game, road trip, hoops…)
       </button>
     )
   }

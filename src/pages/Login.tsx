@@ -65,15 +65,14 @@ export default function Login() {
   return (
     <div className="login">
       <div className="login-hero">
-        <Logo size={96} />
+        <Logo size={84} />
         <h1 className="display huge">Hammered<br />Boilers</h1>
         <p className="tagline">Boiler Up. Bottoms Up.</p>
       </div>
-      <div className="hazard" />
       <div className="card narrow login-card">
         {step === 'email' && (
           <form className="stack" onSubmit={checkEmail}>
-            <label className="label" htmlFor="email">Crew sign-in</label>
+            <label className="label" htmlFor="email">Sign in with your crew email</label>
             <input id="email" className="input" type="email" required autoComplete="username" placeholder="you@example.com"
               value={email} onChange={(e) => setEmail(e.target.value)} autoFocus />
             <button className="btn gold" disabled={busy || !clean}>{busy ? 'Checking…' : 'Continue'}</button>
@@ -111,6 +110,7 @@ export default function Login() {
 
         {err && <p className="error">{err}</p>}
       </div>
+      <p className="login-foot">Members only. Not on the list? Ask anyone in the crew to add you.</p>
     </div>
   )
 }

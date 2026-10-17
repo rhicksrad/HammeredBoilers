@@ -7,7 +7,7 @@
 // - /assets/*: Vite puts a hash in those names, so a cached copy never goes stale.
 // - Everything else (config.js, icons, manifest): serve the cached copy, refresh it behind the scenes.
 
-const CACHE = 'hb-v1'
+const CACHE = 'hb-v2'
 const SHELL = './'
 
 self.addEventListener('install', (event) => {

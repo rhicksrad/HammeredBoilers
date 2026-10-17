@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Check, ClipboardList, Plus, UtensilsCrossed, X, type LucideIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { ListItem, ListKind } from '../lib/types'
@@ -51,7 +52,8 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
   return kind === 'food' ? (
     <Panel
       title="Food & Drink"
-      icon="🍔"
+      Icon={UtensilsCrossed}
+      empty="Nothing on the list yet. Add the first thing to bring."
       summary={`${sorted.filter((x) => x.owner_id || x.owner_name).length}/${sorted.length} covered`}
       addPlaceholder="Add something to bring…"
       onAdd={add}
@@ -62,7 +64,8 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
   ) : (
     <Panel
       title="Asks & Logistics"
-      icon="🔌"
+      Icon={ClipboardList}
+      empty="No questions yet. Power? Parking pass? Ask away."
       summary={`${sorted.filter((x) => x.status === 'open').length} open`}
       addPlaceholder="Ask the crew something…"
       onAdd={add}
@@ -73,19 +76,21 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
   )
 }
 
-function Panel({ title, icon, summary, addPlaceholder, onAdd, err, children }: {
-  title: string; icon: string; summary: string; addPlaceholder: string; onAdd: (label: string) => void
+function Panel({ title, Icon, empty, summary, addPlaceholder, onAdd, err, children }: {
+  title: string; Icon: LucideIcon; empty: string; summary: string; addPlaceholder: string; onAdd: (label: string) => void
   err: string | null; children: React.ReactNode
 }) {
   const [label, setLabel] = useState('')
   return (
     <section className="panel card">
       <header className="panel-head">
-        <h3 className="display">{icon} {title}</h3>
+        <h3 className="display"><Icon size={20} aria-hidden="true" />{title}</h3>
         <span className="chip">{summary}</span>
       </header>
       {err && <p className="error">{err}</p>}
-      <ul className="items">{children}</ul>
+      {Array.isArray(children) && children.length === 0
+        ? <div className="empty"><Icon size={22} aria-hidden="true" />{empty}</div>
+        : <ul className="items">{children}</ul>}
       <form
         className="add-row"
         onSubmit={(e) => {
@@ -94,7 +99,7 @@ function Panel({ title, icon, summary, addPlaceholder, onAdd, err, children }: {
         }}
       >
         <input className="input" placeholder={addPlaceholder} value={label} onChange={(e) => setLabel(e.target.value)} />
-        <button className="btn ghost" disabled={!label.trim()}>Add</button>
+        <button className="btn ghost" disabled={!label.trim()}><Plus size={16} aria-hidden="true" />Add</button>
       </form>
     </section>
   )
@@ -115,7 +120,7 @@ function FoodRow({ item, patch, remove }: RowProps) {
         onClick={() => patch(item.id, { owner_id: mine ? null : me!.id, owner_name: null })}
         disabled={taken && !mine}
       >
-        {owner ? owner.emoji : taken ? '✓' : ''}
+        {owner ? owner.emoji : taken ? <Check size={16} strokeWidth={2.5} aria-hidden="true" /> : ''}
       </button>
       <div className="item-main">
         <div className="item-label">{item.label}</div>
@@ -137,8 +142,8 @@ function AskRow({ item, patch, remove }: RowProps) {
         <div className="item-label">{item.label}</div>
         <div className="item-sub">
           <div className="seg">
-            <button className={item.status === 'yes' ? 'on yes' : ''} onClick={() => set('yes')}>Yes</button>
-            <button className={item.status === 'no' ? 'on no' : ''} onClick={() => set('no')}>No</button>
+            <button className={item.status === 'yes' ? 'on yes' : ''} aria-pressed={item.status === 'yes'} onClick={() => set('yes')}>Yes</button>
+            <button className={item.status === 'no' ? 'on no' : ''} aria-pressed={item.status === 'no'} onClick={() => set('no')}>No</button>
           </div>
           <WhoPicker item={item} patch={patch} unset="Who's on it?" />
         </div>
@@ -178,7 +183,7 @@ function WhoPicker({ item, patch, unset }: { item: ListItem; patch: RowProps['pa
       <option value="">{unset}</option>
       {me && <option value={me.id}>{me.emoji} Me</option>}
       {crew.map((p) => <option key={p.id} value={p.id}>{p.emoji} {p.display_name}</option>)}
-      {item.owner_name && <option value="name">👤 {item.owner_name}</option>}
+      {item.owner_name && <option value="name">{item.owner_name}</option>}
       <option value="other">+ Someone else…</option>
     </select>
   )
@@ -203,13 +208,14 @@ function Note({ item, patch, placeholder }: { item: ListItem; patch: RowProps['p
   }
   return item.note
     ? <button className="note" onClick={() => setEditing(true)}>“{item.note}”</button>
-    : <button className="link-btn faint" onClick={() => setEditing(true)}>+ note</button>
+    : <button className="link-btn faint" onClick={() => setEditing(true)}><Plus size={13} aria-hidden="true" />Note</button>
 }
 
 function RowMenu({ onDelete }: { onDelete: () => void }) {
   return (
-    <button className="row-del" title="Remove from the list" onClick={() => confirm('Remove this from the list?') && onDelete()}>
-      ✕
+    <button className="row-del" title="Remove from the list" aria-label="Remove from the list"
+      onClick={() => confirm('Remove this from the list?') && onDelete()}>
+      <X size={16} aria-hidden="true" />
     </button>
   )
 }

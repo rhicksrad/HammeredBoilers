@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
+import { Check, Headphones, Plus, Printer, Undo2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import { gameDay, gameTime, when } from '../lib/format'
@@ -91,7 +92,7 @@ export default function DjBooth({ game }: { game: Game }) {
     <section className="dj card">
       <header className="dj-head">
         <div className="stack-sm">
-          <h3 className="display">🎧 DJ Booth</h3>
+          <h3 className="display"><Headphones size={20} aria-hidden="true" />DJ Booth</h3>
           <div className="muted small">
             {!djLabel ? 'No DJ set up yet.'
               : amDj ? "You're on the decks. Approve or deny with a note, then print the list for the booth."
@@ -100,7 +101,9 @@ export default function DjBooth({ game }: { game: Game }) {
         </div>
         <div className="row wrap">
           <span className="chip">{pending.length} waiting · {approved.length} approved</span>
-          <button className="btn gold sm" disabled={!approved.length} onClick={() => setPrinting(true)}>🖨 Print the list</button>
+          <button className="btn gold sm" disabled={!approved.length} onClick={() => setPrinting(true)}>
+            <Printer size={15} aria-hidden="true" />Print the list
+          </button>
         </div>
       </header>
       {err && <p className="error">{err}</p>}
@@ -111,13 +114,13 @@ export default function DjBooth({ game }: { game: Game }) {
           <h4 className="dj-sub">Waiting on the DJ</h4>
           {pending.length
             ? <ul className="items">{pending.map((r) => <SongRow key={r.id} r={r} {...rowProps} />)}</ul>
-            : <p className="muted small">Nothing waiting.</p>}
+            : <div className="empty">Nothing waiting.</div>}
         </div>
         <div className="stack">
           <h4 className="dj-sub">On the list ({approved.length})</h4>
           {approved.length
             ? <ul className="items">{approved.map((r) => <SongRow key={r.id} r={r} {...rowProps} />)}</ul>
-            : <p className="muted small">Nothing approved yet.</p>}
+            : <div className="empty">Nothing approved yet.</div>}
           {denied.length > 0 && (
             <details className="dj-denied">
               <summary>Not tonight ({denied.length})</summary>
@@ -152,9 +155,9 @@ function RequestForm({ amDj, onAdd }: { amDj: boolean; onAdd: (song: string, art
         <input className="input" placeholder="Artist" value={artist} maxLength={200} onChange={(e) => setArtist(e.target.value)} />
       </div>
       <div className="add-row">
-        <input className="input" placeholder="Note (optional): when to play it, shout-out…" value={note} maxLength={300}
+        <input className="input" placeholder="Note (optional)" value={note} maxLength={300}
           onChange={(e) => setNote(e.target.value)} />
-        <button className="btn gold" disabled={!song.trim() || busy}>{amDj ? 'Add it' : 'Request'}</button>
+        <button className="btn gold" disabled={!song.trim() || busy}><Plus size={16} aria-hidden="true" />{amDj ? 'Add' : 'Request'}</button>
       </div>
     </form>
   )
@@ -202,8 +205,8 @@ function SongRow({ r, amDj, meId, profiles, patch, remove }: RowProps) {
             <input className="input note-input" placeholder="Note back (optional)" value={djNote} maxLength={300}
               onFocus={() => setEditing(true)} onChange={(e) => setDjNote(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') decide('approved') }} />
-            <button className="btn sm approve" onClick={() => decide('approved')}>✓ Approve</button>
-            <button className="btn sm deny" onClick={() => decide('denied')}>✕ Deny</button>
+            <button className="btn sm approve" onClick={() => decide('approved')}><Check size={15} strokeWidth={2.5} aria-hidden="true" />Approve</button>
+            <button className="btn sm deny" onClick={() => decide('denied')}><X size={15} strokeWidth={2.5} aria-hidden="true" />Deny</button>
           </div>
         )}
         {amDj && r.status !== 'pending' && (
@@ -213,20 +216,21 @@ function SongRow({ r, amDj, meId, profiles, patch, remove }: RowProps) {
                   onChange={(e) => setDjNote(e.target.value)} onBlur={saveNote}
                   onKeyDown={(e) => { if (e.key === 'Enter') saveNote(); if (e.key === 'Escape') setEditing(false) }} />
               : r.dj_note
-                ? <button className="note dj-note" onClick={() => setEditing(true)}>🎧 “{r.dj_note}”</button>
-                : <button className="link-btn faint" onClick={() => setEditing(true)}>+ note back</button>}
-            <button className="link-btn faint" onClick={() => patch(r.id, { status: 'pending' })}>Undo</button>
+                ? <button className="note dj-note" onClick={() => setEditing(true)}><Headphones size={13} aria-hidden="true" />“{r.dj_note}”</button>
+                : <button className="link-btn faint" onClick={() => setEditing(true)}><Plus size={13} aria-hidden="true" />Note back</button>}
+            <button className="link-btn faint" onClick={() => patch(r.id, { status: 'pending' })}><Undo2 size={13} aria-hidden="true" />Undo</button>
           </div>
         )}
         {!amDj && (
           <div className="item-sub">
             {r.status === 'pending' && <span className="muted">Waiting on the DJ</span>}
-            {r.dj_note && <span className="note static dj-note">🎧 “{r.dj_note}”</span>}
+            {r.dj_note && <span className="note static dj-note"><Headphones size={13} aria-hidden="true" />“{r.dj_note}”</span>}
           </div>
         )}
       </div>
       {(mine || amDj) && (
-        <button className="row-del" title="Remove request" onClick={() => confirm(`Remove "${r.song}"?`) && remove(r.id)}>✕</button>
+        <button className="row-del" title="Remove request" aria-label="Remove request"
+          onClick={() => confirm(`Remove "${r.song}"?`) && remove(r.id)}><X size={16} aria-hidden="true" /></button>
       )}
     </li>
   )

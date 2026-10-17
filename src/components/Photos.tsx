@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { downloadZip } from 'client-zip'
+import { ChevronLeft, ChevronRight, Download, ImagePlus, Play, Trash2, X } from 'lucide-react'
 import { BUCKET, supabase } from '../lib/supabase'
 import { extOf, makeThumb, saveAs } from '../lib/images'
 import { gameDay, when } from '../lib/format'
@@ -44,7 +45,7 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Photo[]; games: R
             {src && (isVideo(p) && !p.thumb_path
               ? <video src={`${src}#t=0.1`} muted preload="metadata" playsInline />
               : <img src={src} alt={p.caption ?? ''} loading="lazy" />)}
-            {isVideo(p) && <span className="play">▶</span>}
+            {isVideo(p) && <span className="play"><span><Play size={18} fill="currentColor" aria-hidden="true" /></span></span>}
             {p.game_id && games[p.game_id] && <span className="tile-tag">{games[p.game_id].opponent}</span>}
           </button>
         )
@@ -110,15 +111,15 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
           </div>
         </div>
         <div className="row">
-          <button className="btn ghost sm" onClick={download}>Download</button>
-          {p.uploader_id === me?.id && <button className="btn ghost sm danger" onClick={del}>Delete</button>}
+          <button className="btn ghost sm" onClick={download}><Download size={15} aria-hidden="true" />Download</button>
+          {p.uploader_id === me?.id && <button className="btn ghost sm danger" onClick={del}><Trash2 size={15} aria-hidden="true" />Delete</button>}
         </div>
       </div>
       {photos.length > 1 && <>
-        <button className="lb-nav prev" onClick={(e) => { e.stopPropagation(); go(-1) }}>‹</button>
-        <button className="lb-nav next" onClick={(e) => { e.stopPropagation(); go(1) }}>›</button>
+        <button className="lb-nav prev" aria-label="Previous" onClick={(e) => { e.stopPropagation(); go(-1) }}><ChevronLeft size={22} aria-hidden="true" /></button>
+        <button className="lb-nav next" aria-label="Next" onClick={(e) => { e.stopPropagation(); go(1) }}><ChevronRight size={22} aria-hidden="true" /></button>
       </>}
-      <button className="lb-close" onClick={onClose}>✕</button>
+      <button className="lb-close" aria-label="Close" onClick={onClose}><X size={20} aria-hidden="true" /></button>
     </div>
   )
 }
@@ -172,12 +173,13 @@ export function Uploader({ games, defaultGameId, onUploaded }: { games: Game[]; 
     <div className="uploader card">
       <div className="grid-3">
         <select className="input" value={gameId} onChange={(e) => setGameId(e.target.value)}>
-          <option value="">No game (random)</option>
+          <option value="">No game</option>
           {games.map((g) => <option key={g.id} value={g.id}>vs {g.opponent} · {gameDay(g)}</option>)}
         </select>
         <input className="input" placeholder="Caption (optional)" maxLength={300} value={caption} onChange={(e) => setCaption(e.target.value)} />
         <label className={`btn gold ${progress ? 'disabled' : ''}`}>
-          {progress ? `Uploading ${progress.done}/${progress.total}…` : '📸 Add pics / videos'}
+          <ImagePlus size={17} aria-hidden="true" />
+          {progress ? `Uploading ${progress.done}/${progress.total}…` : 'Add photos or videos'}
           <input ref={input} type="file" accept="image/*,video/*" multiple hidden disabled={Boolean(progress)}
             onChange={(e) => upload(e.target.files)} />
         </label>
