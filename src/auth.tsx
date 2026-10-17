@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './lib/supabase'
 import { useLiveTable } from './lib/realtime'
@@ -42,18 +42,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => { refreshMember() }, [refreshMember])
 
-  useEffect(() => {
-    if (!member) return
-    supabase.from('profiles').select('*').then(({ data }) => {
+  const loadProfiles = useCallback(() => {
+    supabase.from('profiles').select('*').then(({ data, error }) => {
+      if (error) return // keep what we have rather than blanking every name and avatar
       setProfiles(Object.fromEntries((data ?? []).map((p) => [p.id, p as Profile])))
     })
-  }, [member])
+  }, [])
+
+  useEffect(() => { if (member) loadProfiles() }, [member, loadProfiles])
 
   useLiveTable<Profile>('profiles', undefined, {
     onUpsert: (p) => setProfiles((all) => ({ ...all, [p.id]: p })),
+    onResync: loadProfiles,
   }, Boolean(member))
 
-  const saveProfile: AuthState['saveProfile'] = async (patch) => {
+  const saveProfile = useCallback<AuthState['saveProfile']>(async (patch) => {
     if (!userId) return 'Not signed in'
     // Saving a name finishes onboarding; a photo uploaded mid-onboarding doesn't close the welcome form.
     const changes = 'display_name' in patch ? { ...patch, onboarded: true } : patch
@@ -62,12 +65,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (error) return error.message
     setProfiles((all) => ({ ...all, [userId]: data as Profile }))
     return null
-  }
+  }, [userId])
 
   const me = userId ? profiles[userId] ?? null : null
+  // Every screen reads this, so only hand out a new object when something in it changed.
+  const value = useMemo(
+    () => ({ session, loading, member, me, profiles, refreshMember, saveProfile }),
+    [session, loading, member, me, profiles, refreshMember, saveProfile],
+  )
 
   return (
-    <Ctx.Provider value={{ session, loading, member, me, profiles, refreshMember, saveProfile }}>
+    <Ctx.Provider value={value}>
       {children}
     </Ctx.Provider>
   )

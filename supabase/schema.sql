@@ -351,6 +351,7 @@ from public.games g;
 
 -- ---------------------------------------------------------------------------
 -- Row-level security: crew members only.
+-- The checks are wrapped in (select …) so Postgres runs them once per query instead of once per row.
 -- ---------------------------------------------------------------------------
 alter table public.members       enable row level security;
 alter table public.profiles      enable row level security;
@@ -367,78 +368,78 @@ drop policy if exists members_select on public.members;
 drop policy if exists members_insert on public.members;
 drop policy if exists members_update on public.members;
 drop policy if exists members_delete on public.members;
-create policy members_select on public.members for select to authenticated using (public.is_member());
-create policy members_insert on public.members for insert to authenticated with check (public.is_member());
+create policy members_select on public.members for select to authenticated using ((select public.is_member()));
+create policy members_insert on public.members for insert to authenticated with check ((select public.is_member()));
 revoke update on public.members from anon, authenticated;
 create policy members_delete on public.members for delete to authenticated
-  using (public.is_member() and email <> lower(coalesce(auth.jwt() ->> 'email', '')));
+  using ((select public.is_member()) and email <> lower(coalesce(auth.jwt() ->> 'email', '')));
 
 -- profiles: crew can see everyone; you edit only yourself
 drop policy if exists profiles_select on public.profiles;
 drop policy if exists profiles_update on public.profiles;
-create policy profiles_select on public.profiles for select to authenticated using (public.is_member());
+create policy profiles_select on public.profiles for select to authenticated using ((select public.is_member()));
 create policy profiles_update on public.profiles for update to authenticated
-  using (id = auth.uid() and public.is_member()) with check (id = auth.uid());
+  using (id = (select auth.uid()) and (select public.is_member())) with check (id = (select auth.uid()));
 
 -- games: crew can read, sync, add, and edit lot/notes; only hand-added games can be deleted
 drop policy if exists games_select on public.games;
 drop policy if exists games_insert on public.games;
 drop policy if exists games_update on public.games;
 drop policy if exists games_delete on public.games;
-create policy games_select on public.games for select to authenticated using (public.is_member());
-create policy games_insert on public.games for insert to authenticated with check (public.is_member());
-create policy games_update on public.games for update to authenticated using (public.is_member()) with check (public.is_member());
-create policy games_delete on public.games for delete to authenticated using (public.is_member() and espn_id is null);
+create policy games_select on public.games for select to authenticated using ((select public.is_member()));
+create policy games_insert on public.games for insert to authenticated with check ((select public.is_member()));
+create policy games_update on public.games for update to authenticated using ((select public.is_member())) with check ((select public.is_member()));
+create policy games_delete on public.games for delete to authenticated using ((select public.is_member()) and espn_id is null);
 
 -- list template: readable (edit it in the SQL editor)
 drop policy if exists list_template_select on public.list_template;
-create policy list_template_select on public.list_template for select to authenticated using (public.is_member());
+create policy list_template_select on public.list_template for select to authenticated using ((select public.is_member()));
 
 -- list items: anyone in the crew can add, claim, answer, edit, or remove
 drop policy if exists list_items_select on public.list_items;
 drop policy if exists list_items_insert on public.list_items;
 drop policy if exists list_items_update on public.list_items;
 drop policy if exists list_items_delete on public.list_items;
-create policy list_items_select on public.list_items for select to authenticated using (public.is_member());
-create policy list_items_insert on public.list_items for insert to authenticated with check (public.is_member());
-create policy list_items_update on public.list_items for update to authenticated using (public.is_member()) with check (public.is_member());
-create policy list_items_delete on public.list_items for delete to authenticated using (public.is_member());
+create policy list_items_select on public.list_items for select to authenticated using ((select public.is_member()));
+create policy list_items_insert on public.list_items for insert to authenticated with check ((select public.is_member()));
+create policy list_items_update on public.list_items for update to authenticated using ((select public.is_member())) with check ((select public.is_member()));
+create policy list_items_delete on public.list_items for delete to authenticated using ((select public.is_member()));
 
 -- messages: post as yourself; delete only your own
 drop policy if exists messages_select on public.messages;
 drop policy if exists messages_insert on public.messages;
 drop policy if exists messages_delete on public.messages;
-create policy messages_select on public.messages for select to authenticated using (public.is_member());
+create policy messages_select on public.messages for select to authenticated using ((select public.is_member()));
 create policy messages_insert on public.messages for insert to authenticated
-  with check (public.is_member() and author_id = auth.uid());
+  with check ((select public.is_member()) and author_id = (select auth.uid()));
 create policy messages_delete on public.messages for delete to authenticated
-  using (public.is_member() and author_id = auth.uid());
+  using ((select public.is_member()) and author_id = (select auth.uid()));
 
 -- photos: upload as yourself; edit caption / delete only your own
 drop policy if exists photos_select on public.photos;
 drop policy if exists photos_insert on public.photos;
 drop policy if exists photos_update on public.photos;
 drop policy if exists photos_delete on public.photos;
-create policy photos_select on public.photos for select to authenticated using (public.is_member());
+create policy photos_select on public.photos for select to authenticated using ((select public.is_member()));
 create policy photos_insert on public.photos for insert to authenticated
-  with check (public.is_member() and uploader_id = auth.uid());
+  with check ((select public.is_member()) and uploader_id = (select auth.uid()));
 create policy photos_update on public.photos for update to authenticated
-  using (public.is_member() and uploader_id = auth.uid()) with check (uploader_id = auth.uid());
+  using ((select public.is_member()) and uploader_id = (select auth.uid())) with check (uploader_id = (select auth.uid()));
 create policy photos_delete on public.photos for delete to authenticated
-  using (public.is_member() and uploader_id = auth.uid());
+  using ((select public.is_member()) and uploader_id = (select auth.uid()));
 
 -- song requests: request as yourself; only the DJ approves/denies; delete your own (the DJ can delete any)
 drop policy if exists song_requests_select on public.song_requests;
 drop policy if exists song_requests_insert on public.song_requests;
 drop policy if exists song_requests_update on public.song_requests;
 drop policy if exists song_requests_delete on public.song_requests;
-create policy song_requests_select on public.song_requests for select to authenticated using (public.is_member());
+create policy song_requests_select on public.song_requests for select to authenticated using ((select public.is_member()));
 create policy song_requests_insert on public.song_requests for insert to authenticated
-  with check (public.is_member() and requested_by = auth.uid());
+  with check ((select public.is_member()) and requested_by = (select auth.uid()));
 create policy song_requests_update on public.song_requests for update to authenticated
-  using (public.is_dj()) with check (public.is_dj());
+  using ((select public.is_dj())) with check ((select public.is_dj()));
 create policy song_requests_delete on public.song_requests for delete to authenticated
-  using (public.is_member() and (requested_by = auth.uid() or public.is_dj()));
+  using ((select public.is_member()) and (requested_by = (select auth.uid()) or (select public.is_dj())));
 
 -- ---------------------------------------------------------------------------
 -- Storage bucket for the gallery (private; the site uses signed URLs).

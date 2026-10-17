@@ -5,11 +5,13 @@ type Row = { id: string } & Record<string, unknown>
 type Handlers<T extends Row> = {
   onUpsert?: (row: T) => void
   onDelete?: (id: string) => void
+  onResync?: () => void // the connection dropped and came back (phone slept, signal blipped): changes may have been missed
 }
 
 /**
  * Live inserts/updates (optionally filtered, e.g. "game_id=eq.123") and deletes for one table.
  * Deletes can't be filtered server-side, so callers just ignore ids they don't have.
+ * Nothing is replayed after a reconnect, so `onResync` is the cue to reload.
  */
 export function useLiveTable<T extends Row>(table: string, filter: string | undefined, h: Handlers<T>, enabled = true) {
   const handlers = useRef(h)
@@ -17,6 +19,7 @@ export function useLiveTable<T extends Row>(table: string, filter: string | unde
   useEffect(() => {
     if (!enabled) return
     const ch = supabase.channel(`${table}:${filter ?? 'all'}:${Math.random().toString(36).slice(2)}`)
+    let joined = false
     const base = { schema: 'public', table, ...(filter ? { filter } : {}) }
     ch.on('postgres_changes', { event: 'INSERT', ...base }, (p) => handlers.current.onUpsert?.(p.new as T))
       .on('postgres_changes', { event: 'UPDATE', ...base }, (p) => handlers.current.onUpsert?.(p.new as T))
@@ -24,7 +27,11 @@ export function useLiveTable<T extends Row>(table: string, filter: string | unde
         const id = (p.old as Row)?.id
         if (id) handlers.current.onDelete?.(id)
       })
-      .subscribe()
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') return
+        if (joined) handlers.current.onResync?.()
+        joined = true
+      })
     return () => { supabase.removeChannel(ch) }
   }, [table, filter, enabled])
 }

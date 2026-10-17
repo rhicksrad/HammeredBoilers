@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router'
 import {
   ArrowLeft, ArrowRight, Camera, ClipboardList, Headphones, MapPin, MessageCircle, StickyNote, UtensilsCrossed,
@@ -32,19 +32,31 @@ export default function GamePage() {
   const [tab, setTab] = useState<Tab>('food')
   const chatRef = useRef<HTMLElement>(null)
   const tabsRef = useRef<HTMLDivElement>(null)
-  const [open, setOpen] = useState<number | null>(null)
+  // The open photo goes by id, so a new upload landing at the front of the grid doesn't swap what's on screen.
+  const [openId, setOpenId] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadGame = useCallback(() => {
     if (!id) return
-    supabase.from('games').select('*').eq('id', id).maybeSingle().then(({ data }) => setGame(data as Game | null))
+    supabase.from('games').select('*').eq('id', id).maybeSingle()
+      .then(({ data, error }) => { if (!error) setGame(data as Game | null) })
+  }, [id])
+  const loadPhotos = useCallback(() => {
+    if (!id) return
     supabase.from('photos').select('*').eq('game_id', id).order('created_at', { ascending: false })
-      .then(({ data }) => setPhotos((data ?? []) as Photo[]))
+      .then(({ data, error }) => { if (!error) setPhotos((data ?? []) as Photo[]) })
   }, [id])
 
-  useLiveTable<Game>('games', id ? `id=eq.${id}` : undefined, { onUpsert: (g) => setGame(g) }, Boolean(id))
+  // Going from one game to another reuses this page, so clear the last game's board first.
+  useEffect(() => {
+    setGame(undefined); setPhotos([]); setOpenId(null)
+    loadGame(); loadPhotos()
+  }, [loadGame, loadPhotos])
+
+  useLiveTable<Game>('games', id ? `id=eq.${id}` : undefined, { onUpsert: (g) => setGame(g), onResync: loadGame }, Boolean(id))
   useLiveTable<Photo>('photos', id ? `game_id=eq.${id}` : undefined, {
     onUpsert: (p) => setPhotos((cur) => (cur.some((x) => x.id === p.id) ? upsertById(cur, p) : [p, ...cur])),
     onDelete: (pid) => setPhotos((cur) => cur.filter((x) => x.id !== pid)),
+    onResync: loadPhotos,
   }, Boolean(id))
 
   // ?tab=chat (from a tag in the bell) opens the thread: the tab on phones, a scroll on wider screens.
@@ -68,6 +80,7 @@ export default function GamePage() {
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
+  const open = openId ? photos.findIndex((p) => p.id === openId) : -1
 
   if (game === undefined) return <div className="loading">Loading…</div>
   if (game === null) return <div className="card">That game isn't on the board. <Link to="/">Back to Gameday</Link></div>
@@ -141,14 +154,14 @@ export default function GamePage() {
           </div>
           <Uploader games={[game]} defaultGameId={game.id}
             onUploaded={(p) => setPhotos((cur) => (cur.some((x) => x.id === p.id) ? cur : [p, ...cur]))} />
-          {photos.length ? <PhotoGrid photos={photos} games={gamesById} onOpen={setOpen} />
+          {photos.length ? <PhotoGrid photos={photos} games={gamesById} onOpen={(i) => setOpenId(photos[i].id)} />
             : <div className="empty"><Camera size={22} aria-hidden="true" />No photos from this one yet.</div>}
         </section>
       </div>
 
-      {open != null && (
-        <Lightbox photos={photos} index={open} games={gamesById} onClose={() => setOpen(null)} onIndex={setOpen}
-          onDeleted={(pid) => { setPhotos((cur) => cur.filter((x) => x.id !== pid)); setOpen(null) }} />
+      {open >= 0 && (
+        <Lightbox photos={photos} index={open} games={gamesById} onClose={() => setOpenId(null)} onIndex={(i) => setOpenId(photos[i].id)}
+          onDeleted={(pid) => { setPhotos((cur) => cur.filter((x) => x.id !== pid)); setOpenId(null) }} />
       )}
     </div>
   )
@@ -163,7 +176,9 @@ function EditableField({ game, field, Icon, label, placeholder }: {
   const save = async () => {
     setFocused(false)
     const v = val.trim()
-    if (v !== (game[field] ?? '')) await supabase.from('games').update({ [field]: v || null }).eq('id', game.id)
+    if (v === (game[field] ?? '')) return
+    const { error } = await supabase.from('games').update({ [field]: v || null }).eq('id', game.id)
+    if (error) { setVal(game[field] ?? ''); alert(`Couldn't save that: ${error.message}`) }
   }
   return (
     <label className="field">

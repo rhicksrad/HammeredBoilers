@@ -1,14 +1,33 @@
+import { lazy, Suspense, type ComponentType } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router'
 import { AuthProvider, useAuth } from './auth'
 import { isConfigured, supabase } from './lib/supabase'
 import Layout from './components/Layout'
 import Logo from './components/Logo'
-import Login from './pages/Login'
 import Home from './pages/Home'
-import GamePage from './pages/GamePage'
-import Playground from './pages/Playground'
-import Gallery from './pages/Gallery'
-import Crew from './pages/Crew'
+
+// Gameday is where nearly everyone lands, so it ships in the main bundle; the rest load when first opened.
+// If the app was left open across a deploy, the old page's files are gone from the server: reload once
+// to pick up the new version instead of showing a blank screen.
+const RELOADED_KEY = 'hb:reloaded-for-update'
+const page = (load: () => Promise<{ default: ComponentType }>) => lazy(async () => {
+  try {
+    const m = await load()
+    try { sessionStorage.removeItem(RELOADED_KEY) } catch { /* private mode */ }
+    return m
+  } catch (err) {
+    let reloaded = true // if we can't remember, don't risk a reload loop
+    try { reloaded = sessionStorage.getItem(RELOADED_KEY) === '1'; sessionStorage.setItem(RELOADED_KEY, '1') } catch { /* private mode */ }
+    if (reloaded) throw err
+    window.location.reload()
+    return new Promise<never>(() => {}) // keep showing the loading state until the reload lands
+  }
+})
+const Login = page(() => import('./pages/Login'))
+const GamePage = page(() => import('./pages/GamePage'))
+const Playground = page(() => import('./pages/Playground'))
+const Gallery = page(() => import('./pages/Gallery'))
+const Crew = page(() => import('./pages/Crew'))
 
 export default function App() {
   if (!isConfigured) return <SetupNeeded />
@@ -24,18 +43,20 @@ export default function App() {
 function Gate() {
   const { session, loading, member } = useAuth()
   if (loading || (session && member === null)) return <Splash />
-  if (!session) return <Login />
+  if (!session) return <Suspense fallback={<Splash />}><Login /></Suspense>
   if (!member) return <NotOnList email={session.user.email ?? ''} />
   return (
     <Layout>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/game/:id" element={<GamePage />} />
-        <Route path="/playground" element={<Playground />} />
-        <Route path="/gallery" element={<Gallery />} />
-        <Route path="/crew" element={<Crew />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={<div className="loading">Loading…</div>}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/game/:id" element={<GamePage />} />
+          <Route path="/playground" element={<Playground />} />
+          <Route path="/gallery" element={<Gallery />} />
+          <Route path="/crew" element={<Crew />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </Layout>
   )
 }
