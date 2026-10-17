@@ -49,7 +49,10 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
   const { me, profiles } = useAuth()
   const p = photos[index]
   const url = useSignedUrls(p ? [p.path] : [])
-  const touchX = useRef<number | null>(null)
+  // A swipe is one finger moving sideways at normal zoom. A pinch, or panning around a
+  // pinched-in photo, also moves fingers sideways, so those never change the photo.
+  const swipe = useRef<{ x: number; y: number; pinched: boolean } | null>(null)
+  const zoomed = () => (window.visualViewport?.scale ?? 1) > 1.01
 
   const go = useCallback((d: number) => onIndex((index + d + photos.length) % photos.length), [index, photos.length, onIndex])
   useEffect(() => {
@@ -79,13 +82,20 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
 
   return (
     <div className="lightbox" onClick={onClose}
-      onTouchStart={(e) => { touchX.current = e.touches[0].clientX }}
+      onTouchStart={(e) => {
+        if (e.touches.length > 1) { if (swipe.current) swipe.current.pinched = true; return }
+        swipe.current = zoomed() ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY, pinched: false }
+      }}
       onTouchEnd={(e) => {
-        if (touchX.current == null) return
-        const dx = e.changedTouches[0].clientX - touchX.current
-        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1)
-        touchX.current = null
-      }}>
+        const s = swipe.current
+        if (e.touches.length > 0) return // wait for the last finger to lift
+        swipe.current = null
+        if (!s || s.pinched || zoomed()) return
+        const dx = e.changedTouches[0].clientX - s.x
+        const dy = e.changedTouches[0].clientY - s.y
+        if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) go(dx < 0 ? 1 : -1)
+      }}
+      onTouchCancel={() => { swipe.current = null }}>
       <div className="lb-stage" onClick={(e) => e.stopPropagation()}>
         {src ? (isVideo(p) ? <video src={src} controls autoPlay playsInline /> : <img src={src} alt={p.caption ?? ''} />)
           : <div className="loading">Loading…</div>}
