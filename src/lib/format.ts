@@ -7,19 +7,22 @@ const fmt = (opts: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat('en-US
 const dayFmt = fmt({ weekday: 'short', month: 'short', day: 'numeric' })
 const longDayFmt = fmt({ weekday: 'long', month: 'long', day: 'numeric' })
 const timeFmt = fmt({ hour: 'numeric', minute: '2-digit' })
+const weekdayFmt = fmt({ weekday: 'short' })
+const fullDayFmt = fmt({ dateStyle: 'full' })
 const ymdFmt = fmt({ year: 'numeric', month: '2-digit', day: '2-digit' })
 
 export const gameDay = (g: Game, long = false) => (long ? longDayFmt : dayFmt).format(new Date(g.kickoff))
 export const gameTime = (g: Game) => (g.time_tbd ? 'Time TBA' : timeFmt.format(new Date(g.kickoff)))
 export const clock = (iso: string) => timeFmt.format(new Date(iso))
 export const ymd = (d: Date) => ymdFmt.format(d) // MM/DD/YYYY in Eastern, good for same-day checks
+export const fullDay = (iso: string) => fullDayFmt.format(new Date(iso)) // "Saturday, October 18, 2026"
 
 export function when(iso: string) {
   const d = new Date(iso)
   const now = new Date()
   if (ymd(d) === ymd(now)) return clock(iso)
   const diffDays = (now.getTime() - d.getTime()) / 86400000
-  if (diffDays < 6) return `${fmt({ weekday: 'short' }).format(d)} ${clock(iso)}`
+  if (diffDays < 6) return `${weekdayFmt.format(d)} ${clock(iso)}`
   return `${dayFmt.format(d)}, ${clock(iso)}`
 }
 

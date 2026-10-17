@@ -114,7 +114,9 @@ export default function Crew() {
                   {m.email !== myEmail && (
                     <button className="btn ghost sm danger" title="Remove from the crew" aria-label={`Remove ${m.email}`} onClick={async () => {
                       if (!confirm(`Remove ${m.email} from the crew? They'll lose access.`)) return
-                      await supabase.from('members').delete().eq('email', m.email)
+                      setErr(null); setNote(null)
+                      const { error } = await supabase.from('members').delete().eq('email', m.email)
+                      if (error) setErr(error.message)
                       loadMembers()
                     }}>
                       <UserMinus size={14} aria-hidden="true" /><span className="btn-label">Remove</span>

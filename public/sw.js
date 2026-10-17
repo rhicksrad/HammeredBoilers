@@ -7,7 +7,7 @@
 // - /assets/*: Vite puts a hash in those names, so a cached copy never goes stale.
 // - Everything else (config.js, icons, manifest): serve the cached copy, refresh it behind the scenes.
 
-const CACHE = 'hb-v3'
+const CACHE = 'hb-v4'
 const SHELL = './'
 
 self.addEventListener('install', (event) => {
@@ -28,23 +28,27 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(req.url)
   if (url.origin !== self.location.origin) return
 
-  if (req.mode === 'navigate') event.respondWith(page(req))
+  if (req.mode === 'navigate') event.respondWith(page(req, event))
   else if (url.pathname.includes('/assets/')) event.respondWith(hashed(req))
   else event.respondWith(staleWhileRevalidate(req, event))
 })
 
-async function page(req) {
+async function page(req, event) {
   const cache = await caches.open(CACHE)
+  let res
   try {
-    const res = await fetch(req)
-    if (res.ok) {
-      await cache.put(SHELL, res.clone())
-      await pruneAssets(cache, await res.clone().text())
-    }
-    return res
+    res = await fetch(req)
   } catch {
     return (await cache.match(SHELL)) || Response.error()
   }
+  if (res.ok) {
+    const html = await res.clone().text()
+    const old = await cache.match(SHELL)
+    // A new deploy: drop the last one's JS/CSS before the page asks for its own files.
+    if (!old || (await old.text()) !== html) await pruneAssets(cache, html)
+    event.waitUntil(cache.put(SHELL, res.clone()))
+  }
+  return res
 }
 
 async function hashed(req) {
@@ -70,7 +74,9 @@ async function staleWhileRevalidate(req, event) {
   return fresh
 }
 
-// Drop JS/CSS from old deploys: anything under /assets/ the new page no longer mentions.
+// Drop JS/CSS from old deploys: anything under /assets/ the new page doesn't mention. Pages that load later
+// (the lazy ones) aren't in the HTML, so this only runs when the HTML changed; otherwise every open would
+// throw them away and fetch them again.
 async function pruneAssets(cache, html) {
   for (const req of await cache.keys()) {
     const path = new URL(req.url).pathname
