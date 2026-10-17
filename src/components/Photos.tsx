@@ -12,7 +12,7 @@ import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
 import { useReactions } from '../lib/reactions'
 import { ReactionBar } from './Reactions'
-import { PhotoComments, usePhotoComments } from './PhotoComments'
+import { PhotoComments, useCommentCounts, usePhotoComments } from './PhotoComments'
 
 export const isVideo = (p: Photo) => p.mime.startsWith('video/')
 const DAY = 86400_000
@@ -183,10 +183,12 @@ const fileName = (p: Photo, game?: Game) => {
 
 export function PhotoGrid({ photos, games, onOpen }: { photos: Shot[]; games: Record<string, Game>; onOpen: (i: number) => void }) {
   const url = useSignedUrls(photos.map((p) => p.thumb_path ?? p.path))
+  const commentCounts = useCommentCounts()
   return (
     <div className="photo-grid">
       {photos.map((p, i) => {
         const src = url(p.thumb_path ?? p.path)
+        const talk = p.copies.reduce((n, c) => n + (commentCounts[c.id] ?? 0), 0) // the stack shares one thread
         return (
           <button key={p.id} className="photo-tile" onClick={() => onOpen(i)} title={p.caption ?? ''}>
             {src && (isVideo(p) && !p.thumb_path
@@ -197,6 +199,11 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Shot[]; games: Re
             {p.copies.length > 1 && (
               <span className="tile-stack" title={`${p.copies.length} copies of this pic`}>
                 <Layers size={11} aria-hidden="true" />{p.copies.length}
+              </span>
+            )}
+            {talk > 0 && (
+              <span className="tile-talk" title={`${talk} comment${talk === 1 ? '' : 's'}`}>
+                <MessageSquare size={11} aria-hidden="true" />{talk}
               </span>
             )}
           </button>

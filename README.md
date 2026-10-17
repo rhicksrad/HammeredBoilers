@@ -33,7 +33,7 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
 - **Reactions & comments:** react to any photo, video, chat message or photo comment with an emoji: tap the smiley
   for quick picks, a bigger set, or any emoji off your keyboard. Tap a reaction to add or take back yours; the smiley
   also shows who reacted with what. Every photo and video has its own comment thread (**Comment** in the photo
-  viewer). Reactions to your things and comments on pics show up in the bell.
+  viewer); pics with comments show a speech bubble and count on their thumbnail. Reactions to your things and comments on pics show up in the bell.
 - **Crew:** your name and avatar: upload a photo, or pick a badge (hammer, train, beer…). Add buddies by email here.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.

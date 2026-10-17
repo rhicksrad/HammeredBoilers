@@ -110,3 +110,28 @@ export function PhotoComments({ photoId, comments, onClose }: {
     </aside>
   )
 }
+
+/** How many comments each photo has, kept live, for the badges on the grid. */
+export function useCommentCounts() {
+  const [rows, setRows] = useState<Record<string, string>>({}) // comment id → photo id
+  const load = useCallback(async () => {
+    const { data, error } = await supabase.from('photo_comments').select('id, photo_id')
+    if (!error) setRows(Object.fromEntries((data ?? []).map((c) => [c.id as string, c.photo_id as string])))
+  }, [])
+  useEffect(() => { load() }, [load])
+  useLiveTable<PhotoComment>('photo_comments', undefined, {
+    onInsert: (c) => setRows((cur) => ({ ...cur, [c.id]: c.photo_id })),
+    onDelete: (id) => setRows((cur) => {
+      if (!(id in cur)) return cur
+      const next = { ...cur }
+      delete next[id]
+      return next
+    }),
+    onResync: load,
+  })
+  return useMemo(() => {
+    const n: Record<string, number> = {}
+    for (const photoId of Object.values(rows)) n[photoId] = (n[photoId] ?? 0) + 1
+    return n
+  }, [rows])
+}
