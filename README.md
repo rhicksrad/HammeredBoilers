@@ -29,9 +29,22 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.
 
+## Put it on your phone
+
+It installs like an app: its own icon, full screen, no browser bar.
+
+- **iPhone:** open the site in Safari, tap **Share**, then **Add to Home Screen**.
+- **Android:** open it in Chrome, tap **⋮**, then **Add to Home screen** (or **Install app** if Chrome offers it).
+
+The home-screen app always loads the latest version when you have signal. With no signal it still opens, but
+nothing live works until you're back online.
+
 ## Stack
 
 - React + Vite, hosted free on GitHub Pages (`.github/workflows/deploy-pages.yml` deploys every push to `main`).
+- Installable as an app: [`public/manifest.webmanifest`](public/manifest.webmanifest), icons in `public/icons/`, and a
+  service worker ([`public/sw.js`](public/sw.js)) that caches only the app itself. The page is fetched fresh each open,
+  so deploys show up right away; Supabase and the other APIs are never cached.
 - Supabase (free tier) handles email login, Postgres, realtime, and photo storage. Supabase project:
   `hammered-boilers` (ref `noyvywdgqugdvsuvtwty`, East US).
 - Schedule: ESPN's public feed (Purdue = team 2509). Weather: Open-Meteo (Ross-Ade Stadium). Neither needs a key.
