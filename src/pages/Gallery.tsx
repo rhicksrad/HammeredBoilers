@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
-import { Download, Images } from 'lucide-react'
+import { Download, HardDrive, Images } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { gameDay, isGameday, isPast, plural } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, Photo } from '../lib/types'
+import { storageUsage, type Usage } from '../lib/storage'
 import { byShot, downloadAll, Lightbox, PhotoGrid, Uploader, useBackfillTakenAt } from '../components/Photos'
 
 export default function Gallery() {
@@ -15,6 +16,7 @@ export default function Gallery() {
   // By id, not position: a new upload landing at the front of the grid shouldn't swap what's on screen.
   const [openId, setOpenId] = useState<string | null>(null)
   const [zipping, setZipping] = useState(false)
+  const [usage, setUsage] = useState<Usage | null>(null)
 
   const loadPhotos = useCallback(() => {
     supabase.from('photos').select('*').order('created_at', { ascending: false })
@@ -38,6 +40,14 @@ export default function Gallery() {
     return c
   }, [photos])
 
+  // Re-check storage whenever the number of files changes (an upload or delete, here or from someone else).
+  const fileCount = photos?.length
+  useEffect(() => {
+    if (fileCount === undefined) return
+    const t = setTimeout(() => { storageUsage().then(setUsage, () => {}) }, 1500)
+    return () => clearTimeout(t)
+  }, [fileCount])
+
   useBackfillTakenAt(photos)
   // In the order they were taken: one game reads start to finish; everything else shows the newest first.
   const shown = useMemo(() => byShot((photos ?? []).filter((p) =>
@@ -59,6 +69,8 @@ export default function Gallery() {
         <h1 className="display">Gallery</h1>
         <p className="muted">Everyone's photos and videos from every tailgate, kept at full size.</p>
       </header>
+
+      {usage && <StorageMeter usage={usage} />}
 
       <Uploader games={uploadable.length ? uploadable : games} defaultGameId={defaultGame}
         onUploaded={(p) => setPhotos((cur) => cur && (cur.some((x) => x.id === p.id) ? cur : [p, ...cur]))} />
@@ -91,6 +103,28 @@ export default function Gallery() {
         <Lightbox photos={shown} index={open} games={gamesById} onClose={() => setOpenId(null)} onIndex={(i) => setOpenId(shown[i].id)}
           onDeleted={(id) => { setPhotos((cur) => cur?.filter((x) => x.id !== id) ?? cur); setOpenId(null) }} />
       )}
+    </div>
+  )
+}
+
+function gb(bytes: number) {
+  const g = bytes / 1024 ** 3
+  return g >= 10 ? `${Math.round(g)} GB` : g >= 1 ? `${g.toFixed(1)} GB` : `${Math.max(1, Math.round(bytes / 1024 ** 2))} MB`
+}
+
+function StorageMeter({ usage }: { usage: Usage }) {
+  const pct = Math.min(100, (usage.bytes / usage.limit) * 100)
+  const level = pct >= 90 ? 'bad' : pct >= 75 ? 'warn' : 'ok'
+  return (
+    <div className={`storage-meter ${level}`}>
+      <div className="storage-meter-row">
+        <span><HardDrive size={14} aria-hidden="true" /> Storage</span>
+        <span className="muted">{gb(usage.bytes)} of {gb(usage.limit)} free</span>
+      </div>
+      <div className="storage-meter-track" role="progressbar" aria-label="Storage used"
+        aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
+        <div className="storage-meter-fill" style={{ width: `${Math.max(pct, 0.5)}%` }} />
+      </div>
     </div>
   )
 }

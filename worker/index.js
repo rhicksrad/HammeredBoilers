@@ -8,6 +8,7 @@
 //   POST   /sign        { paths, ttl?, download? }  -> { urls: [{ path, url }] }    (crew only)
 //   PUT    /o/<path>    body = the file                                            (crew only, own folder)
 //   POST   /delete      { paths }                                                  (crew only, own folder)
+//   GET    /usage       -> { bytes, files, limit }  total stored in R2                (crew only)
 //   GET    /f/<path>?e=<expires>&s=<signature>[&d=<download name>]                 (signed link)
 //   PUT    /migrate/<path>  header x-migrate-token                                 (one-time copy from Supabase)
 // It also pings Supabase on a schedule so the free project never pauses (see wrangler.toml).
@@ -15,6 +16,8 @@
 const MAX_BYTES = 100 * 1024 * 1024 // Workers' request body cap on the free plan
 const MAX_TTL = 24 * 3600
 const AUTH_TTL_MS = 60_000
+const FREE_BYTES = 10 * 1024 ** 3 // R2 free tier: 10 GB-month of storage
+const USAGE_TTL_MS = 5 * 60_000
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -35,6 +38,7 @@ export default {
       if (route === 'sign' && req.method === 'POST') return await sign(req, env, url)
       if (route === 'o' && req.method === 'PUT') return await upload(req, env, path)
       if (route === 'delete' && req.method === 'POST') return await remove(req, env)
+      if (route === 'usage' && req.method === 'GET') return await usage(req, env)
       if (route === 'migrate' && req.method === 'PUT') return await migrate(req, env, path)
       return text('Not found', 404)
     } catch (e) {
@@ -172,6 +176,7 @@ async function putFile(req, env, path) {
   if (!size) return text('Missing file', 411)
   if (size > MAX_BYTES) return text(`Files can be up to ${MAX_BYTES / 1024 / 1024} MB`, 413)
   await env.FILES.put(path, req.body, { httpMetadata: { contentType: type } })
+  usageCache = null
   return json({ path })
 }
 
@@ -188,6 +193,7 @@ async function remove(req, env) {
   const mine = paths.filter((p) => ownedBy(uid, p))
   if (mine.length) {
     await env.FILES.delete(mine)
+    usageCache = null
     // Also drop any copy still in the old Supabase bucket, so the migration script doesn't bring it back.
     await fetch(`${env.SUPABASE_URL}/storage/v1/object/gallery`, {
       method: 'DELETE',
@@ -204,4 +210,24 @@ async function migrate(req, env, path) {
   if (!validPath(path)) return text('Bad path', 400)
   if (await env.FILES.head(path)) return json({ path, skipped: true })
   return putFile(req, env, path)
+}
+
+// ---------------------------------------------------------------------------
+// Storage used, for the meter on the Gallery page. Adds up every object in the bucket (1000 per page),
+// cached for a few minutes and cleared whenever this instance uploads or deletes something.
+// ---------------------------------------------------------------------------
+let usageCache = null
+
+async function usage(req, env) {
+  await crewMember(req, env)
+  if (!usageCache || usageCache.until < Date.now()) {
+    let bytes = 0, files = 0, cursor
+    do {
+      const page = await env.FILES.list({ cursor, limit: 1000 })
+      for (const o of page.objects) { bytes += o.size; files++ }
+      cursor = page.truncated ? page.cursor : undefined
+    } while (cursor)
+    usageCache = { body: { bytes, files, limit: FREE_BYTES }, until: Date.now() + USAGE_TTL_MS }
+  }
+  return json(usageCache.body)
 }

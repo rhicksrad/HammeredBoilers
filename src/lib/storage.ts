@@ -45,3 +45,11 @@ export async function signFiles(paths: string[], ttl: number, download?: string)
   })
   return urls
 }
+
+export type Usage = { bytes: number; files: number; limit: number }
+
+/** How much the R2 file service holds, against its free tier. Null when files are still in Supabase. */
+export async function storageUsage(): Promise<Usage | null> {
+  if (!filesUrl) return null
+  return call('usage', { method: 'GET' })
+}
