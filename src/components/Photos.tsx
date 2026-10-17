@@ -39,7 +39,9 @@ export const stackDupes = (photos: Photo[], hashOf: (p: Photo) => string | null 
   const groups = new Map<string, Photo[]>()
   for (const p of photos) {
     const k = hashOf(p) ?? p.id
-    groups.set(k, [...(groups.get(k) ?? []), p])
+    const g = groups.get(k)
+    if (g) g.push(p)
+    else groups.set(k, [p])
   }
   const shots: Shot[] = []
   for (const p of photos) {
@@ -174,8 +176,8 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Shot[]; games: Re
         return (
           <button key={p.id} className="photo-tile" onClick={() => onOpen(i)} title={p.caption ?? ''}>
             {src && (isVideo(p) && !p.thumb_path
-              ? <video src={`${src}#t=0.1`} muted preload="metadata" playsInline />
-              : <img src={src} alt={p.caption ?? ''} loading="lazy" />)}
+              ? <LazyVideo src={`${src}#t=0.1`} />
+              : <img src={src} alt={p.caption ?? ''} loading="lazy" decoding="async" />)}
             {isVideo(p) && <span className="play"><span><Play size={18} fill="currentColor" aria-hidden="true" /></span></span>}
             {p.game_id && games[p.game_id] && <span className="tile-tag">{games[p.game_id].opponent}</span>}
             {uploaders(p).length > 1 && (
@@ -190,6 +192,23 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Shot[]; games: Re
   )
 }
 
+/**
+ * A video tile with no preview picture (older uploads): a <video> starts fetching as soon as it's on the page,
+ * so it only goes in once the tile scrolls near the screen.
+ */
+function LazyVideo({ src }: { src: string }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [near, setNear] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || near) return
+    const io = new IntersectionObserver((entries) => { if (entries.some((e) => e.isIntersecting)) setNear(true) }, { rootMargin: '400px' })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [near])
+  return near ? <video src={src} muted preload="metadata" playsInline /> : <span ref={ref} className="tile-fill" />
+}
+
 /** Everyone who added this pic, first uploader first (once each, however many copies they added). */
 const uploaders = (p: Shot) => [...new Set(p.copies.map((c) => c.uploader_id))]
 
@@ -199,7 +218,16 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
 }) {
   const { me, profiles } = useAuth()
   const p = photos[index]
-  const url = useSignedUrls(p ? [p.path] : [])
+  // This one, its preview (already loaded by the grid, so it shows at once), and the ones either side, so a
+  // swipe lands on a photo that's already on its way.
+  const near = photos.length > 1 ? [photos[(index + 1) % photos.length], photos[(index - 1 + photos.length) % photos.length]] : []
+  const url = useSignedUrls(p ? [p.path, ...(p.thumb_path ? [p.thumb_path] : []), ...near.map((n) => n.path)] : [])
+  const [shown, setShown] = useState<string | null>(null) // the full-size link that has finished loading
+  const [broken, setBroken] = useState<string | null>(null) // one this browser can't show (e.g. HEIC outside Safari)
+  const nearKey = near.map((n) => (isVideo(n) ? '' : url(n.path) ?? '')).join('|')
+  useEffect(() => {
+    nearKey.split('|').filter(Boolean).forEach((u) => { const img = new Image(); img.decoding = 'async'; img.src = u })
+  }, [nearKey])
   // A swipe is one finger moving sideways at normal zoom. A pinch, or panning around a
   // pinched-in photo, also moves fingers sideways, so those never change the photo.
   const swipe = useRef<{ x: number; y: number; pinched: boolean } | null>(null)
@@ -218,6 +246,7 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
 
   if (!p) return null
   const src = url(p.path)
+  const thumb = url(p.thumb_path)
   const game = p.game_id ? games[p.game_id] : undefined
 
   const download = async () => {
@@ -254,8 +283,13 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
       }}
       onTouchCancel={() => { swipe.current = null }}>
       <div className="lb-stage" onClick={(e) => e.stopPropagation()}>
-        {src ? (isVideo(p) ? <video src={src} controls autoPlay playsInline /> : <img src={src} alt={p.caption ?? ''} />)
-          : <div className="loading">Loading…</div>}
+        {isVideo(p) ? (src ? <video key={src} src={src} poster={thumb} controls autoPlay playsInline /> : <div className="loading">Loading…</div>)
+          : <>
+            {thumb && shown !== src && <img className="lb-preview" src={thumb} alt="" aria-hidden="true" />}
+            {src && broken !== src && <img key={src} src={src} alt={p.caption ?? ''} decoding="async"
+              onLoad={() => setShown(src)} onError={() => setBroken(src)} />}
+            {!src && !thumb && <div className="loading">Loading…</div>}
+          </>}
       </div>
       <div className="lb-bar" onClick={(e) => e.stopPropagation()}>
         <div>
