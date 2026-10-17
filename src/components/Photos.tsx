@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { downloadZip } from 'client-zip'
-import { ChevronLeft, ChevronRight, Download, ImagePlus, Layers, Play, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, ImagePlus, Layers, MessageSquare, Play, Trash2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { fileHashes, removeFiles, signFiles, uploadFile } from '../lib/storage'
 import { useSignedUrls } from '../lib/signedUrls'
@@ -10,6 +10,9 @@ import { gameDay, when } from '../lib/format'
 import type { Game, Photo } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
+import { useReactions } from '../lib/reactions'
+import { ReactionBar } from './Reactions'
+import { PhotoComments, usePhotoComments } from './PhotoComments'
 
 export const isVideo = (p: Photo) => p.mime.startsWith('video/')
 const DAY = 86400_000
@@ -232,10 +235,14 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
   // pinched-in photo, also moves fingers sideways, so those never change the photo.
   const swipe = useRef<{ x: number; y: number; pinched: boolean } | null>(null)
   const zoomed = () => (window.visualViewport?.scale ?? 1) > 1.01
+  const reactions = useReactions('photo', p ? [p.id] : [])
+  const comments = usePhotoComments(p ? p.copies.map((c) => c.id) : [])
+  const [talking, setTalking] = useState(false) // the comments panel stays open from one pic to the next
 
   const go = useCallback((d: number) => onIndex((index + d + photos.length) % photos.length), [index, photos.length, onIndex])
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if ((e.target as HTMLElement)?.closest?.('input, textarea')) return // typing a comment
       if (e.key === 'Escape') onClose()
       if (e.key === 'ArrowRight') go(1)
       if (e.key === 'ArrowLeft') go(-1)
@@ -267,7 +274,7 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
   const who = uploaders(p)
 
   return (
-    <div className="lightbox" onClick={onClose}
+    <div className={`lightbox ${talking ? 'talking' : ''}`} onClick={onClose}
       onTouchStart={(e) => {
         if (e.touches.length > 1) { if (swipe.current) swipe.current.pinched = true; return }
         swipe.current = zoomed() ? null : { x: e.touches[0].clientX, y: e.touches[0].clientY, pinched: false }
@@ -300,8 +307,14 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
             {' · '}{when(shotAt(p, game))}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
+          {reactions.ready && <ReactionBar always list={reactions.of(p.id)} onToggle={(e) => reactions.toggle(p.id, e)} />}
         </div>
         <div className="row">
+          {comments.ready && (
+            <button className={`btn ghost sm ${talking ? 'on' : ''}`} aria-pressed={talking} onClick={() => setTalking((t) => !t)}>
+              <MessageSquare size={15} aria-hidden="true" />{comments.rows?.length ? `Comments (${comments.rows.length})` : 'Comment'}
+            </button>
+          )}
           <button className="btn ghost sm" onClick={download}><Download size={15} aria-hidden="true" />Download</button>
           {mine.length > 0 && <button className="btn ghost sm danger" onClick={del}><Trash2 size={15} aria-hidden="true" />{others ? 'Remove mine' : 'Delete'}</button>}
         </div>
@@ -311,6 +324,12 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
         <button className="lb-nav next" aria-label="Next" onClick={(e) => { e.stopPropagation(); go(1) }}><ChevronRight size={22} aria-hidden="true" /></button>
       </>}
       <button className="lb-close" aria-label="Close" onClick={onClose}><X size={20} aria-hidden="true" /></button>
+      {talking && comments.ready && (
+        <div className="lb-comments-wrap" onClick={(e) => e.stopPropagation()}
+          onTouchStart={(e) => e.stopPropagation()} onTouchEnd={(e) => e.stopPropagation()}>
+          <PhotoComments photoId={p.id} comments={comments} onClose={() => setTalking(false)} />
+        </div>
+      )}
     </div>
   )
 }

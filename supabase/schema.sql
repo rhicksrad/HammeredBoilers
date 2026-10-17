@@ -553,12 +553,109 @@ create policy gallery_delete on storage.objects for delete to authenticated
          and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ---------------------------------------------------------------------------
+-- Photo comments: a thread under every photo and video.
+-- ---------------------------------------------------------------------------
+create table if not exists public.photo_comments (
+  id         uuid primary key default gen_random_uuid(),
+  photo_id   uuid not null references public.photos(id) on delete cascade,
+  author_id  uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  body       text not null check (char_length(body) between 1 and 1000),
+  created_at timestamptz not null default now()
+);
+create index if not exists photo_comments_photo_idx on public.photo_comments (photo_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Emoji reactions on photos, chat messages and photo comments. One row per person per emoji per thing.
+-- owner_id is whose thing it is (filled in here, not by the site), so the bell can say "reacted to your photo".
+-- ---------------------------------------------------------------------------
+create table if not exists public.reactions (
+  id          uuid primary key default gen_random_uuid(),
+  target_type text not null check (target_type in ('photo', 'message', 'comment')),
+  target_id   uuid not null,
+  owner_id    uuid references public.profiles(id) on delete cascade,
+  user_id     uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  emoji       text not null check (char_length(emoji) between 1 and 16),
+  created_at  timestamptz not null default now(),
+  unique (target_type, target_id, user_id, emoji)
+);
+create index if not exists reactions_target_idx on public.reactions (target_id);
+create index if not exists reactions_owner_idx on public.reactions (owner_id, created_at desc);
+
+create or replace function public.reaction_owner()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  new.owner_id := case new.target_type
+    when 'photo'   then (select uploader_id from public.photos where id = new.target_id)
+    when 'message' then (select author_id from public.messages where id = new.target_id)
+    when 'comment' then (select author_id from public.photo_comments where id = new.target_id)
+  end;
+  if new.owner_id is null then
+    raise exception 'That is gone';
+  end if;
+  return new;
+end;
+$$;
+
+drop trigger if exists reaction_owner on public.reactions;
+create trigger reaction_owner
+  before insert on public.reactions
+  for each row execute function public.reaction_owner();
+
+-- Deleting a photo, message or comment takes its reactions with it (whoever left them).
+create or replace function public.drop_reactions()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  delete from public.reactions where target_id = old.id;
+  return old;
+end;
+$$;
+
+drop trigger if exists photos_drop_reactions on public.photos;
+create trigger photos_drop_reactions after delete on public.photos
+  for each row execute function public.drop_reactions();
+drop trigger if exists messages_drop_reactions on public.messages;
+create trigger messages_drop_reactions after delete on public.messages
+  for each row execute function public.drop_reactions();
+drop trigger if exists photo_comments_drop_reactions on public.photo_comments;
+create trigger photo_comments_drop_reactions after delete on public.photo_comments
+  for each row execute function public.drop_reactions();
+
+alter table public.photo_comments enable row level security;
+alter table public.reactions      enable row level security;
+
+-- photo comments: post as yourself; delete only your own
+drop policy if exists photo_comments_select on public.photo_comments;
+drop policy if exists photo_comments_insert on public.photo_comments;
+drop policy if exists photo_comments_delete on public.photo_comments;
+create policy photo_comments_select on public.photo_comments for select to authenticated using ((select public.is_member()));
+create policy photo_comments_insert on public.photo_comments for insert to authenticated
+  with check ((select public.is_member()) and author_id = (select auth.uid()));
+create policy photo_comments_delete on public.photo_comments for delete to authenticated
+  using ((select public.is_member()) and author_id = (select auth.uid()));
+revoke update on public.photo_comments from anon, authenticated;
+
+-- reactions: react as yourself; take back only your own; never edited
+drop policy if exists reactions_select on public.reactions;
+drop policy if exists reactions_insert on public.reactions;
+drop policy if exists reactions_delete on public.reactions;
+create policy reactions_select on public.reactions for select to authenticated using ((select public.is_member()));
+create policy reactions_insert on public.reactions for insert to authenticated
+  with check ((select public.is_member()) and user_id = (select auth.uid()));
+create policy reactions_delete on public.reactions for delete to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()));
+revoke update on public.reactions from anon, authenticated;
+
+-- ---------------------------------------------------------------------------
 -- Realtime: push changes to everyone's screen live.
 -- ---------------------------------------------------------------------------
 do $$
 declare t text;
 begin
-  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests'] loop
+  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests', 'photo_comments', 'reactions'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

@@ -30,6 +30,10 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   not when it was uploaded). The same pic added by more than one person shows once, stacked, with everyone who
   added it. That covers re-shared copies too (texted or AirDropped, so the file changed): two people's pics taken
   within two seconds that look alike count as one. Originals stay full-size, and you can download one or zip a whole game.
+- **Reactions & comments:** react to any photo, video, chat message or photo comment with an emoji: tap the smiley
+  for quick picks, a bigger set, or any emoji off your keyboard. Tap a reaction to add or take back yours; the smiley
+  also shows who reacted with what. Every photo and video has its own comment thread (**Comment** in the photo
+  viewer). Reactions to your things and comments on pics show up in the bell.
 - **Crew:** your name and avatar: upload a photo, or pick a badge (hammer, train, beer…). Add buddies by email here.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.

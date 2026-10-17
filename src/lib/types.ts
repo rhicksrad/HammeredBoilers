@@ -88,3 +88,23 @@ export type SongRequest = {
   decided_at: string | null
   created_at: string
 }
+
+export type PhotoComment = {
+  id: string
+  photo_id: string
+  author_id: string
+  body: string
+  created_at: string
+}
+
+export type ReactionTarget = 'photo' | 'message' | 'comment'
+
+export type Reaction = {
+  id: string
+  target_type: ReactionTarget
+  target_id: string
+  owner_id: string | null // whose photo / message / comment it is
+  user_id: string         // who reacted
+  emoji: string
+  created_at: string
+}
