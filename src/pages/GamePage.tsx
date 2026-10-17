@@ -81,7 +81,7 @@ export default function GamePage() {
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
-  const shots = useMemo(() => byShot(photos), [photos]) // the day in the order it happened
+  const shots = useMemo(() => byShot(photos, gamesById), [photos, gamesById]) // the day in the order it happened
   const open = openId ? shots.findIndex((p) => p.id === openId) : -1
 
   if (game === undefined) return <div className="loading">Loading…</div>

@@ -51,7 +51,7 @@ export default function Gallery() {
   useBackfillTakenAt(photos)
   // In the order they were taken: one game reads start to finish; everything else shows the newest first.
   const shown = useMemo(() => byShot((photos ?? []).filter((p) =>
-    filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), filter === 'all' || filter === 'none'), [photos, filter])
+    filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), gamesById, filter === 'all' || filter === 'none'), [photos, gamesById, filter])
   const open = openId ? shown.findIndex((p) => p.id === openId) : -1
 
   // Default upload target: the game in view, else today's / the most recent home game.

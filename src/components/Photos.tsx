@@ -12,13 +12,24 @@ import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
 
 export const isVideo = (p: Photo) => p.mime.startsWith('video/')
-export const shotAt = (p: Photo) => p.taken_at ?? p.created_at
+const DAY = 86400_000
+/**
+ * When a pic was taken. A pic tagged to a game whose file says it was made more than a day after kickoff was
+ * re-saved later (texted, AirDropped, exported), so its file date is when it was shared: use kickoff instead.
+ */
+export const shotAt = (p: Photo, game?: Game) => {
+  const t = p.taken_at ?? p.created_at
+  if (game && new Date(t).getTime() > new Date(game.kickoff).getTime() + DAY) return game.kickoff
+  return t
+}
 /** In the order they were taken: oldest first (a game day as it happened), or newest first. */
-export const byShot = (photos: Photo[], newestFirst = false) =>
-  [...photos].sort((a, b) => shotAt(a).localeCompare(shotAt(b)) * (newestFirst ? -1 : 1))
+export const byShot = (photos: Photo[], games: Record<string, Game>, newestFirst = false) => {
+  const at = new Map(photos.map((p) => [p.id, new Date(shotAt(p, p.game_id ? games[p.game_id] : undefined)).getTime()]))
+  return [...photos].sort((a, b) => (at.get(a.id)! - at.get(b.id)!) * (newestFirst ? -1 : 1))
+}
 const fileName = (p: Photo, game?: Game) => {
   const ext = p.path.split('.').pop()
-  const stamp = new Date(shotAt(p)).toISOString().slice(0, 19).replace(/[T:]/g, '-')
+  const stamp = new Date(shotAt(p, game)).toISOString().slice(0, 19).replace(/[T:]/g, '-')
   return `${game ? `purdue-vs-${game.opponent.toLowerCase().replace(/\W+/g, '-')}` : 'tailgate'}-${stamp}-${p.id.slice(0, 4)}.${ext}`
 }
 
@@ -104,7 +115,7 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
         <div>
           {p.caption && <div className="lb-caption">{p.caption}</div>}
           <div className="muted small icon-text">
-            <Avatar p={profiles[p.uploader_id]} size={18} />{nameOf(profiles[p.uploader_id])} · {when(shotAt(p))}
+            <Avatar p={profiles[p.uploader_id]} size={18} />{nameOf(profiles[p.uploader_id])} · {when(shotAt(p, game))}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
         </div>
