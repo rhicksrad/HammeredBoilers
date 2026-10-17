@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
-import { AtSign, Bell, Camera, ClipboardList, Headphones, Image, MessageCircle, UserPlus, UtensilsCrossed, type LucideIcon } from 'lucide-react'
+import { AtSign, Bell, Camera, ClipboardList, Headphones, Image, MessageCircle, MessageSquare, SmilePlus, UserPlus, UtensilsCrossed, type LucideIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { mentionsMe, plainMentions } from '../lib/mentions'
 import { plural, when } from '../lib/format'
-import type { ListItem, Message, Photo, Profile, SongRequest } from '../lib/types'
+import type { ListItem, Message, Photo, PhotoComment, Profile, Reaction, SongRequest } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
 
@@ -13,16 +13,23 @@ type Post = Pick<Message, 'id' | 'game_id' | 'author_id' | 'body' | 'created_at'
 type Added = Pick<ListItem, 'id' | 'game_id' | 'kind' | 'label' | 'created_by' | 'created_at'>
 type Pic = Pick<Photo, 'id' | 'game_id' | 'uploader_id' | 'created_at'>
 type Song = Pick<SongRequest, 'id' | 'game_id' | 'requested_by' | 'song' | 'artist' | 'created_at'>
+type Reacted = Pick<Reaction, 'id' | 'target_type' | 'target_id' | 'user_id' | 'emoji' | 'created_at'>
+type Comment = Pick<PhotoComment, 'id' | 'photo_id' | 'author_id' | 'body' | 'created_at'>
 
-type Kind = 'join' | 'tag' | 'chat' | 'food' | 'ask' | 'photo' | 'song'
-type Activity = { key: string; kind: Kind; at: string; who: string; gameId: string | null; text: string }
+type Kind = 'join' | 'tag' | 'chat' | 'food' | 'ask' | 'photo' | 'song' | 'react' | 'comment'
+type Activity = {
+  key: string; kind: Kind; at: string; who: string; gameId: string | null; text: string
+  target?: { type: Reaction['target_type']; id: string } // reactions and comments: the thing to open
+}
 
 const KEEP = 30 // per source, and the most the bell lists
 const PHOTO_BURST = 10 * 60_000 // photos one person adds to one place within 10 minutes show as one line
 
 const ICONS: Record<Kind, LucideIcon> = {
   join: UserPlus, tag: AtSign, chat: MessageCircle, food: UtensilsCrossed, ask: ClipboardList, photo: Camera, song: Headphones,
+  react: SmilePlus, comment: MessageSquare,
 }
+const THING: Record<Reaction['target_type'], string> = { photo: 'your pic', message: 'your message', comment: 'your comment' }
 
 // "Seen up to" lives on this device only; it's just for the unread count. The bell used to list only
 // tags, so a device that had opened it before picks up from there instead of lighting up with old news.
@@ -52,6 +59,8 @@ export default function ActivityBell() {
   const [added, setAdded] = useState<Added[]>([])
   const [pics, setPics] = useState<Pic[]>([])
   const [songs, setSongs] = useState<Song[]>([])
+  const [reacts, setReacts] = useState<Reacted[]>([])
+  const [comments, setComments] = useState<Comment[]>([])
   const [games, setGames] = useState<Record<string, string>>({})
   const [open, setOpen] = useState(false)
   const [seen, setSeen] = useState('')
@@ -71,6 +80,11 @@ export default function ActivityBell() {
       .neq('uploader_id', myId).order('created_at', { ascending: false }).limit(KEEP), setPics)
     recent(supabase.from('song_requests').select('id, game_id, requested_by, song, artist, created_at')
       .neq('requested_by', myId).order('created_at', { ascending: false }).limit(KEEP), setSongs)
+    // Reactions to your things (owner_id is filled in by the database) and comments on anyone's pics.
+    recent(supabase.from('reactions').select('id, target_type, target_id, user_id, emoji, created_at')
+      .eq('owner_id', myId).neq('user_id', myId).order('created_at', { ascending: false }).limit(KEEP), setReacts)
+    recent(supabase.from('photo_comments').select('id, photo_id, author_id, body, created_at')
+      .neq('author_id', myId).order('created_at', { ascending: false }).limit(KEEP), setComments)
     supabase.from('games').select('id, opponent')
       .then(({ data }) => setGames(Object.fromEntries((data ?? []).map((g) => [g.id, g.opponent as string]))))
   }, [myId])
@@ -93,6 +107,14 @@ export default function ActivityBell() {
     onInsert: (s) => { if (s.requested_by !== myId) setSongs(addRow<Song>(s)) },
     onUpsert: (s) => setSongs(patchRow<Song>(s)),
     onDelete: (id) => setSongs(dropRow(id)),
+  }, live)
+  useLiveTable<Reaction>('reactions', myId ? `owner_id=eq.${myId}` : undefined, {
+    onInsert: (r) => { if (r.user_id !== myId) setReacts(addRow<Reacted>(r)) },
+    onDelete: (id) => setReacts(dropRow(id)), // taken back: the line goes too
+  }, live)
+  useLiveTable<PhotoComment>('photo_comments', undefined, {
+    onInsert: (c) => { if (c.author_id !== myId) setComments(addRow<Comment>(c)) },
+    onDelete: (id) => setComments(dropRow(id)),
   }, live)
   useLiveTable<{ id: string; opponent: string }>('games', undefined, {
     onUpsert: (g) => setGames((cur) => ({ ...cur, [g.id]: g.opponent })),
@@ -135,8 +157,20 @@ export default function ActivityBell() {
         text: `Requested ${s.song}${s.artist ? ` by ${s.artist}` : ''}`,
       })
     }
+    for (const r of reacts) {
+      out.push({
+        key: `react:${r.id}`, kind: 'react', at: r.created_at, who: r.user_id, gameId: null,
+        text: `Reacted ${r.emoji} to ${THING[r.target_type]}`, target: { type: r.target_type, id: r.target_id },
+      })
+    }
+    for (const c of comments) {
+      out.push({
+        key: `comment:${c.id}`, kind: 'comment', at: c.created_at, who: c.author_id, gameId: null,
+        text: `Commented on a pic: ${c.body}`, target: { type: 'photo', id: c.photo_id },
+      })
+    }
     return out.sort((a, b) => b.at.localeCompare(a.at)).slice(0, KEEP)
-  }, [profiles, posts, added, pics, songs, myId])
+  }, [profiles, posts, added, pics, songs, reacts, comments, myId])
 
   useEffect(() => {
     if (!open) return
@@ -152,15 +186,28 @@ export default function ActivityBell() {
     setOpen((o) => !o)
     if (!open && feed[0]) { writeSeen(myId, feed[0].at); setTimeout(() => setSeen(feed[0].at), 1500) }
   }
-  const go = (a: Activity) => {
+  const go = async (a: Activity) => {
     setOpen(false)
+    if (a.target) {
+      // Open the pic itself, or the chat the message is in.
+      let { type, id } = a.target
+      if (type === 'comment') {
+        const { data } = await supabase.from('photo_comments').select('photo_id').eq('id', id).maybeSingle()
+        if (!data) return
+        ;[type, id] = ['photo', data.photo_id as string]
+      }
+      if (type === 'photo') return navigate(`/gallery?photo=${id}`)
+      const { data } = await supabase.from('messages').select('game_id').eq('id', id).maybeSingle()
+      if (!data) return
+      return navigate(data.game_id ? `/game/${data.game_id}?tab=chat` : '/playground')
+    }
     if (a.kind === 'join') return navigate('/crew')
     if (a.kind === 'photo') return navigate(a.gameId ? `/game/${a.gameId}?tab=pics` : '/gallery')
     const tab = a.kind === 'tag' ? 'chat' : a.kind === 'ask' ? 'asks' : a.kind === 'song' ? 'dj' : a.kind
     navigate(a.gameId ? `/game/${a.gameId}?tab=${tab}` : '/playground')
   }
   const where = (a: Activity) =>
-    a.kind === 'join' ? '' : a.gameId ? ` · vs ${games[a.gameId] ?? 'a game'}` : a.kind === 'photo' ? ' · Gallery' : ' · Playground'
+    a.kind === 'join' || a.kind === 'react' ? '' : a.kind === 'comment' ? ' · Gallery' : a.gameId ? ` · vs ${games[a.gameId] ?? 'a game'}` : a.kind === 'photo' ? ' · Gallery' : ' · Playground'
 
   return (
     <div className="bell-wrap" ref={box}>

@@ -1,4 +1,4 @@
-import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { ImagePlus, Megaphone, MessageCircle, SendHorizontal, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { removeFiles, uploadFile } from '../lib/storage'
@@ -10,6 +10,8 @@ import type { Message, Profile } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
 import { useSignedUrls } from '../lib/signedUrls'
+import { useReactions, type Reactions } from '../lib/reactions'
+import { ReactButton, ReactionBar } from './Reactions'
 
 const PAGE = 100
 const MAX_IMAGE_MB = 15
@@ -178,6 +180,8 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     setMsgs((cur) => cur?.filter((x) => x.id !== m.id) ?? cur)
   }, [])
   const onImageLoad = useCallback(() => { if (stickToBottom.current) scrollDown() }, [])
+  const msgIds = useMemo(() => msgs?.map((m) => m.id) ?? [], [msgs])
+  const reactions = useReactions('message', msgIds)
 
   return (
     <div
@@ -193,7 +197,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
         {msgs === null && <div className="loading">Loading chat…</div>}
         {hasMore && <button className="btn ghost sm older" onClick={loadOlder}>Load older messages</button>}
         {msgs?.length === 0 && <div className="chat-empty"><MessageCircle size={26} aria-hidden="true" />No messages yet. Start it off.</div>}
-        {msgs && <MessageList msgs={msgs} me={me} profiles={profiles} onRemove={remove} onImageLoad={onImageLoad} />}
+        {msgs && <MessageList msgs={msgs} me={me} profiles={profiles} reactions={reactions} onRemove={remove} onImageLoad={onImageLoad} />}
       </div>
       {readOnlyNote && <div className="chat-note muted small">{readOnlyNote}</div>}
       <form className="chat-input" onSubmit={send}>
@@ -254,8 +258,8 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
   )
 }
 
-const MessageList = memo(function MessageList({ msgs, me, profiles, onRemove, onImageLoad }: {
-  msgs: Message[]; me: Profile | null; profiles: Record<string, Profile>
+const MessageList = memo(function MessageList({ msgs, me, profiles, reactions, onRemove, onImageLoad }: {
+  msgs: Message[]; me: Profile | null; profiles: Record<string, Profile>; reactions: Reactions
   onRemove: (m: Message) => void; onImageLoad: () => void
 }) {
   return (
@@ -282,8 +286,12 @@ const MessageList = memo(function MessageList({ msgs, me, profiles, onRemove, on
                 )}
                 {m.body && <div className="msg-body"><RichText text={m.body} /></div>}
                 {m.image_path && <ChatImage path={m.image_path} onLoad={onImageLoad} />}
+                {reactions.ready && <ReactionBar list={reactions.of(m.id)} onToggle={(e) => reactions.toggle(m.id, e)} />}
               </div>
-              {mine && <button className="msg-del" title="Delete" aria-label="Delete message" onClick={() => onRemove(m)}><X size={14} aria-hidden="true" /></button>}
+              <div className="msg-actions">
+                {reactions.ready && <ReactButton className="msg-act" list={reactions.of(m.id)} onToggle={(e) => reactions.toggle(m.id, e)} />}
+                {mine && <button className="msg-act del" title="Delete" aria-label="Delete message" onClick={() => onRemove(m)}><X size={14} aria-hidden="true" /></button>}
+              </div>
             </div>
           </Fragment>
         )
@@ -319,7 +327,7 @@ function embedFor(url: string): Embed | null {
 }
 
 /** Plain text with clickable links, plus an inline preview of the first GIF/image link. */
-function RichText({ text }: { text: string }) {
+export function RichText({ text }: { text: string }) {
   const urls: string[] = [...(text.match(URL_RE) ?? [])]
   const embed = urls.map(embedFor).find(Boolean) ?? null
   const justTheLink = embed && urls.length === 1 && text.trim() === urls[0]

@@ -15,6 +15,13 @@ export default function Gallery() {
   const [photos, setPhotos] = useState<Photo[] | null>(null)
   // By id, not position: a new upload landing at the front of the grid shouldn't swap what's on screen.
   const [openId, setOpenId] = useState<string | null>(null)
+  // ?photo=… (from the bell: a reaction or comment on a pic) opens that pic.
+  const wantPhoto = params.get('photo')
+  useEffect(() => { if (wantPhoto) setOpenId(wantPhoto) }, [wantPhoto])
+  const close = () => {
+    setOpenId(null)
+    if (wantPhoto) setParams(filter === 'all' ? {} : { game: filter }, { replace: true })
+  }
   const [zipping, setZipping] = useState(false)
   const [usage, setUsage] = useState<Usage | null>(null)
 
@@ -57,7 +64,8 @@ export default function Gallery() {
   const shown = useMemo(() => stackDupes(byShot((photos ?? []).filter((p) =>
     filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), gamesById, filter === 'all' || filter === 'none'), stackKey),
   [photos, gamesById, filter, stackKey])
-  const open = openId ? shown.findIndex((p) => p.id === openId) : -1
+  // A pic further down a stack (someone else's copy) opens the stack.
+  const open = openId ? shown.findIndex((p) => p.id === openId || p.copies.some((c) => c.id === openId)) : -1
 
   // Default upload target: the game in view, else today's / the most recent home game.
   const defaultGame = filter !== 'all' && filter !== 'none' ? filter
@@ -105,8 +113,8 @@ export default function Gallery() {
         : <div className="card empty"><Images size={26} aria-hidden="true" />Nothing here yet. Add the first photo above.</div>}
 
       {open >= 0 && (
-        <Lightbox photos={shown} index={open} games={gamesById} onClose={() => setOpenId(null)} onIndex={(i) => setOpenId(shown[i].id)}
-          onDeleted={(id) => { setPhotos((cur) => cur?.filter((x) => x.id !== id) ?? cur); setOpenId(null) }} />
+        <Lightbox photos={shown} index={open} games={gamesById} onClose={close} onIndex={(i) => setOpenId(shown[i].id)}
+          onDeleted={(id) => { setPhotos((cur) => cur?.filter((x) => x.id !== id) ?? cur); close() }} />
       )}
     </div>
   )

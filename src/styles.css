@@ -404,10 +404,12 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .msg-time { font-size: 11.5px; color: var(--muted); }
 .msg-body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14.5px; color: #e6e2db; }
 .msg-img { display: block; max-width: min(320px, 100%); max-height: 280px; border-radius: 10px; margin-top: 6px; }
-.msg-del { position: absolute; right: 6px; top: 6px; display: grid; place-items: center; width: 26px; height: 26px; background: var(--card-2); border: 1px solid var(--line-2); color: var(--muted); border-radius: 6px; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
-.msg:hover .msg-del, .msg-del:focus-visible { opacity: 1; }
-.msg-del:hover { color: var(--bad); border-color: var(--bad); }
-@media (hover: none) { .msg-del { opacity: 0.6; } }
+.msg-actions { position: absolute; right: 6px; top: 6px; display: flex; gap: 4px; }
+.msg-act { display: grid; place-items: center; width: 26px; height: 26px; background: var(--card-2); border: 1px solid var(--line-2); color: var(--muted); border-radius: 6px; cursor: pointer; opacity: 0; transition: opacity 0.15s; }
+.msg:hover .msg-act, .msg-act:focus-visible { opacity: 1; }
+.msg-act:hover { color: var(--gold); border-color: var(--gold-line); }
+.msg-act.del:hover { color: var(--bad); border-color: var(--bad); }
+@media (hover: none) { .msg-act { opacity: 0.6; } }
 .chat-input { display: flex; gap: 8px; align-items: flex-end; padding-top: 10px; border-top: 1px solid var(--line); }
 .chat-input textarea { min-height: 40px; max-height: 140px; resize: none; }
 .chat-note { text-align: center; }
@@ -592,3 +594,47 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
   .modal-backdrop.sheet .modal { max-width: none; border-radius: 18px 18px 0 0; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: sheet-up 0.22s ease-out; }
 }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: 0; } }
+
+/* ---------- emoji reactions ---------- */
+.reactions { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-top: 6px; }
+.react-chip { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 9px 0 7px; border-radius: 999px; border: 1px solid var(--line-2); background: var(--card-2); color: var(--text-2); font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.react-chip:hover { border-color: #444; }
+.react-chip.on { border-color: var(--gold-line); background: var(--gold-soft); color: var(--gold); }
+.react-emoji { font-size: 15px; line-height: 1; }
+.react-add { display: grid; place-items: center; width: 28px; height: 26px; border-radius: 999px; border: 1px solid var(--line); background: transparent; color: var(--muted); cursor: pointer; }
+.react-add:hover { color: var(--gold); border-color: var(--gold-line); }
+.react-sheet-wrap { position: fixed; inset: 0; z-index: 200; display: flex; align-items: flex-end; justify-content: center; padding: 16px 16px calc(16px + env(safe-area-inset-bottom)); background: rgba(0, 0, 0, 0.45); }
+@media (min-width: 761px) { .react-sheet-wrap { align-items: center; } }
+.react-sheet { width: min(380px, 100%); max-height: 80dvh; overflow-y: auto; padding: 10px 12px 12px; background: var(--card-2); border-color: var(--line-2); box-shadow: var(--shadow-pop); display: flex; flex-direction: column; gap: 10px; }
+.react-sheet-head { display: flex; align-items: center; justify-content: space-between; }
+.react-sheet-head .bell-title { padding: 4px 2px; }
+.pick-row, .pick-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+.pick-row { padding-bottom: 8px; border-bottom: 1px solid var(--line-2); }
+.pick-row .pick { font-size: 24px; }
+.pick { aspect-ratio: 1; display: grid; place-items: center; font-size: 20px; line-height: 1; border: 1px solid transparent; border-radius: 9px; background: transparent; cursor: pointer; padding: 0; }
+.pick:hover { background: rgba(255, 255, 255, 0.06); }
+.pick.on { background: var(--gold-soft); border-color: var(--gold-line); }
+.pick-custom { display: flex; gap: 8px; }
+.pick-custom .input { flex: 1; min-width: 0; }
+.react-who { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px solid var(--line-2); }
+.react-who-row { display: flex; gap: 10px; align-items: flex-start; }
+.react-who-row .react-emoji { font-size: 18px; width: 22px; text-align: center; padding-top: 1px; }
+.react-who-names { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13.5px; color: var(--text-2); }
+
+/* ---------- photo comments (in the photo viewer) ---------- */
+.lb-bar .reactions { margin-top: 8px; }
+.lb-bar .btn.on { border-color: var(--gold-line); color: var(--gold); background: var(--gold-soft); }
+.lb-comments-wrap { position: absolute; z-index: 5; top: 0; right: 0; bottom: 0; width: 380px; background: var(--card); border-left: 1px solid var(--line); }
+.lightbox.talking { padding-right: 380px; }
+.lightbox.talking .lb-close { right: 392px; }
+.lightbox.talking .lb-nav.next { right: 392px; }
+.lb-comments { height: 100%; display: flex; flex-direction: column; gap: 8px; padding: 10px 12px calc(12px + env(safe-area-inset-bottom)); }
+.lb-comments-head { display: flex; align-items: center; justify-content: space-between; }
+.lb-comments-head .bell-title { padding: 4px 2px; }
+.lb-comments-list { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line-2) transparent; }
+.lb-comments .msg-avatar { width: 30px; }
+@media (max-width: 760px) {
+  .lightbox.talking { padding-right: 0; }
+  .lightbox.talking .lb-close { right: 12px; }
+  .lb-comments-wrap { top: auto; left: 0; width: auto; height: 62dvh; border-left: 0; border-top: 1px solid var(--line-2); border-radius: 16px 16px 0 0; box-shadow: var(--shadow-pop); }
+}
