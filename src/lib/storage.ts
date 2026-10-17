@@ -1,0 +1,47 @@
+import { BUCKET, supabase } from './supabase'
+
+// Where photos, videos, chat pics and avatars live. With HB_CONFIG.filesUrl set (public/config.js), that's the
+// Cloudflare R2 file service in worker/; without it, the Supabase "gallery" bucket. Same paths either way.
+const filesUrl = (window.HB_CONFIG?.filesUrl || import.meta.env.VITE_FILES_URL || '').replace(/\/$/, '')
+
+async function call(route: string, init: RequestInit) {
+  const { data } = await supabase.auth.getSession()
+  const res = await fetch(`${filesUrl}/${route}`, {
+    ...init, headers: { ...init.headers, authorization: `Bearer ${data.session?.access_token ?? ''}` },
+  })
+  if (!res.ok) throw new Error((await res.text()) || `Upload failed (${res.status})`)
+  return res.json()
+}
+
+export async function uploadFile(path: string, file: Blob, contentType?: string) {
+  if (!filesUrl) {
+    const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType })
+    if (error) throw error
+    return
+  }
+  const route = `o/${path.split('/').map(encodeURIComponent).join('/')}`
+  await call(route, { method: 'PUT', body: file, headers: { 'content-type': contentType || file.type || 'application/octet-stream' } })
+}
+
+export async function removeFiles(paths: string[]) {
+  if (!paths.length) return
+  if (!filesUrl) { await supabase.storage.from(BUCKET).remove(paths); return }
+  await call('delete', { method: 'POST', body: JSON.stringify({ paths }), headers: { 'content-type': 'application/json' } })
+}
+
+/** Signed links for a set of paths. `download` makes the link save the file under that name. */
+export async function signFiles(paths: string[], ttl: number, download?: string): Promise<{ path: string; url: string }[]> {
+  if (!paths.length) return []
+  if (!filesUrl) {
+    if (download) {
+      const { data } = await supabase.storage.from(BUCKET).createSignedUrl(paths[0], ttl, { download })
+      return data ? [{ path: paths[0], url: data.signedUrl }] : []
+    }
+    const { data } = await supabase.storage.from(BUCKET).createSignedUrls(paths, ttl)
+    return (data ?? []).flatMap((d) => (d.path && d.signedUrl ? [{ path: d.path, url: d.signedUrl }] : []))
+  }
+  const { urls } = await call('sign', {
+    method: 'POST', body: JSON.stringify({ paths, ttl, download }), headers: { 'content-type': 'application/json' },
+  })
+  return urls
+}

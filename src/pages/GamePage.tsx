@@ -12,7 +12,7 @@ import GameList from '../components/GameLists'
 import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
-import { Lightbox, PhotoGrid, Uploader } from '../components/Photos'
+import { byShot, Lightbox, PhotoGrid, Uploader } from '../components/Photos'
 
 type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
 
@@ -68,6 +68,7 @@ export default function GamePage() {
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
+  const shots = useMemo(() => byShot(photos), [photos]) // the day in the order it happened
 
   if (game === undefined) return <div className="loading">Loading…</div>
   if (game === null) return <div className="card">That game isn't on the board. <Link to="/">Back to Gameday</Link></div>
@@ -141,13 +142,13 @@ export default function GamePage() {
           </div>
           <Uploader games={[game]} defaultGameId={game.id}
             onUploaded={(p) => setPhotos((cur) => (cur.some((x) => x.id === p.id) ? cur : [p, ...cur]))} />
-          {photos.length ? <PhotoGrid photos={photos} games={gamesById} onOpen={setOpen} />
+          {photos.length ? <PhotoGrid photos={shots} games={gamesById} onOpen={setOpen} />
             : <div className="empty"><Camera size={22} aria-hidden="true" />No photos from this one yet.</div>}
         </section>
       </div>
 
       {open != null && (
-        <Lightbox photos={photos} index={open} games={gamesById} onClose={() => setOpen(null)} onIndex={setOpen}
+        <Lightbox photos={shots} index={open} games={gamesById} onClose={() => setOpen(null)} onIndex={setOpen}
           onDeleted={(pid) => { setPhotos((cur) => cur.filter((x) => x.id !== pid)); setOpen(null) }} />
       )}
     </div>

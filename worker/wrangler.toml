@@ -1,0 +1,18 @@
+# Cloudflare Worker that stores the site's photos and videos in R2. See worker/README.md.
+name = "hammered-boilers-files"
+main = "index.js"
+compatibility_date = "2026-09-01"
+
+# Ping Supabase every other day so the free project never pauses for inactivity.
+[triggers]
+crons = ["17 12 */2 * *"]
+
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "hammered-boilers-files"
+
+# Same public values as public/config.js. The secrets (SIGNING_SECRET, MIGRATE_TOKEN) are set with
+# `wrangler secret put` or the deploy workflow, never here.
+[vars]
+SUPABASE_URL = "https://noyvywdgqugdvsuvtwty.supabase.co"
+SUPABASE_KEY = "sb_publishable_bRUkqd9hk_WeXjyecWSlng_fnydSie9"

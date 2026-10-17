@@ -23,7 +23,8 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   highlighted, and the bell in the top bar lists every tag with a count of new ones; tap one to jump to that chat.
 - **Playground:** general nonsense chat, any day. GIFs work everywhere in chat: tap **GIF** to post one from your
   phone, paste one straight in, or drop a Giphy or Tenor link.
-- **Gallery:** everyone's pics and videos, filterable by game. Originals stay full-size, and you can download one
+- **Gallery:** everyone's pics and videos, filterable by game, in the order they were taken (the photo's own date,
+  not when it was uploaded). Originals stay full-size, and you can download one
   or zip a whole game.
 - **Crew:** your name and avatar: upload a photo, or pick a badge (hammer, train, beer…). Add buddies by email here.
 
@@ -48,7 +49,10 @@ nothing live works until you're back online.
 - Installable as an app: [`public/manifest.webmanifest`](public/manifest.webmanifest), icons in `public/icons/`, and a
   service worker ([`public/sw.js`](public/sw.js)) that caches only the app itself. The page is fetched fresh each open,
   so deploys show up right away; Supabase and the other APIs are never cached.
-- Supabase (free tier) handles email login, Postgres, realtime, and photo storage. Supabase project:
+- Supabase (free tier) handles email login, Postgres and realtime. Photos and videos go to Cloudflare R2 through a small
+  Worker ([`worker/`](worker/README.md)) once `filesUrl` is set in `public/config.js`; until then they use Supabase storage.
+  [`keep-awake.yml`](.github/workflows/keep-awake.yml) (and the Worker, on its own schedule) pings Supabase every few
+  days so the free project never pauses. Supabase project:
   `hammered-boilers` (ref `noyvywdgqugdvsuvtwty`, East US).
 - Schedule: ESPN's public feed (Purdue = team 2509). Weather: Open-Meteo (Ross-Ade Stadium). Neither needs a key.
 - [`public/config.js`](public/config.js) holds the Supabase URL and **publishable** key. Those are meant to be public.

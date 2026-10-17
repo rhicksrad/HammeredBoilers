@@ -1,18 +1,24 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { downloadZip } from 'client-zip'
 import { ChevronLeft, ChevronRight, Download, ImagePlus, Play, Trash2, X } from 'lucide-react'
-import { BUCKET, supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
+import { removeFiles, signFiles, uploadFile } from '../lib/storage'
 import { useSignedUrls } from '../lib/signedUrls'
 import { extOf, makeThumb, saveAs } from '../lib/images'
+import { fileReader, takenAt, urlReader } from '../lib/takenAt'
 import { gameDay, when } from '../lib/format'
 import type { Game, Photo } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
 
 export const isVideo = (p: Photo) => p.mime.startsWith('video/')
+export const shotAt = (p: Photo) => p.taken_at ?? p.created_at
+/** In the order they were taken: oldest first (a game day as it happened), or newest first. */
+export const byShot = (photos: Photo[], newestFirst = false) =>
+  [...photos].sort((a, b) => shotAt(a).localeCompare(shotAt(b)) * (newestFirst ? -1 : 1))
 const fileName = (p: Photo, game?: Game) => {
   const ext = p.path.split('.').pop()
-  const stamp = p.created_at.slice(0, 19).replace(/[T:]/g, '-')
+  const stamp = new Date(shotAt(p)).toISOString().slice(0, 19).replace(/[T:]/g, '-')
   return `${game ? `purdue-vs-${game.opponent.toLowerCase().replace(/\W+/g, '-')}` : 'tailgate'}-${stamp}-${p.id.slice(0, 4)}.${ext}`
 }
 
@@ -61,12 +67,12 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
   const game = p.game_id ? games[p.game_id] : undefined
 
   const download = async () => {
-    const { data } = await supabase.storage.from(BUCKET).createSignedUrl(p.path, 600, { download: fileName(p, game) })
-    if (data) saveAs(data.signedUrl, fileName(p, game))
+    const [link] = await signFiles([p.path], 600, fileName(p, game))
+    if (link) saveAs(link.url, fileName(p, game))
   }
   const del = async () => {
     if (!confirm('Delete this for everyone?')) return
-    await supabase.storage.from(BUCKET).remove([p.path, ...(p.thumb_path ? [p.thumb_path] : [])])
+    await removeFiles([p.path, ...(p.thumb_path ? [p.thumb_path] : [])])
     const { error } = await supabase.from('photos').delete().eq('id', p.id)
     if (!error) onDeleted(p.id)
   }
@@ -88,7 +94,7 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
         <div>
           {p.caption && <div className="lb-caption">{p.caption}</div>}
           <div className="muted small icon-text">
-            <Avatar p={profiles[p.uploader_id]} size={18} />{nameOf(profiles[p.uploader_id])} · {when(p.created_at)}
+            <Avatar p={profiles[p.uploader_id]} size={18} />{nameOf(profiles[p.uploader_id])} · {when(shotAt(p))}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
         </div>
@@ -126,18 +132,22 @@ export function Uploader({ games, defaultGameId, onUploaded }: { games: Game[]; 
       try {
         const id = crypto.randomUUID()
         const path = `${me.id}/${id}.${extOf(file)}`
-        const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type || undefined })
-        if (error) throw error
+        await uploadFile(path, file, file.type || undefined)
         let thumb_path: string | null = null
         const thumb = await makeThumb(file)
         if (thumb) {
           thumb_path = `${me.id}/thumbs/${id}.jpg`
-          const t = await supabase.storage.from(BUCKET).upload(thumb_path, thumb, { contentType: 'image/jpeg' })
-          if (t.error) thumb_path = null
+          try { await uploadFile(thumb_path, thumb, 'image/jpeg') } catch { thumb_path = null }
         }
-        const { data, error: dbErr } = await supabase.from('photos').insert({
+        const row = {
           game_id: gameId || null, path, thumb_path, mime: file.type || 'image/jpeg', caption: caption.trim() || null,
-        }).select().single()
+          taken_at: (await takenAt(fileReader(file), file.type)) ?? fromLastModified(file),
+        }
+        let { data, error: dbErr } = await supabase.from('photos').insert(row).select().single()
+        if (dbErr?.message.includes('taken_at')) { // database not updated yet (supabase/schema.sql): save without it
+          const { taken_at: _, ...rest } = row
+          ;({ data, error: dbErr } = await supabase.from('photos').insert(rest).select().single())
+        }
         if (dbErr) throw dbErr
         onUploaded(data as Photo)
       } catch (e) {
@@ -171,10 +181,38 @@ export function Uploader({ games, defaultGameId, onUploaded }: { games: Game[]; 
   )
 }
 
+// No date inside the file: a phone's "last modified" is often the capture time, unless it's just now (a fresh copy).
+function fromLastModified(file: File) {
+  return file.lastModified && file.lastModified < Date.now() - 5 * 60_000 ? new Date(file.lastModified).toISOString() : null
+}
+
+/**
+ * Pics uploaded before taken_at existed: read the time from each of your own stored files once, so the gallery
+ * can sort them by when they were taken. Files that don't say get their upload time, so they aren't re-read.
+ */
+const tried = new Set<string>()
+export function useBackfillTakenAt(photos: Photo[] | null) {
+  const { me } = useAuth()
+  useEffect(() => {
+    const todo = (photos ?? []).filter((p) => p.uploader_id === me?.id && !p.taken_at && !tried.has(p.id))
+    if (!todo.length) return
+    todo.forEach((p) => tried.add(p.id))
+    ;(async () => {
+      for (const p of todo) {
+        try {
+          const [link] = await signFiles([p.path], 600)
+          const reader = link && (await urlReader(link.url))
+          const t = reader ? await takenAt(reader, p.mime) : null
+          await supabase.from('photos').update({ taken_at: t ?? p.created_at }).eq('id', p.id)
+        } catch { /* try again next visit */ tried.delete(p.id) }
+      }
+    })()
+  }, [photos, me?.id])
+}
+
 /** Zip every file in the current view and save it. */
 export async function downloadAll(photos: Photo[], games: Record<string, Game>, zipName: string) {
-  const { data } = await supabase.storage.from(BUCKET).createSignedUrls(photos.map((p) => p.path), 600)
-  const urls = new Map(data?.map((d) => [d.path, d.signedUrl]) ?? [])
+  const urls = new Map((await signFiles(photos.map((p) => p.path), 600)).map((d) => [d.path, d.url]))
   async function* files() {
     for (const p of photos) {
       const u = urls.get(p.path)

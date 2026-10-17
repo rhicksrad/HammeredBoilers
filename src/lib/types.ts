@@ -65,6 +65,7 @@ export type Photo = {
   thumb_path: string | null
   mime: string
   caption: string | null
+  taken_at: string | null // when the shot was taken (from the file), if it said
   created_at: string
 }
 

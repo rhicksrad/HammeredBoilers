@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { Camera, Trash2 } from 'lucide-react'
-import { BUCKET, supabase } from '../lib/supabase'
+import { removeFiles, uploadFile } from '../lib/storage'
 import { useAuth } from '../auth'
 import { Avatar, BADGES, Badge, badgeFor } from './Avatar'
 
@@ -38,12 +38,11 @@ export default function AvatarPicker({ badge, onPick }: { badge: string; onPick:
       const jpeg = await squareJpeg(file)
       if (!jpeg) throw new Error("Couldn't read that image. Try a JPEG or PNG.")
       const path = `${me.id}/avatar/${crypto.randomUUID()}.jpg`
-      const up = await supabase.storage.from(BUCKET).upload(path, jpeg, { contentType: 'image/jpeg' })
-      if (up.error) throw up.error
+      await uploadFile(path, jpeg, 'image/jpeg')
       const old = me.avatar_path
       const msg = await saveProfile({ avatar_path: path })
-      if (msg) { supabase.storage.from(BUCKET).remove([path]); throw new Error(msg) }
-      if (old) supabase.storage.from(BUCKET).remove([old])
+      if (msg) { removeFiles([path]).catch(() => {}); throw new Error(msg) }
+      if (old) removeFiles([old]).catch(() => {})
     } catch (e) {
       setErr((e as Error).message)
     } finally {
@@ -58,7 +57,7 @@ export default function AvatarPicker({ badge, onPick }: { badge: string; onPick:
     const msg = await saveProfile({ avatar_path: null })
     setBusy(false)
     if (msg) return setErr(msg)
-    if (old) supabase.storage.from(BUCKET).remove([old])
+    if (old) removeFiles([old]).catch(() => {})
   }
 
   return (

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BUCKET, supabase } from './supabase'
+import { signFiles } from './storage'
 
 const URL_TTL = 6 * 3600
 
@@ -20,8 +20,8 @@ function fetchUrls(paths: string[]): Promise<void> {
       queued = new Set()
       flush = null
       try {
-        const { data } = await supabase.storage.from(BUCKET).createSignedUrls(batch, URL_TTL)
-        data?.forEach((d) => d.signedUrl && d.path && urlCache.set(d.path, d.signedUrl))
+        const urls = await signFiles(batch, URL_TTL)
+        urls.forEach((d) => urlCache.set(d.path, d.url))
       } finally {
         batch.forEach((p) => inFlight.delete(p)) // a failed batch can be asked for again
       }
