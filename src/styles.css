@@ -414,14 +414,9 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .uploader .btn { position: relative; }
 .filter-bar { display: flex; gap: 10px; align-items: center; }
 .filter-bar select { max-width: 420px; }
-.storage-meter { display: flex; flex-direction: column; gap: 6px; max-width: 420px; font-size: 13px; }
-.storage-meter-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-.storage-meter-row span:first-child { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-weight: 600; }
-.storage-meter-row svg.lucide { color: var(--gold); }
-.storage-meter-track { height: 6px; border-radius: 999px; background: var(--card-3); overflow: hidden; }
-.storage-meter-fill { height: 100%; border-radius: inherit; background: var(--gold); transition: width 0.4s ease; }
-.storage-meter.warn .storage-meter-fill { background: var(--warn); }
-.storage-meter.bad .storage-meter-fill { background: var(--bad); }
+.storage-meter { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.storage-meter span:first-child { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); font-weight: 600; }
+.storage-meter svg.lucide { color: var(--gold); }
 @media (max-width: 760px) { .filter-bar { flex-direction: column; align-items: stretch; } .filter-bar select { max-width: none; } }
 .photo-grid { display: grid; gap: 6px; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 .gp-pics .photo-grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }

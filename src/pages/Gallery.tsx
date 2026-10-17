@@ -118,18 +118,10 @@ function gb(bytes: number) {
 }
 
 function StorageMeter({ usage }: { usage: Usage }) {
-  const pct = Math.min(100, (usage.bytes / usage.limit) * 100)
-  const level = pct >= 90 ? 'bad' : pct >= 75 ? 'warn' : 'ok'
   return (
-    <div className={`storage-meter ${level}`}>
-      <div className="storage-meter-row">
-        <span><HardDrive size={14} aria-hidden="true" /> Storage</span>
-        <span className="muted">{gb(usage.bytes)} of {gb(usage.limit)} free</span>
-      </div>
-      <div className="storage-meter-track" role="progressbar" aria-label="Storage used"
-        aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(pct)}>
-        <div className="storage-meter-fill" style={{ width: `${Math.max(pct, 0.5)}%` }} />
-      </div>
+    <div className="storage-meter">
+      <span><HardDrive size={14} aria-hidden="true" /> Storage</span>
+      <span className="muted">{gb(usage.bytes)} used</span>
     </div>
   )
 }
