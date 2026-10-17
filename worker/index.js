@@ -59,8 +59,10 @@ const validPath = (p) => typeof p === 'string' && p.length > 0 && p.length < 512
 // ---------------------------------------------------------------------------
 const authCache = new Map()
 
+const tokenOf = (req) => (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
+
 async function crewMember(req, env) {
-  const token = (req.headers.get('authorization') || '').replace(/^Bearer\s+/i, '')
+  const token = tokenOf(req)
   if (!token) throw text('Sign in first', 401)
   const hit = authCache.get(token)
   if (hit && hit.until > Date.now()) return hit.uid
@@ -104,12 +106,32 @@ async function sign(req, env, url) {
   const life = Math.min(Math.max(Number(ttl) || 3600, 60), MAX_TTL)
   const e = Math.ceil((Date.now() / 1000 + life) / 3600) * 3600
   const d = typeof download === 'string' ? download : ''
-  const urls = await Promise.all(paths.filter(validPath).map(async (p) => {
+  const valid = paths.filter(validPath)
+  const inR2 = await Promise.all(valid.map((p) => env.FILES.head(p)))
+  const urls = await Promise.all(valid.filter((_, i) => inR2[i]).map(async (p) => {
     const s = await hmac(env, `${p}\n${e}\n${d}`)
     const q = new URLSearchParams({ e: String(e), s, ...(d ? { d } : {}) })
     return { path: p, url: `${url.origin}/f/${p.split('/').map(encodeURIComponent).join('/')}?${q}` }
   }))
+  const missing = valid.filter((_, i) => !inR2[i])
+  if (missing.length) urls.push(...(await supabaseLinks(req, env, missing, life, d)))
   return json({ urls })
+}
+
+// Files not copied over from the old Supabase bucket yet (scripts/migrate-to-r2.mjs): sign them there instead,
+// as the same user, so nothing goes missing while the copy runs.
+async function supabaseLinks(req, env, paths, life, download) {
+  const res = await fetch(`${env.SUPABASE_URL}/storage/v1/object/sign/gallery`, {
+    method: 'POST',
+    headers: { apikey: env.SUPABASE_KEY, authorization: `Bearer ${tokenOf(req)}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ paths, expiresIn: life }),
+  })
+  if (!res.ok) return []
+  const rows = await res.json()
+  return rows.filter((r) => r.signedURL && !r.error).map((r) => ({
+    path: r.path,
+    url: `${env.SUPABASE_URL}/storage/v1${r.signedURL}${download ? `&download=${encodeURIComponent(download)}` : ''}`,
+  }))
 }
 
 async function serve(req, env, url, path) {
@@ -164,7 +186,15 @@ async function remove(req, env) {
   const { paths } = await req.json()
   if (!Array.isArray(paths)) return text('Bad request', 400)
   const mine = paths.filter((p) => ownedBy(uid, p))
-  if (mine.length) await env.FILES.delete(mine)
+  if (mine.length) {
+    await env.FILES.delete(mine)
+    // Also drop any copy still in the old Supabase bucket, so the migration script doesn't bring it back.
+    await fetch(`${env.SUPABASE_URL}/storage/v1/object/gallery`, {
+      method: 'DELETE',
+      headers: { apikey: env.SUPABASE_KEY, authorization: `Bearer ${tokenOf(req)}`, 'content-type': 'application/json' },
+      body: JSON.stringify({ prefixes: mine }),
+    }).catch(() => {})
+  }
   return json({ deleted: mine })
 }
 

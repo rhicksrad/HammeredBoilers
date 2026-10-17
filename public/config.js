@@ -4,5 +4,5 @@ window.HB_CONFIG = {
   supabaseUrl: 'https://noyvywdgqugdvsuvtwty.supabase.co',
   supabaseKey: 'sb_publishable_bRUkqd9hk_WeXjyecWSlng_fnydSie9',
   // Photo and video storage in Cloudflare R2 (worker/README.md). Leave it out to keep using Supabase storage.
-  // filesUrl: 'https://hammered-boilers-files.<subdomain>.workers.dev',
+  filesUrl: 'https://hammered-boilers-files.hicksrch.workers.dev',
 }
