@@ -40,9 +40,10 @@ Once everything's on R2, the old files can be deleted from the Supabase bucket t
 | Route | Who | What |
 |---|---|---|
 | `POST /sign` `{ paths, ttl?, download? }` | crew | Signed links, like Supabase's `createSignedUrls` |
-| `PUT /o/<path>` | crew, own folder | Upload (photos and videos only, up to 100 MB) |
+| `PUT /o/<path>` | crew, own folder | Upload (photos and videos only, up to 100 MB); returns the file's MD5 |
 | `POST /delete` `{ paths }` | crew, own folder | Delete |
 | `GET /usage` | crew | Total bytes and files in the bucket, against the 10 GB free tier (shown on the Gallery page) |
+| `POST /hashes` `{ paths }` | crew | Each file's MD5 (its R2 etag), so the site can stack duplicate uploads |
 | `GET /f/<path>?e=…&s=…` | anyone with the link | The file, with range requests for video |
 | `PUT /migrate/<path>` | `x-migrate-token` | One-time copy from Supabase |
 

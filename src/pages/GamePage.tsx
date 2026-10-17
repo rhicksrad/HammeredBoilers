@@ -12,7 +12,7 @@ import GameList from '../components/GameLists'
 import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
-import { byShot, Lightbox, PhotoGrid, Uploader } from '../components/Photos'
+import { byShot, Lightbox, PhotoGrid, stackDupes, Uploader, useContentHashes } from '../components/Photos'
 
 type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
 
@@ -81,7 +81,9 @@ export default function GamePage() {
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
-  const shots = useMemo(() => byShot(photos, gamesById), [photos, gamesById]) // the day in the order it happened
+  const hashOf = useContentHashes(photos)
+  // The day in the order it happened, with the same file from more than one person stacked into one tile.
+  const shots = useMemo(() => stackDupes(byShot(photos, gamesById), hashOf), [photos, gamesById, hashOf])
   const open = openId ? shots.findIndex((p) => p.id === openId) : -1
 
   if (game === undefined) return <div className="loading">Loading…</div>
@@ -126,7 +128,7 @@ export default function GamePage() {
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => pickTab(t.id)} aria-pressed={tab === t.id}>
             <t.Icon size={20} strokeWidth={1.8} aria-hidden="true" />
-            <span>{t.label}{t.id === 'pics' && photos.length ? ` ${photos.length}` : ''}</span>
+            <span>{t.label}{t.id === 'pics' && shots.length ? ` ${shots.length}` : ''}</span>
           </button>
         ))}
       </div>

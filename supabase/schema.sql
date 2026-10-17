@@ -189,6 +189,9 @@ create table if not exists public.photos (
 create index if not exists photos_game_idx on public.photos (game_id, created_at desc);
 -- When the photo or video was actually taken (EXIF / video header), so pics sort in the order things happened.
 alter table public.photos add column if not exists taken_at timestamptz;
+-- MD5 of the file (the R2 file service reports it), so the same pic uploaded by two people shows as one stacked tile.
+alter table public.photos add column if not exists content_hash text;
+create index if not exists photos_hash_idx on public.photos (content_hash);
 
 -- ---------------------------------------------------------------------------
 -- DJ booth. Anyone in the crew can request a song for a game; the DJ approves

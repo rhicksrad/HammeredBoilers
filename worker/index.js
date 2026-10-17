@@ -9,6 +9,7 @@
 //   PUT    /o/<path>    body = the file                                            (crew only, own folder)
 //   POST   /delete      { paths }                                                  (crew only, own folder)
 //   GET    /usage       -> { bytes, files, limit }  total stored in R2                (crew only)
+//   POST   /hashes      { paths }  -> { hashes: { <path>: <md5> } }  to spot duplicates (crew only)
 //   GET    /f/<path>?e=<expires>&s=<signature>[&d=<download name>]                 (signed link)
 //   PUT    /migrate/<path>  header x-migrate-token                                 (one-time copy from Supabase)
 // It also pings Supabase on a schedule so the free project never pauses (see wrangler.toml).
@@ -39,6 +40,7 @@ export default {
       if (route === 'o' && req.method === 'PUT') return await upload(req, env, path)
       if (route === 'delete' && req.method === 'POST') return await remove(req, env)
       if (route === 'usage' && req.method === 'GET') return await usage(req, env)
+      if (route === 'hashes' && req.method === 'POST') return await hashes(req, env)
       if (route === 'migrate' && req.method === 'PUT') return await migrate(req, env, path)
       return text('Not found', 404)
     } catch (e) {
@@ -175,9 +177,9 @@ async function putFile(req, env, path) {
   const size = Number(req.headers.get('content-length'))
   if (!size) return text('Missing file', 411)
   if (size > MAX_BYTES) return text(`Files can be up to ${MAX_BYTES / 1024 / 1024} MB`, 413)
-  await env.FILES.put(path, req.body, { httpMetadata: { contentType: type } })
+  const obj = await env.FILES.put(path, req.body, { httpMetadata: { contentType: type } })
   usageCache = null
-  return json({ path })
+  return json({ path, hash: obj?.etag ?? null })
 }
 
 async function upload(req, env, path) {
@@ -210,6 +212,20 @@ async function migrate(req, env, path) {
   if (!validPath(path)) return text('Bad path', 400)
   if (await env.FILES.head(path)) return json({ path, skipped: true })
   return putFile(req, env, path)
+}
+
+// ---------------------------------------------------------------------------
+// Content hashes, so the same file uploaded by two people shows once. R2's etag for a single-part upload (all of
+// ours) is the MD5 of the file, so this reads nothing but each file's metadata. Files still only in Supabase
+// are left out.
+// ---------------------------------------------------------------------------
+async function hashes(req, env) {
+  await crewMember(req, env)
+  const { paths } = await req.json()
+  if (!Array.isArray(paths) || paths.length > 1000) return text('Bad request', 400)
+  const valid = paths.filter(validPath)
+  const objs = await Promise.all(valid.map((p) => env.FILES.head(p)))
+  return json({ hashes: Object.fromEntries(valid.flatMap((p, i) => (objs[i] ? [[p, objs[i].etag]] : []))) })
 }
 
 // ---------------------------------------------------------------------------

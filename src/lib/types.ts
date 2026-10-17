@@ -67,6 +67,7 @@ export type Photo = {
   mime: string
   caption: string | null
   taken_at: string | null // when the shot was taken (from the file), if it said
+  content_hash?: string | null // MD5 of the file, so the same pic uploaded twice shows once
   created_at: string
 }
 

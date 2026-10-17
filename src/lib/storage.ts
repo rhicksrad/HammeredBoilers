@@ -13,14 +13,23 @@ async function call(route: string, init: RequestInit) {
   return res.json()
 }
 
-export async function uploadFile(path: string, file: Blob, contentType?: string) {
+/** Uploads a file. Returns its content hash (MD5) when the R2 file service gives one, for spotting duplicates. */
+export async function uploadFile(path: string, file: Blob, contentType?: string): Promise<string | null> {
   if (!filesUrl) {
     const { error } = await supabase.storage.from(BUCKET).upload(path, file, { contentType })
     if (error) throw error
-    return
+    return null
   }
   const route = `o/${path.split('/').map(encodeURIComponent).join('/')}`
-  await call(route, { method: 'PUT', body: file, headers: { 'content-type': contentType || file.type || 'application/octet-stream' } })
+  const res = await call(route, { method: 'PUT', body: file, headers: { 'content-type': contentType || file.type || 'application/octet-stream' } })
+  return typeof res?.hash === 'string' ? res.hash : null
+}
+
+/** Content hashes (MD5) of stored files, by path. Files the R2 service doesn't have yet are left out. */
+export async function fileHashes(paths: string[]): Promise<Record<string, string>> {
+  if (!filesUrl || !paths.length) return {}
+  const { hashes } = await call('hashes', { method: 'POST', body: JSON.stringify({ paths }), headers: { 'content-type': 'application/json' } })
+  return hashes ?? {}
 }
 
 export async function removeFiles(paths: string[]) {

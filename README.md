@@ -27,8 +27,8 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
 - **Playground:** general nonsense chat, any day. GIFs work everywhere in chat: tap **GIF** to post one from your
   phone, paste one straight in, or drop a Giphy or Tenor link.
 - **Gallery:** everyone's pics and videos, filterable by game, in the order they were taken (the photo's own date,
-  not when it was uploaded). Originals stay full-size, and you can download one
-  or zip a whole game.
+  not when it was uploaded). The same pic added by more than one person shows once, stacked, with everyone who
+  added it. Originals stay full-size, and you can download one or zip a whole game.
 - **Crew:** your name and avatar: upload a photo, or pick a badge (hammer, train, beer…). Add buddies by email here.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.

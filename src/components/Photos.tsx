@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { downloadZip } from 'client-zip'
-import { ChevronLeft, ChevronRight, Download, ImagePlus, Play, Trash2, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Download, ImagePlus, Layers, Play, Trash2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { removeFiles, signFiles, uploadFile } from '../lib/storage'
+import { fileHashes, removeFiles, signFiles, uploadFile } from '../lib/storage'
 import { useSignedUrls } from '../lib/signedUrls'
 import { extOf, makeThumb, saveAs } from '../lib/images'
 import { fileReader, takenAt, urlReader } from '../lib/takenAt'
@@ -27,13 +27,68 @@ export const byShot = (photos: Photo[], games: Record<string, Game>, newestFirst
   const at = new Map(photos.map((p) => [p.id, new Date(shotAt(p, p.game_id ? games[p.game_id] : undefined)).getTime()]))
   return [...photos].sort((a, b) => (at.get(a.id)! - at.get(b.id)!) * (newestFirst ? -1 : 1))
 }
+
+/** A tile: one pic, plus every copy of the same file anyone uploaded (itself included, first-uploaded first). */
+export type Shot = Photo & { copies: Photo[] }
+
+/**
+ * Folds identical files into one tile, by content hash. The first upload is the one shown; the rest ride along
+ * so the lightbox can list everyone who added it. Keeps the order it's given.
+ */
+export const stackDupes = (photos: Photo[], hashOf: (p: Photo) => string | null | undefined): Shot[] => {
+  const groups = new Map<string, Photo[]>()
+  for (const p of photos) {
+    const k = hashOf(p) ?? p.id
+    groups.set(k, [...(groups.get(k) ?? []), p])
+  }
+  const shots: Shot[] = []
+  for (const p of photos) {
+    const g = groups.get(hashOf(p) ?? p.id)!
+    const copies = [...g].sort((a, b) => a.created_at.localeCompare(b.created_at))
+    if (copies[0].id === p.id) shots.push({ ...p, copies })
+  }
+  return shots
+}
+
+/**
+ * Each pic's content hash: saved with the row at upload, else asked of the file service (it already knows every
+ * file's MD5) for older pics. Your own older pics get theirs saved, so it's only asked once.
+ */
+const knownHashes = new Map<string, string | null>()
+export function useContentHashes(photos: Photo[] | null) {
+  const { me } = useAuth()
+  const [seen, bump] = useState(0)
+  useEffect(() => {
+    const todo = (photos ?? []).filter((p) => !p.content_hash && !knownHashes.has(p.path))
+    if (!todo.length) return
+    todo.forEach((p) => knownHashes.set(p.path, null))
+    let live = true
+    ;(async () => {
+      try {
+        for (let i = 0; i < todo.length; i += 1000) {
+          const found = await fileHashes(todo.slice(i, i + 1000).map((p) => p.path))
+          Object.entries(found).forEach(([path, h]) => knownHashes.set(path, h))
+        }
+      } catch { todo.forEach((p) => knownHashes.delete(p.path)); return } // try again next visit
+      if (live) bump((n) => n + 1)
+      for (const p of todo) {
+        const h = knownHashes.get(p.path)
+        if (h && p.uploader_id === me?.id) await supabase.from('photos').update({ content_hash: h }).eq('id', p.id)
+      }
+    })()
+    return () => { live = false }
+  }, [photos, me?.id])
+  // A new function once more hashes are in, so stacks built from it are redone.
+  return useCallback((p: Photo) => p.content_hash ?? knownHashes.get(p.path) ?? null, [seen])
+}
+
 const fileName = (p: Photo, game?: Game) => {
   const ext = p.path.split('.').pop()
   const stamp = new Date(shotAt(p, game)).toISOString().slice(0, 19).replace(/[T:]/g, '-')
   return `${game ? `purdue-vs-${game.opponent.toLowerCase().replace(/\W+/g, '-')}` : 'tailgate'}-${stamp}-${p.id.slice(0, 4)}.${ext}`
 }
 
-export function PhotoGrid({ photos, games, onOpen }: { photos: Photo[]; games: Record<string, Game>; onOpen: (i: number) => void }) {
+export function PhotoGrid({ photos, games, onOpen }: { photos: Shot[]; games: Record<string, Game>; onOpen: (i: number) => void }) {
   const url = useSignedUrls(photos.map((p) => p.thumb_path ?? p.path))
   return (
     <div className="photo-grid">
@@ -46,6 +101,11 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Photo[]; games: R
               : <img src={src} alt={p.caption ?? ''} loading="lazy" />)}
             {isVideo(p) && <span className="play"><span><Play size={18} fill="currentColor" aria-hidden="true" /></span></span>}
             {p.game_id && games[p.game_id] && <span className="tile-tag">{games[p.game_id].opponent}</span>}
+            {uploaders(p).length > 1 && (
+              <span className="tile-stack" title={`Added by ${uploaders(p).length} people`}>
+                <Layers size={11} aria-hidden="true" />{uploaders(p).length}
+              </span>
+            )}
           </button>
         )
       })}
@@ -53,8 +113,11 @@ export function PhotoGrid({ photos, games, onOpen }: { photos: Photo[]; games: R
   )
 }
 
+/** Everyone who added this pic, first uploader first (once each, however many copies they added). */
+const uploaders = (p: Shot) => [...new Set(p.copies.map((c) => c.uploader_id))]
+
 export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: {
-  photos: Photo[]; index: number; games: Record<string, Game>
+  photos: Shot[]; index: number; games: Record<string, Game>
   onClose: () => void; onIndex: (i: number) => void; onDeleted: (id: string) => void
 }) {
   const { me, profiles } = useAuth()
@@ -84,12 +147,18 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
     const [link] = await signFiles([p.path], 600, fileName(p, game))
     if (link) saveAs(link.url, fileName(p, game))
   }
+  // Your copies of it. Others who added the same file keep theirs, so it stays up until the last one goes.
+  const mine = p.copies.filter((c) => c.uploader_id === me?.id)
+  const others = p.copies.length > mine.length
   const del = async () => {
-    if (!confirm('Delete this for everyone?')) return
-    await removeFiles([p.path, ...(p.thumb_path ? [p.thumb_path] : [])])
-    const { error } = await supabase.from('photos').delete().eq('id', p.id)
-    if (!error) onDeleted(p.id)
+    if (!confirm(others ? 'Remove your copy? Others added this too, so it stays up for them.' : 'Delete this for everyone?')) return
+    for (const c of mine) {
+      await removeFiles([c.path, ...(c.thumb_path ? [c.thumb_path] : [])])
+      const { error } = await supabase.from('photos').delete().eq('id', c.id)
+      if (!error) onDeleted(c.id)
+    }
   }
+  const who = uploaders(p)
 
   return (
     <div className="lightbox" onClick={onClose}
@@ -115,13 +184,15 @@ export function Lightbox({ photos, index, games, onClose, onIndex, onDeleted }: 
         <div>
           {p.caption && <div className="lb-caption">{p.caption}</div>}
           <div className="muted small icon-text">
-            <Avatar p={profiles[p.uploader_id]} size={18} />{nameOf(profiles[p.uploader_id])} · {when(shotAt(p, game))}
+            {who.map((id) => <Avatar key={id} p={profiles[id]} size={18} />)}
+            {who.length > 1 ? `Added by ${who.map((id) => nameOf(profiles[id])).join(', ')}` : nameOf(profiles[p.uploader_id])}
+            {' · '}{when(shotAt(p, game))}
             {game && <> · vs {game.opponent} ({gameDay(game)})</>}
           </div>
         </div>
         <div className="row">
           <button className="btn ghost sm" onClick={download}><Download size={15} aria-hidden="true" />Download</button>
-          {p.uploader_id === me?.id && <button className="btn ghost sm danger" onClick={del}><Trash2 size={15} aria-hidden="true" />Delete</button>}
+          {mine.length > 0 && <button className="btn ghost sm danger" onClick={del}><Trash2 size={15} aria-hidden="true" />{others ? 'Remove mine' : 'Delete'}</button>}
         </div>
       </div>
       {photos.length > 1 && <>
@@ -153,21 +224,23 @@ export function Uploader({ games, defaultGameId, onUploaded }: { games: Game[]; 
       try {
         const id = crypto.randomUUID()
         const path = `${me.id}/${id}.${extOf(file)}`
-        await uploadFile(path, file, file.type || undefined)
+        const content_hash = await uploadFile(path, file, file.type || undefined)
         let thumb_path: string | null = null
         const thumb = await makeThumb(file)
         if (thumb) {
           thumb_path = `${me.id}/thumbs/${id}.jpg`
           try { await uploadFile(thumb_path, thumb, 'image/jpeg') } catch { thumb_path = null }
         }
-        const row = {
+        const row: Record<string, unknown> = {
           game_id: gameId || null, path, thumb_path, mime: file.type || 'image/jpeg', caption: caption.trim() || null,
-          taken_at: (await takenAt(fileReader(file), file.type)) ?? fromLastModified(file),
+          taken_at: (await takenAt(fileReader(file), file.type)) ?? fromLastModified(file), content_hash,
         }
         let { data, error: dbErr } = await supabase.from('photos').insert(row).select().single()
-        if (dbErr?.message.includes('taken_at')) { // database not updated yet (supabase/schema.sql): save without it
-          const { taken_at: _, ...rest } = row
-          ;({ data, error: dbErr } = await supabase.from('photos').insert(rest).select().single())
+        // Database not updated yet (supabase/schema.sql): save without the newer columns it doesn't have.
+        for (const col of ['content_hash', 'taken_at']) {
+          if (!dbErr?.message.includes(col)) continue
+          delete row[col]
+          ;({ data, error: dbErr } = await supabase.from('photos').insert(row).select().single())
         }
         if (dbErr) throw dbErr
         onUploaded(data as Photo)
