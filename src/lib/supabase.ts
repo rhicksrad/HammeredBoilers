@@ -2,7 +2,7 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 declare global {
   interface Window {
-    HB_CONFIG?: { supabaseUrl?: string; supabaseKey?: string }
+    HB_CONFIG?: { supabaseUrl?: string; supabaseKey?: string; filesUrl?: string }
   }
 }
 

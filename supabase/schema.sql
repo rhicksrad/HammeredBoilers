@@ -187,6 +187,8 @@ create table if not exists public.photos (
   created_at  timestamptz not null default now()
 );
 create index if not exists photos_game_idx on public.photos (game_id, created_at desc);
+-- When the photo or video was actually taken (EXIF / video header), so pics sort in the order things happened.
+alter table public.photos add column if not exists taken_at timestamptz;
 
 -- ---------------------------------------------------------------------------
 -- DJ booth. Anyone in the crew can request a song for a game; the DJ approves

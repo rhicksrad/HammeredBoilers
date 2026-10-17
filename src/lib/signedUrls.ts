@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BUCKET, supabase } from './supabase'
+import { signFiles } from './storage'
 
 const URL_TTL = 6 * 3600
 // Treat a URL as gone a little before it really expires, so an image never starts loading on a dead link.
@@ -31,8 +31,8 @@ function fetchUrls(paths: string[]): Promise<void> {
       flush = null
       try {
         const expires = Date.now() + URL_TTL * 1000
-        const { data } = await supabase.storage.from(BUCKET).createSignedUrls(batch, URL_TTL)
-        data?.forEach((d) => d.signedUrl && d.path && urlCache.set(d.path, { url: d.signedUrl, expires }))
+        const urls = await signFiles(batch, URL_TTL)
+        urls.forEach((d) => urlCache.set(d.path, { url: d.url, expires }))
       } finally {
         batch.forEach((p) => inFlight.delete(p)) // a failed batch can be asked for again
       }

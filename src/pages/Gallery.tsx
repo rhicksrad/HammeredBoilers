@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { gameDay, isGameday, isPast, plural } from '../lib/format'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, Photo } from '../lib/types'
-import { downloadAll, Lightbox, PhotoGrid, Uploader } from '../components/Photos'
+import { byShot, downloadAll, Lightbox, PhotoGrid, Uploader, useBackfillTakenAt } from '../components/Photos'
 
 export default function Gallery() {
   const [params, setParams] = useSearchParams()
@@ -38,8 +38,10 @@ export default function Gallery() {
     return c
   }, [photos])
 
-  const shown = useMemo(() => (photos ?? []).filter((p) =>
-    filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), [photos, filter])
+  useBackfillTakenAt(photos)
+  // In the order they were taken: one game reads start to finish; everything else shows the newest first.
+  const shown = useMemo(() => byShot((photos ?? []).filter((p) =>
+    filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), filter === 'all' || filter === 'none'), [photos, filter])
   const open = openId ? shown.findIndex((p) => p.id === openId) : -1
 
   // Default upload target: the game in view, else today's / the most recent home game.

@@ -12,7 +12,7 @@ import GameList from '../components/GameLists'
 import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
-import { Lightbox, PhotoGrid, Uploader } from '../components/Photos'
+import { byShot, Lightbox, PhotoGrid, Uploader } from '../components/Photos'
 
 type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
 
@@ -81,7 +81,8 @@ export default function GamePage() {
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])
-  const open = openId ? photos.findIndex((p) => p.id === openId) : -1
+  const shots = useMemo(() => byShot(photos), [photos]) // the day in the order it happened
+  const open = openId ? shots.findIndex((p) => p.id === openId) : -1
 
   if (game === undefined) return <div className="loading">Loading…</div>
   if (game === null) return <div className="card">That game isn't on the board. <Link to="/">Back to Gameday</Link></div>
@@ -155,13 +156,13 @@ export default function GamePage() {
           </div>
           <Uploader games={[game]} defaultGameId={game.id}
             onUploaded={(p) => setPhotos((cur) => (cur.some((x) => x.id === p.id) ? cur : [p, ...cur]))} />
-          {photos.length ? <PhotoGrid photos={photos} games={gamesById} onOpen={(i) => setOpenId(photos[i].id)} />
+          {photos.length ? <PhotoGrid photos={shots} games={gamesById} onOpen={(i) => setOpenId(shots[i].id)} />
             : <div className="empty"><Camera size={22} aria-hidden="true" />No photos from this one yet.</div>}
         </section>
       </div>
 
       {open >= 0 && (
-        <Lightbox photos={photos} index={open} games={gamesById} onClose={() => setOpenId(null)} onIndex={(i) => setOpenId(photos[i].id)}
+        <Lightbox photos={shots} index={open} games={gamesById} onClose={() => setOpenId(null)} onIndex={(i) => setOpenId(shots[i].id)}
           onDeleted={(pid) => { setPhotos((cur) => cur.filter((x) => x.id !== pid)); setOpenId(null) }} />
       )}
     </div>

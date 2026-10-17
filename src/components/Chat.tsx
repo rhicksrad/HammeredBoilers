@@ -1,6 +1,7 @@
 import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ImagePlus, Megaphone, MessageCircle, SendHorizontal, X } from 'lucide-react'
-import { BUCKET, supabase } from '../lib/supabase'
+import { supabase } from '../lib/supabase'
+import { removeFiles, uploadFile } from '../lib/storage'
 import { useLiveTable } from '../lib/realtime'
 import { extOf } from '../lib/images'
 import { clock, fullDay } from '../lib/format'
@@ -157,8 +158,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     for (const [i, file] of images.entries()) {
       if (file.size > MAX_IMAGE_MB * 1024 * 1024) { setErr(`${file.name || 'That image'} is over ${MAX_IMAGE_MB} MB.`); continue }
       const path = `${me.id}/chat/${crypto.randomUUID()}.${extOf(file)}`
-      const up = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type })
-      if (up.error) { setErr(up.error.message); continue }
+      try { await uploadFile(path, file, file.type) } catch (e) { setErr((e as Error).message); continue }
       const { data, error } = await supabase.from('messages')
         .insert({ game_id: gameId, body: i === 0 ? caption : '', image_path: path }).select().single()
       if (error) { setErr(error.message); continue }
@@ -174,7 +174,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     if (!confirm('Delete this message?')) return
     const { error } = await supabase.from('messages').delete().eq('id', m.id)
     if (error) return
-    if (m.image_path) supabase.storage.from(BUCKET).remove([m.image_path])
+    if (m.image_path) removeFiles([m.image_path]).catch(() => {})
     setMsgs((cur) => cur?.filter((x) => x.id !== m.id) ?? cur)
   }, [])
   const onImageLoad = useCallback(() => { if (stickToBottom.current) scrollDown() }, [])
