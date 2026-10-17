@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Headphones, Plus, Printer, Undo2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -24,19 +24,25 @@ export default function DjBooth({ game }: { game: Game }) {
   const [err, setErr] = useState<string | null>(null)
   const [printing, setPrinting] = useState(false)
 
+  const load = useCallback(() => {
+    supabase.from('song_requests').select('*').eq('game_id', game.id).then(({ data, error }) => {
+      setErr(error?.message ?? null)
+      if (!error) setReqs((data ?? []) as SongRequest[])
+      else setReqs((cur) => cur ?? [])
+    })
+  }, [game.id])
+
   useEffect(() => {
     setReqs(null)
-    supabase.from('song_requests').select('*').eq('game_id', game.id).then(({ data, error }) => {
-      if (error) setErr(error.message)
-      setReqs((data ?? []) as SongRequest[])
-    })
+    load()
     supabase.from('members').select('email').eq('dj', true)
       .then(({ data }) => setDjEmails((data ?? []).map((m) => m.email as string)))
-  }, [game.id])
+  }, [game.id, load])
 
   useLiveTable<SongRequest>('song_requests', `game_id=eq.${game.id}`, {
     onUpsert: (row) => setReqs((cur) => (cur ? upsertById(cur, row) : cur)),
     onDelete: (id) => setReqs((cur) => cur?.filter((x) => x.id !== id) ?? cur),
+    onResync: load,
   })
 
   // Print only the sheet: mount it, flag the body so print CSS hides the app, then clean up after the dialog.

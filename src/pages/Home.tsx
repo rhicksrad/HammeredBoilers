@@ -20,8 +20,8 @@ export default function Home() {
       supabase.from('games').select('*').order('kickoff'),
       supabase.from('game_stats').select('*'),
     ])
-    setGames((g.data ?? []) as Game[])
-    setStats(Object.fromEntries(((s.data ?? []) as GameStats[]).map((x) => [x.game_id, x])))
+    setGames((cur) => (g.error && cur ? cur : (g.data ?? []) as Game[])) // a failed refresh keeps the board on screen
+    if (!s.error) setStats(Object.fromEntries(((s.data ?? []) as GameStats[]).map((x) => [x.game_id, x])))
   }, [])
 
   const sync = useCallback(async (force: boolean) => {
@@ -41,6 +41,7 @@ export default function Home() {
   useLiveTable<Game>('games', undefined, {
     onUpsert: (g) => setGames((all) => (all ? upsertById(all, g).sort((a, b) => a.kickoff.localeCompare(b.kickoff)) : all)),
     onDelete: (id) => setGames((all) => all?.filter((g) => g.id !== id) ?? all),
+    onResync: load,
   })
 
   const { next, upcoming, past } = useMemo(() => {

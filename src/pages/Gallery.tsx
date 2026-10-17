@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Download, Images } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -12,17 +12,23 @@ export default function Gallery() {
   const filter = params.get('game') ?? 'all' // 'all' | 'none' | <game id>
   const [games, setGames] = useState<Game[]>([])
   const [photos, setPhotos] = useState<Photo[] | null>(null)
-  const [open, setOpen] = useState<number | null>(null)
+  // By id, not position: a new upload landing at the front of the grid shouldn't swap what's on screen.
+  const [openId, setOpenId] = useState<string | null>(null)
   const [zipping, setZipping] = useState(false)
 
+  const loadPhotos = useCallback(() => {
+    supabase.from('photos').select('*').order('created_at', { ascending: false })
+      .then(({ data, error }) => setPhotos((cur) => (error && cur ? cur : (data ?? []) as Photo[])))
+  }, [])
   useEffect(() => {
     supabase.from('games').select('*').order('kickoff', { ascending: false }).then(({ data }) => setGames((data ?? []) as Game[]))
-    supabase.from('photos').select('*').order('created_at', { ascending: false }).then(({ data }) => setPhotos((data ?? []) as Photo[]))
-  }, [])
+    loadPhotos()
+  }, [loadPhotos])
 
   useLiveTable<Photo>('photos', undefined, {
     onUpsert: (p) => setPhotos((cur) => cur && (cur.some((x) => x.id === p.id) ? upsertById(cur, p) : [p, ...cur])),
     onDelete: (id) => setPhotos((cur) => cur?.filter((x) => x.id !== id) ?? cur),
+    onResync: loadPhotos,
   })
 
   const gamesById = useMemo(() => Object.fromEntries(games.map((g) => [g.id, g])), [games])
@@ -36,6 +42,7 @@ export default function Gallery() {
   // In the order they were taken: one game reads start to finish; everything else shows the newest first.
   const shown = useMemo(() => byShot((photos ?? []).filter((p) =>
     filter === 'all' ? true : filter === 'none' ? !p.game_id : p.game_id === filter), filter === 'all' || filter === 'none'), [photos, filter])
+  const open = openId ? shown.findIndex((p) => p.id === openId) : -1
 
   // Default upload target: the game in view, else today's / the most recent home game.
   const defaultGame = filter !== 'all' && filter !== 'none' ? filter
@@ -77,12 +84,12 @@ export default function Gallery() {
       </div>
 
       {photos === null ? <div className="loading">Loading pics…</div>
-        : shown.length ? <PhotoGrid photos={shown} games={gamesById} onOpen={setOpen} />
+        : shown.length ? <PhotoGrid photos={shown} games={gamesById} onOpen={(i) => setOpenId(shown[i].id)} />
         : <div className="card empty"><Images size={26} aria-hidden="true" />Nothing here yet. Add the first photo above.</div>}
 
-      {open != null && (
-        <Lightbox photos={shown} index={open} games={gamesById} onClose={() => setOpen(null)} onIndex={setOpen}
-          onDeleted={(id) => { setPhotos((cur) => cur?.filter((x) => x.id !== id) ?? cur); setOpen(null) }} />
+      {open >= 0 && (
+        <Lightbox photos={shown} index={open} games={gamesById} onClose={() => setOpenId(null)} onIndex={(i) => setOpenId(shown[i].id)}
+          onDeleted={(id) => { setPhotos((cur) => cur?.filter((x) => x.id !== id) ?? cur); setOpenId(null) }} />
       )}
     </div>
   )

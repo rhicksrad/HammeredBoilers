@@ -83,10 +83,9 @@ export async function kickoffForecast(g: Game): Promise<Forecast | null> {
     }
   }
   // Time TBA: use the day's high.
-  const day = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(kickoff)
-  const dayIdx = (d.daily.time as number[]).findIndex(
-    (t) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(t * 1000)) === day,
-  )
+  const isoDay = new Intl.DateTimeFormat('en-CA', { timeZone: TZ })
+  const day = isoDay.format(kickoff)
+  const dayIdx = (d.daily.time as number[]).findIndex((t) => isoDay.format(new Date(t * 1000)) === day)
   if (dayIdx < 0) return null
   const high = Math.round(d.daily.temperature_2m_max[dayIdx])
   return {

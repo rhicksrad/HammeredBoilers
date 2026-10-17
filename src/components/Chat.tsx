@@ -1,10 +1,10 @@
-import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, memo, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ImagePlus, Megaphone, MessageCircle, SendHorizontal, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { removeFiles, uploadFile } from '../lib/storage'
 import { useLiveTable } from '../lib/realtime'
 import { extOf } from '../lib/images'
-import { clock, TZ } from '../lib/format'
+import { clock, fullDay } from '../lib/format'
 import { CREW, encodeMentions, mentionsMe, TOKEN_RE } from '../lib/mentions'
 import type { Message, Profile } from '../lib/types'
 import { useAuth } from '../auth'
@@ -13,7 +13,6 @@ import { useSignedUrls } from '../lib/signedUrls'
 
 const PAGE = 100
 const MAX_IMAGE_MB = 15
-const dayKey = (iso: string) => new Intl.DateTimeFormat('en-US', { timeZone: TZ, dateStyle: 'full' }).format(new Date(iso))
 
 /** One chat room: a game's thread (gameId) or the Playground (gameId = null). */
 export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: string | null; placeholder: string; readOnlyNote?: string }) {
@@ -31,6 +30,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
   const scroller = useRef<HTMLDivElement>(null)
   const stickToBottom = useRef(true)
   const keepOffset = useRef<number | null>(null)
+  const loadingOlder = useRef(false)
 
   const query = useCallback(() => {
     const q = supabase.from('messages').select('*').order('created_at', { ascending: false }).limit(PAGE)
@@ -38,23 +38,44 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
   }, [gameId])
 
   useEffect(() => {
+    let live = true // a slow answer for the last room mustn't land in this one
     setMsgs(null)
     query().then(({ data }) => {
+      if (!live) return
       const rows = (data ?? []) as Message[]
       setHasMore(rows.length === PAGE)
       setMsgs(rows.reverse())
       stickToBottom.current = true
     })
+    return () => { live = false }
   }, [query])
 
   const loadOlder = async () => {
-    if (!msgs?.length) return
-    const { data } = await query().lt('created_at', msgs[0].created_at)
+    if (!msgs?.length || loadingOlder.current) return // a double tap would load the same page twice
+    loadingOlder.current = true
+    try {
+      const { data } = await query().lt('created_at', msgs[0].created_at)
+      const rows = ((data ?? []) as Message[]).reverse()
+      setHasMore(rows.length === PAGE)
+      const el = scroller.current
+      keepOffset.current = el ? el.scrollHeight - el.scrollTop : null
+      setMsgs((cur) => [...rows, ...(cur ?? [])])
+    } finally {
+      loadingOlder.current = false
+    }
+  }
+
+  // Back from a dropped connection: swap in the newest page so anything posted or deleted meanwhile shows up,
+  // keeping older pages already loaded.
+  const resync = async () => {
+    const { data, error } = await query()
+    if (error) return
     const rows = ((data ?? []) as Message[]).reverse()
-    setHasMore(rows.length === PAGE)
-    const el = scroller.current
-    keepOffset.current = el ? el.scrollHeight - el.scrollTop : null
-    setMsgs((cur) => [...rows, ...(cur ?? [])])
+    setMsgs((cur) => {
+      if (!cur) return cur
+      const from = rows.length === PAGE ? rows[0].created_at : ''
+      return [...cur.filter((m) => m.created_at < from), ...rows]
+    })
   }
 
   useLiveTable<Message>('messages', gameId ? `game_id=eq.${gameId}` : undefined, {
@@ -63,6 +84,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
       setMsgs((cur) => (cur && !cur.some((x) => x.id === m.id) ? [...cur, m] : cur))
     },
     onDelete: (id) => setMsgs((cur) => cur?.filter((m) => m.id !== id) ?? cur),
+    onResync: resync,
   })
 
   // Stay pinned to the newest message unless the reader scrolled up; keep position when loading older ones.
@@ -77,10 +99,10 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     }
   }, [msgs])
 
-  const scrollDown = () => {
+  const scrollDown = useCallback(() => {
     const el = scroller.current
     if (el) el.scrollTop = el.scrollHeight
-  }
+  }, [])
 
   const onScroll = () => {
     const el = scroller.current
@@ -147,13 +169,15 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     if (fileInput.current) fileInput.current.value = ''
   }
 
-  const remove = async (m: Message) => {
+  // Stable, so typing in the composer doesn't re-render every message.
+  const remove = useCallback(async (m: Message) => {
     if (!confirm('Delete this message?')) return
     const { error } = await supabase.from('messages').delete().eq('id', m.id)
     if (error) return
     if (m.image_path) removeFiles([m.image_path]).catch(() => {})
     setMsgs((cur) => cur?.filter((x) => x.id !== m.id) ?? cur)
-  }
+  }, [])
+  const onImageLoad = useCallback(() => { if (stickToBottom.current) scrollDown() }, [])
 
   return (
     <div
@@ -169,33 +193,7 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
         {msgs === null && <div className="loading">Loading chat…</div>}
         {hasMore && <button className="btn ghost sm older" onClick={loadOlder}>Load older messages</button>}
         {msgs?.length === 0 && <div className="chat-empty"><MessageCircle size={26} aria-hidden="true" />No messages yet. Start it off.</div>}
-        {msgs?.map((m, i) => {
-          const prev = msgs[i - 1]
-          const newDay = !prev || dayKey(prev.created_at) !== dayKey(m.created_at)
-          const grouped = !newDay && prev?.author_id === m.author_id &&
-            new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60_000
-          const mine = m.author_id === me?.id
-          const p = profiles[m.author_id]
-          return (
-            <Fragment key={m.id}>
-              {newDay && <div className="day-sep"><span>{dayKey(m.created_at)}</span></div>}
-              <div className={`msg ${grouped ? 'grouped' : ''} ${mine ? 'mine' : ''} ${!mine && mentionsMe(m.body, me?.id) ? 'tagged' : ''}`}>
-                <div className="msg-avatar">{!grouped && <Avatar p={p} size={34} />}</div>
-                <div className="msg-main">
-                  {!grouped && (
-                    <div className="msg-head">
-                      <span className="msg-name">{nameOf(p)}</span>
-                      <span className="msg-time">{clock(m.created_at)}</span>
-                    </div>
-                  )}
-                  {m.body && <div className="msg-body"><RichText text={m.body} /></div>}
-                  {m.image_path && <ChatImage path={m.image_path} onLoad={() => stickToBottom.current && scrollDown()} />}
-                </div>
-                {mine && <button className="msg-del" title="Delete" aria-label="Delete message" onClick={() => remove(m)}><X size={14} aria-hidden="true" /></button>}
-              </div>
-            </Fragment>
-          )
-        })}
+        {msgs && <MessageList msgs={msgs} me={me} profiles={profiles} onRemove={remove} onImageLoad={onImageLoad} />}
       </div>
       {readOnlyNote && <div className="chat-note muted small">{readOnlyNote}</div>}
       <form className="chat-input" onSubmit={send}>
@@ -255,6 +253,44 @@ export default function Chat({ gameId, placeholder, readOnlyNote }: { gameId: st
     </div>
   )
 }
+
+const MessageList = memo(function MessageList({ msgs, me, profiles, onRemove, onImageLoad }: {
+  msgs: Message[]; me: Profile | null; profiles: Record<string, Profile>
+  onRemove: (m: Message) => void; onImageLoad: () => void
+}) {
+  return (
+    <>
+      {msgs.map((m, i) => {
+        const prev = msgs[i - 1]
+        const day = fullDay(m.created_at)
+        const newDay = !prev || fullDay(prev.created_at) !== day
+        const grouped = !newDay && prev?.author_id === m.author_id &&
+          new Date(m.created_at).getTime() - new Date(prev.created_at).getTime() < 5 * 60_000
+        const mine = m.author_id === me?.id
+        const p = profiles[m.author_id]
+        return (
+          <Fragment key={m.id}>
+            {newDay && <div className="day-sep"><span>{day}</span></div>}
+            <div className={`msg ${grouped ? 'grouped' : ''} ${mine ? 'mine' : ''} ${!mine && mentionsMe(m.body, me?.id) ? 'tagged' : ''}`}>
+              <div className="msg-avatar">{!grouped && <Avatar p={p} size={34} />}</div>
+              <div className="msg-main">
+                {!grouped && (
+                  <div className="msg-head">
+                    <span className="msg-name">{nameOf(p)}</span>
+                    <span className="msg-time">{clock(m.created_at)}</span>
+                  </div>
+                )}
+                {m.body && <div className="msg-body"><RichText text={m.body} /></div>}
+                {m.image_path && <ChatImage path={m.image_path} onLoad={onImageLoad} />}
+              </div>
+              {mine && <button className="msg-del" title="Delete" aria-label="Delete message" onClick={() => onRemove(m)}><X size={14} aria-hidden="true" /></button>}
+            </div>
+          </Fragment>
+        )
+      })}
+    </>
+  )
+})
 
 const URL_RE = /(https?:\/\/[^\s<]+[^\s<.,:;"')\]!?])/g
 const IMG_RE = /\.(gif|png|jpe?g|webp|avif)(\?.*)?$/i

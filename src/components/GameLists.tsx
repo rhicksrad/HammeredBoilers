@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Check, ClipboardList, Plus, UtensilsCrossed, X, type LucideIcon } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
@@ -13,18 +13,21 @@ export default function GameList({ gameId, kind }: { gameId: string; kind: ListK
   const [items, setItems] = useState<ListItem[] | null>(null)
   const [err, setErr] = useState<string | null>(null)
 
-  useEffect(() => {
-    setItems(null)
+  const load = useCallback(() => {
     supabase.from('list_items').select('*').eq('game_id', gameId).eq('kind', kind).then(({ data, error }) => {
-      if (error) setErr(error.message)
-      setItems((data ?? []) as ListItem[])
+      setErr(error?.message ?? null)
+      if (!error) setItems((data ?? []) as ListItem[])
+      else setItems((cur) => cur ?? [])
     })
   }, [gameId, kind])
+
+  useEffect(() => { setItems(null); load() }, [load])
 
   // Realtime takes one filter, so the other list's rows come through too; skip them here.
   useLiveTable<ListItem>('list_items', `game_id=eq.${gameId}`, {
     onUpsert: (row) => row.kind === kind && setItems((cur) => (cur ? upsertById(cur, row) : cur)),
     onDelete: (id) => setItems((cur) => cur?.filter((x) => x.id !== id) ?? cur),
+    onResync: load,
   })
 
   // Optimistic: update the screen now, then the database; realtime keeps everyone else in sync.
