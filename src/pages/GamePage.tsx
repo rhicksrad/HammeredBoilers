@@ -13,6 +13,7 @@ import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
 import { byShot, Lightbox, PhotoGrid, stackDupes, Uploader, useStackKeys } from '../components/Photos'
+import { scroller } from '../lib/scroller'
 
 type Tab = 'food' | 'asks' | 'dj' | 'chat' | 'pics'
 
@@ -74,10 +75,11 @@ export default function GamePage() {
     const el = tabsRef.current
     if (!el || getComputedStyle(el).display === 'none') return
     // Where the tabs sit when not stuck: just below the game header, plus the stack's gap.
-    const above = el.previousElementSibling!.getBoundingClientRect().bottom + window.scrollY
+    const box = scroller()
+    const above = el.previousElementSibling!.getBoundingClientRect().bottom - box.getBoundingClientRect().top + box.scrollTop
     const gap = parseFloat(getComputedStyle(el.parentElement!).rowGap) || 0
     const stuckAt = parseFloat(getComputedStyle(el).top) || 0
-    requestAnimationFrame(() => window.scrollTo({ top: Math.max(0, above + gap - stuckAt) }))
+    requestAnimationFrame(() => box.scrollTo({ top: Math.max(0, above + gap - stuckAt) }))
   }
 
   const gamesById = useMemo(() => (game ? { [game.id]: game } : {}), [game])

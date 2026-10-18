@@ -77,7 +77,12 @@ h3.display svg.lucide, h2.display svg.lucide { color: var(--gold); }
 .icon-text { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---------- layout ---------- */
-.app { min-height: 100vh; padding-bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); }
+.app { height: 100vh; height: 100dvh; display: flex; flex-direction: column; }
+/* Signed in, the page scrolls inside .app-scroll rather than the document, and the phone tab bar is the
+   next block down. iOS Safari drifts position: fixed bars up the screen after the keyboard closes or the
+   toolbar resizes; a bar that is part of the layout can't drift. */
+html:has(.app), html:has(.app) body { height: 100%; overflow: hidden; }
+.app-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior-y: contain; }
 .page { max-width: 1180px; margin: 0 auto; padding: 28px 20px 48px; }
 .stack { display: flex; flex-direction: column; gap: 12px; }
 .stack-lg { display: flex; flex-direction: column; gap: 28px; }
@@ -138,7 +143,7 @@ h3.display svg.lucide, h2.display svg.lucide { color: var(--gold); }
   .topnav, .me-chip { display: none; }
   .tabbar {
     display: grid; grid-template-columns: repeat(4, 1fr);
-    position: fixed; inset: auto 0 0 0; z-index: 30;
+    flex: none; position: relative; z-index: 30;
     height: calc(var(--tabbar-h) + env(safe-area-inset-bottom));
     padding-bottom: env(safe-area-inset-bottom);
     background: rgba(12, 12, 12, 0.94);
@@ -499,6 +504,7 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .print-sheet { display: none; }
 @media print {
   @page { margin: 0.5in; }
+  html:has(body.printing), body.printing { height: auto; overflow: visible; }
   body.printing { background: #fff !important; color: #000; }
   body.printing > :not(.print-sheet) { display: none !important; }
   body.printing .print-sheet { display: block; color: #000; font-family: var(--body); }

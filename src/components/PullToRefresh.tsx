@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { RefreshCw } from 'lucide-react'
+import { scroller } from '../lib/scroller'
 
 const TRIGGER = 72 // px of pull (after resistance) that counts as "refresh"
 const MAX = 110
@@ -27,14 +28,14 @@ export default function PullToRefresh() {
 
     const onStart = (e: TouchEvent) => {
       const t = e.target as Element
-      if (window.scrollY > 0 || e.touches.length > 1 || t.closest?.(OWN_GESTURES)) { start.current = null; return }
+      if (scroller().scrollTop > 0 || e.touches.length > 1 || t.closest?.(OWN_GESTURES)) { start.current = null; return }
       start.current = { y: e.touches[0].clientY, x: e.touches[0].clientX }
     }
     const onMove = (e: TouchEvent) => {
       if (!start.current) return
       const dy = e.touches[0].clientY - start.current.y
       const dx = e.touches[0].clientX - start.current.x
-      if (window.scrollY > 0 || dy <= 0 || Math.abs(dx) > Math.abs(dy)) { if (pullRef.current) set(0); return }
+      if (scroller().scrollTop > 0 || dy <= 0 || Math.abs(dx) > Math.abs(dy)) { if (pullRef.current) set(0); return }
       set(Math.min(MAX, dy * 0.5)) // resistance: the indicator moves half as far as the finger
     }
     const onEnd = () => {

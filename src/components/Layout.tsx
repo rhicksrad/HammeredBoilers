@@ -7,6 +7,7 @@ import { Avatar, badgeFor, DEFAULT_BADGE } from './Avatar'
 import AvatarPicker from './AvatarPicker'
 import ActivityBell from './ActivityBell'
 import PullToRefresh from './PullToRefresh'
+import { scroller } from '../lib/scroller'
 
 const NAV = [
   { to: '/', label: 'Gameday', Icon: CalendarDays, end: true },
@@ -19,32 +20,40 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { me } = useAuth()
   // A new page starts at the top, like an app, instead of keeping the last page's scroll.
   const { pathname } = useLocation()
-  useEffect(() => { window.scrollTo(0, 0) }, [pathname])
+  useEffect(() => { scroller().scrollTo(0, 0) }, [pathname])
+  // iOS pans the whole document up to show the keyboard and can leave it there once the keyboard closes.
+  useEffect(() => {
+    const settle = () => setTimeout(() => { if (window.scrollY) window.scrollTo(0, 0) }, 100)
+    window.addEventListener('focusout', settle)
+    return () => window.removeEventListener('focusout', settle)
+  }, [])
   return (
     <div className="app">
-      <header className="topbar">
-        <NavLink to="/" className="brand">
-          <Logo size={36} />
-          <span>
-            <span className="brand-name">Hammered Boilers</span>
-            <span className="brand-tag">Boiler Up. Bottoms Up.</span>
-          </span>
-        </NavLink>
-        <nav className="topnav">
-          {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} end={n.end}><n.Icon size={17} strokeWidth={1.9} aria-hidden="true" />{n.label}</NavLink>
-          ))}
-        </nav>
-        <ActivityBell />
-        {me && (
-          <NavLink to="/crew" className="me-chip" title="Your profile">
-            <Avatar p={me} size={30} />
-            <span className="me-name">{me.display_name}</span>
+      <div className="app-scroll">
+        <header className="topbar">
+          <NavLink to="/" className="brand">
+            <Logo size={36} />
+            <span>
+              <span className="brand-name">Hammered Boilers</span>
+              <span className="brand-tag">Boiler Up. Bottoms Up.</span>
+            </span>
           </NavLink>
-        )}
-      </header>
-      <PullToRefresh />
-      <main className="page">{children}</main>
+          <nav className="topnav">
+            {NAV.map((n) => (
+              <NavLink key={n.to} to={n.to} end={n.end}><n.Icon size={17} strokeWidth={1.9} aria-hidden="true" />{n.label}</NavLink>
+            ))}
+          </nav>
+          <ActivityBell />
+          {me && (
+            <NavLink to="/crew" className="me-chip" title="Your profile">
+              <Avatar p={me} size={30} />
+              <span className="me-name">{me.display_name}</span>
+            </NavLink>
+          )}
+        </header>
+        <PullToRefresh />
+        <main className="page">{children}</main>
+      </div>
       <nav className="tabbar">
         {NAV.map((n) => (
           <NavLink key={n.to} to={n.to} end={n.end}>
