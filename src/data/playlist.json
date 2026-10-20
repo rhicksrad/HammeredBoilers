@@ -1,0 +1,2020 @@
+{
+ "id": "3t5Iw9vyFz2vmcE7XL0d8c",
+ "name": "Hammered Boilers Tailgate",
+ "owner": "Kevin Hicks",
+ "pulled": "2026-10-20",
+ "tracks": [
+  {
+   "key": "4OV0sRTFrZLXaZZ1sS9hLn",
+   "id": "4OV0sRTFrZLXaZZ1sS9hLn",
+   "title": "Sirius",
+   "artists": [
+    "The Alan Parsons Project"
+   ],
+   "album": "Eye In The Sky (Expanded Edition)",
+   "seconds": 115,
+   "genre": "Rock"
+  },
+  {
+   "key": "6aF5JtQSrh7wNrkDE9B0My",
+   "id": "6aF5JtQSrh7wNrkDE9B0My",
+   "title": "When Worlds Collide",
+   "artists": [
+    "Powerman 5000"
+   ],
+   "album": "Tonight The Stars Revolt",
+   "seconds": 177,
+   "genre": "Rock"
+  },
+  {
+   "key": "0C80GCp0mMuBzLf3EAXqxv",
+   "id": "0C80GCp0mMuBzLf3EAXqxv",
+   "title": "Shoot to Thrill",
+   "artists": [
+    "AC/DC"
+   ],
+   "album": "Back In Black",
+   "seconds": 318,
+   "genre": "Rock"
+  },
+  {
+   "key": "6aJ90LBl96bly9zuEH1U2X",
+   "id": "6aJ90LBl96bly9zuEH1U2X",
+   "title": "This Is How We Do It",
+   "artists": [
+    "Montell Jordan"
+   ],
+   "album": "Best Of Montell Jordan",
+   "seconds": 237,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "05RgAMGypEvqhNs5hPCbMS",
+   "id": "05RgAMGypEvqhNs5hPCbMS",
+   "title": "Panama - 2015 Remaster",
+   "artists": [
+    "Van Halen"
+   ],
+   "album": "1984 (Remastered)",
+   "seconds": 210,
+   "genre": "Rock"
+  },
+  {
+   "key": "07q6QTQXyPRCf7GbLakRPr",
+   "id": "07q6QTQXyPRCf7GbLakRPr",
+   "title": "Everlong",
+   "artists": [
+    "Foo Fighters"
+   ],
+   "album": "Greatest Hits",
+   "seconds": 249,
+   "genre": "Alternative"
+  },
+  {
+   "key": "4HFNGbVmsMV5lHUvDuXLkl",
+   "id": "4HFNGbVmsMV5lHUvDuXLkl",
+   "title": "Parking Lot Party",
+   "artists": [
+    "Lee Brice"
+   ],
+   "album": "Hard 2 Love",
+   "seconds": 207,
+   "genre": "Country"
+  },
+  {
+   "key": "37rKwjBHaZurlyPYy3Nqvz",
+   "id": "37rKwjBHaZurlyPYy3Nqvz",
+   "title": "Thrift Shop (feat. Wanz)",
+   "artists": [
+    "Macklemore & Ryan Lewis",
+    "Macklemore",
+    "Ryan Lewis",
+    "Wanz"
+   ],
+   "album": "The Heist",
+   "seconds": 235,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "2TR7A4ulH9R1PNwMyd8o8U",
+   "id": "2TR7A4ulH9R1PNwMyd8o8U",
+   "title": "This Is How We Roll",
+   "artists": [
+    "Florida Georgia Line",
+    "Luke Bryan"
+   ],
+   "album": "Here's To The Good Times...This Is How We Roll",
+   "seconds": 220,
+   "genre": "Country"
+  },
+  {
+   "key": "5jSz894ljfWE0IcHBSM39i",
+   "id": "5jSz894ljfWE0IcHBSM39i",
+   "title": "Raspberry Beret",
+   "artists": [
+    "Prince"
+   ],
+   "album": "Around the World in a Day",
+   "seconds": 215,
+   "genre": "R&B"
+  },
+  {
+   "key": "0dOg1ySSI7NkpAe89Zo0b9",
+   "id": "0dOg1ySSI7NkpAe89Zo0b9",
+   "title": "Born in the U.S.A.",
+   "artists": [
+    "Bruce Springsteen"
+   ],
+   "album": "Born In The U.S.A.",
+   "seconds": 279,
+   "genre": "Pop"
+  },
+  {
+   "key": "2SiXAy7TuUkycRVbbWDEpo",
+   "id": "2SiXAy7TuUkycRVbbWDEpo",
+   "title": "You Shook Me All Night Long",
+   "artists": [
+    "AC/DC"
+   ],
+   "album": "Back In Black",
+   "seconds": 210,
+   "genre": "Rock"
+  },
+  {
+   "key": "4dGJf1SER1T6ooX46vwzRB",
+   "id": "4dGJf1SER1T6ooX46vwzRB",
+   "title": "Chicken Fried",
+   "artists": [
+    "Zac Brown Band"
+   ],
+   "album": "The Foundation",
+   "seconds": 238,
+   "genre": "Country"
+  },
+  {
+   "key": "2WKCH4ISejDV9ad7iPp5XU",
+   "id": "2WKCH4ISejDV9ad7iPp5XU",
+   "title": "5-1-5-0",
+   "artists": [
+    "Dierks Bentley"
+   ],
+   "album": "Home",
+   "seconds": 182,
+   "genre": "Country"
+  },
+  {
+   "key": "5ubvP9oKmxLUVq506fgLhk",
+   "id": "5ubvP9oKmxLUVq506fgLhk",
+   "title": "Stayin Alive",
+   "artists": [
+    "Bee Gees"
+   ],
+   "album": "How Can You Mend A Broken Heart",
+   "seconds": 285,
+   "genre": "Films/Games"
+  },
+  {
+   "key": "3BnBKNItMng824sLx0pUfy",
+   "id": "3BnBKNItMng824sLx0pUfy",
+   "title": "A LIGHT THAT NEVER COMES",
+   "artists": [
+    "Linkin Park",
+    "Steve Aoki"
+   ],
+   "album": "RECHARGED",
+   "seconds": 229,
+   "genre": "Dance"
+  },
+  {
+   "key": "4DMKwE2E2iYDKY01C335Uw",
+   "id": "4DMKwE2E2iYDKY01C335Uw",
+   "title": "Carry on Wayward Son",
+   "artists": [
+    "Kansas"
+   ],
+   "album": "Leftoverture (Expanded Edition)",
+   "seconds": 323,
+   "genre": "Rock"
+  },
+  {
+   "key": "4h9wh7iOZ0GGn8QVp4RAOB",
+   "id": "4h9wh7iOZ0GGn8QVp4RAOB",
+   "title": "I Ain't Worried",
+   "artists": [
+    "OneRepublic"
+   ],
+   "album": "I Ain’t Worried (Music From The Motion Picture \"Top Gun: Maverick\")",
+   "seconds": 148,
+   "genre": "Films/Games"
+  },
+  {
+   "key": "1nnsiuuYlvPF9gxXIiyAr8",
+   "id": "1nnsiuuYlvPF9gxXIiyAr8",
+   "title": "I Was On a Boat That Day",
+   "artists": [
+    "Old Dominion"
+   ],
+   "album": "I Was On a Boat That Day",
+   "seconds": 178,
+   "genre": "Country"
+  },
+  {
+   "key": "6RUKPb4LETWmmr3iAEQktW",
+   "id": "6RUKPb4LETWmmr3iAEQktW",
+   "title": "Something Just Like This",
+   "artists": [
+    "The Chainsmokers",
+    "Coldplay"
+   ],
+   "album": "Memories...Do Not Open",
+   "seconds": 247,
+   "genre": "Alternative"
+  },
+  {
+   "key": "4bHsxqR3GMrXTxEPLuK5ue",
+   "id": "4bHsxqR3GMrXTxEPLuK5ue",
+   "title": "Don't Stop Believin'",
+   "artists": [
+    "Journey"
+   ],
+   "album": "Escape (Bonus Track Version)",
+   "seconds": 250,
+   "genre": "Rock"
+  },
+  {
+   "key": "2ILPN9TGUTqXlIeW9sJ5mf",
+   "id": "2ILPN9TGUTqXlIeW9sJ5mf",
+   "title": "Number One Spot",
+   "artists": [
+    "Ludacris"
+   ],
+   "album": "The Red Light District",
+   "seconds": 274,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "4igIYHF3B5VBxEafHauVo3",
+   "id": "4igIYHF3B5VBxEafHauVo3",
+   "title": "Fat Bottomed Girls - Remastered 2011",
+   "artists": [
+    "Queen"
+   ],
+   "album": "Jazz (Deluxe Remastered Version)",
+   "seconds": 255,
+   "genre": "Pop"
+  },
+  {
+   "key": "57bgtoPSgt236HzfBOd8kj",
+   "id": "57bgtoPSgt236HzfBOd8kj",
+   "title": "Thunderstruck",
+   "artists": [
+    "AC/DC"
+   ],
+   "album": "The Razors Edge",
+   "seconds": 292,
+   "genre": "Rock"
+  },
+  {
+   "key": "7zNM46fo01dCBidY4yGNTZ",
+   "id": "7zNM46fo01dCBidY4yGNTZ",
+   "title": "Keep Me in Mind",
+   "artists": [
+    "Zac Brown Band"
+   ],
+   "album": "You Get What You Give (Deluxe)",
+   "seconds": 214,
+   "genre": "Country"
+  },
+  {
+   "key": "66pxmg3Jhjm09tHoWR1wVR",
+   "id": "66pxmg3Jhjm09tHoWR1wVR",
+   "title": "All the Pretty Girls",
+   "artists": [
+    "Kenny Chesney"
+   ],
+   "album": "Cosmic Hallelujah",
+   "seconds": 212,
+   "genre": "Country"
+  },
+  {
+   "key": "6b8Be6ljOzmkOmFslEb23P",
+   "id": "6b8Be6ljOzmkOmFslEb23P",
+   "title": "24K Magic",
+   "artists": [
+    "Bruno Mars"
+   ],
+   "album": "24K Magic",
+   "seconds": 225,
+   "genre": "Pop"
+  },
+  {
+   "key": "0J6mQxEZnlRt9ymzFntA6z",
+   "id": "0J6mQxEZnlRt9ymzFntA6z",
+   "title": "Livin' On A Prayer",
+   "artists": [
+    "Bon Jovi"
+   ],
+   "album": "Slippery When Wet",
+   "seconds": 249,
+   "genre": "Rock"
+  },
+  {
+   "key": "0PdM2a6oIjqepoEfcJo0RO",
+   "id": "0PdM2a6oIjqepoEfcJo0RO",
+   "title": "Pour Some Sugar On Me - Remastered 2017",
+   "artists": [
+    "Def Leppard"
+   ],
+   "album": "Hysteria (Super Deluxe)",
+   "seconds": 267,
+   "genre": "Rock"
+  },
+  {
+   "key": "7m3povhdMDLZwuEKak0l0n",
+   "id": "7m3povhdMDLZwuEKak0l0n",
+   "title": "Wasted",
+   "artists": [
+    "Tiësto",
+    "Matthew Koma"
+   ],
+   "album": "A Town Called Paradise (Deluxe)",
+   "seconds": 190,
+   "genre": "Dance"
+  },
+  {
+   "key": "7u5dBtASrtOuBTTZjJrvuJ",
+   "id": "7u5dBtASrtOuBTTZjJrvuJ",
+   "title": "My Hero",
+   "artists": [
+    "Foo Fighters"
+   ],
+   "album": "Greatest Hits",
+   "seconds": 258,
+   "genre": "Alternative"
+  },
+  {
+   "key": "1cktZnxiONH0hR6Q3DKy8h",
+   "id": "1cktZnxiONH0hR6Q3DKy8h",
+   "title": "Drink In My Hand",
+   "artists": [
+    "Eric Church"
+   ],
+   "album": "Chief",
+   "seconds": 191,
+   "genre": "Country"
+  },
+  {
+   "key": "1JClFT74TYSXlzpagbmj0S",
+   "id": "1JClFT74TYSXlzpagbmj0S",
+   "title": "California Love - Original Version",
+   "artists": [
+    "2Pac",
+    "Roger",
+    "Dr. Dre"
+   ],
+   "album": "Greatest Hits",
+   "seconds": 285,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "4MhTFsyqIJnjsOweVcU8ug",
+   "id": "4MhTFsyqIJnjsOweVcU8ug",
+   "title": "Sweet Child O' Mine",
+   "artists": [
+    "Guns N' Roses"
+   ],
+   "album": "Appetite For Destruction",
+   "seconds": 356,
+   "genre": "Rock"
+  },
+  {
+   "key": "3hpUL1gDZWiz8k4DtYhZsS",
+   "id": "3hpUL1gDZWiz8k4DtYhZsS",
+   "title": "Hot In Herre",
+   "artists": [
+    "Nelly"
+   ],
+   "album": "Nellyville",
+   "seconds": 228,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "2ojsE7uptG3qk3yTDV0iCX",
+   "id": "2ojsE7uptG3qk3yTDV0iCX",
+   "title": "Where the Boat Leaves From",
+   "artists": [
+    "Zac Brown Band"
+   ],
+   "album": "The Foundation",
+   "seconds": 222,
+   "genre": "Country"
+  },
+  {
+   "key": "5rX6C5QVvvZB7XckETNych",
+   "id": "5rX6C5QVvvZB7XckETNych",
+   "title": "All Summer Long",
+   "artists": [
+    "Kid Rock"
+   ],
+   "album": "Rock n Roll Jesus",
+   "seconds": 297,
+   "genre": "Pop"
+  },
+  {
+   "key": "73yDLIB1eD9WAl1u9IXS5C",
+   "id": "73yDLIB1eD9WAl1u9IXS5C",
+   "title": "Cowboy",
+   "artists": [
+    "Kid Rock"
+   ],
+   "album": "Devil Without a Cause",
+   "seconds": 258,
+   "genre": "Pop"
+  },
+  {
+   "key": "36TBMtrW4x7bHW8LH8rnRr",
+   "id": "36TBMtrW4x7bHW8LH8rnRr",
+   "title": "It's Tricky",
+   "artists": [
+    "Run–D.M.C."
+   ],
+   "album": "Greatest Hits",
+   "seconds": 183,
+   "genre": "R&B"
+  },
+  {
+   "key": "5b88tNINg4Q4nrRbrCXUmg",
+   "id": "5b88tNINg4Q4nrRbrCXUmg",
+   "title": "Happy - From \"Despicable Me 2\"",
+   "artists": [
+    "Pharrell Williams"
+   ],
+   "album": "G I R L",
+   "seconds": 232,
+   "genre": "Pop"
+  },
+  {
+   "key": "0o7g2ndHoHmzTXaxjPM44O",
+   "id": "0o7g2ndHoHmzTXaxjPM44O",
+   "title": "Even Flow",
+   "artists": [
+    "Pearl Jam"
+   ],
+   "album": "Ten",
+   "seconds": 293,
+   "genre": "Rock"
+  },
+  {
+   "key": "7BKLCZ1jbUBVqRi2FVlTVw",
+   "id": "7BKLCZ1jbUBVqRi2FVlTVw",
+   "title": "Closer",
+   "artists": [
+    "The Chainsmokers",
+    "Halsey"
+   ],
+   "album": "Closer",
+   "seconds": 244,
+   "genre": "Alternative"
+  },
+  {
+   "key": "6KgBpzTuTRPebChN0VTyzV",
+   "id": "6KgBpzTuTRPebChN0VTyzV",
+   "title": "Good as Hell",
+   "artists": [
+    "Lizzo"
+   ],
+   "album": "Cuz I Love You (Super Deluxe)",
+   "seconds": 159,
+   "genre": "Pop"
+  },
+  {
+   "key": "0rmGAIH9LNJewFw7nKzZnc",
+   "id": "0rmGAIH9LNJewFw7nKzZnc",
+   "title": "You Give Love A Bad Name",
+   "artists": [
+    "Bon Jovi"
+   ],
+   "album": "Slippery When Wet",
+   "seconds": 222,
+   "genre": "Rock"
+  },
+  {
+   "key": "1a3xfVZyJnlKn4t65ccBbp",
+   "id": "1a3xfVZyJnlKn4t65ccBbp",
+   "title": "Lose Yourself - From \"8 Mile\" Soundtrack",
+   "artists": [
+    "Eminem"
+   ],
+   "album": "Curtain Call: The Hits",
+   "seconds": 321,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "1sn6iOK93jnp0Hn5BnNOXy",
+   "id": "1sn6iOK93jnp0Hn5BnNOXy",
+   "title": "Best of You",
+   "artists": [
+    "Foo Fighters"
+   ],
+   "album": "Greatest Hits",
+   "seconds": 254,
+   "genre": "Alternative"
+  },
+  {
+   "key": "0GjEhVFGZW8afUYGChu3Rr",
+   "id": "0GjEhVFGZW8afUYGChu3Rr",
+   "title": "Dancing Queen",
+   "artists": [
+    "ABBA"
+   ],
+   "album": "Arrival",
+   "seconds": 230,
+   "genre": "Pop"
+  },
+  {
+   "key": "1dNIEtp7AY3oDAKCGg2XkH",
+   "id": "1dNIEtp7AY3oDAKCGg2XkH",
+   "title": "Something Just Like This",
+   "artists": [
+    "The Chainsmokers",
+    "Coldplay"
+   ],
+   "album": "Something Just Like This",
+   "seconds": 247,
+   "genre": "Alternative"
+  },
+  {
+   "key": "3TZwjdclvWt7iPJUnMpgcs",
+   "id": "3TZwjdclvWt7iPJUnMpgcs",
+   "title": "Jump Around",
+   "artists": [
+    "House Of Pain"
+   ],
+   "album": "House of Pain (Fine Malt Lyrics)",
+   "seconds": 214,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "6RsWqX8zABZLhZydXxEFOm",
+   "id": "6RsWqX8zABZLhZydXxEFOm",
+   "title": "Can't Feel My Face",
+   "artists": [
+    "The Weeknd"
+   ],
+   "album": "Beauty Behind The Madness",
+   "seconds": 213,
+   "genre": "R&B"
+  },
+  {
+   "key": "17lu4tymfnhmcIDlzBbtAb",
+   "id": "17lu4tymfnhmcIDlzBbtAb",
+   "title": "For Those About to Rock (We Salute You)",
+   "artists": [
+    "AC/DC"
+   ],
+   "album": "For Those About to Rock (We Salute You)",
+   "seconds": 344,
+   "genre": "Rock"
+  },
+  {
+   "key": "15npbUjCgwt2lRvyrJvyxw",
+   "id": "15npbUjCgwt2lRvyrJvyxw",
+   "title": "Tequila Little Time",
+   "artists": [
+    "Jon Pardi"
+   ],
+   "album": "Heartache Medication",
+   "seconds": 207,
+   "genre": "Country"
+  },
+  {
+   "key": "5bcTCxgc7xVfSaMV3RuVke",
+   "id": "5bcTCxgc7xVfSaMV3RuVke",
+   "title": "Feels (feat. Pharrell Williams, Katy Perry & Big Sean)",
+   "artists": [
+    "Calvin Harris",
+    "Pharrell Williams",
+    "Katy Perry",
+    "Big Sean",
+    "Funk Wav"
+   ],
+   "album": "Funk Wav Bounces Vol.1",
+   "seconds": 223,
+   "genre": "Dance"
+  },
+  {
+   "key": "1i1fxkWeaMmKEB4T7zqbzK",
+   "id": "1i1fxkWeaMmKEB4T7zqbzK",
+   "title": "Don't Let Me Down",
+   "artists": [
+    "The Chainsmokers",
+    "Daya"
+   ],
+   "album": "Don't Let Me Down",
+   "seconds": 208,
+   "genre": "Dance"
+  },
+  {
+   "key": "14rVWDTz1FknpfBzBHEU98",
+   "id": "14rVWDTz1FknpfBzBHEU98",
+   "title": "Pornstar Champion (We Will Rock You)",
+   "artists": [
+    "Scum of the Earth"
+   ],
+   "album": "Blah...Blah...Blah...Love Songs for the New Millennium",
+   "seconds": 237,
+   "genre": "Alternative"
+  },
+  {
+   "key": "4DdF1l0DzBQy8YL2UVhPrU",
+   "id": "4DdF1l0DzBQy8YL2UVhPrU",
+   "title": "Vacation",
+   "artists": [
+    "Thomas Rhett"
+   ],
+   "album": "Tangled Up",
+   "seconds": 223,
+   "genre": "Country"
+  },
+  {
+   "key": "4UCkX8nrBlpxjrrEqtb46a",
+   "id": "4UCkX8nrBlpxjrrEqtb46a",
+   "title": "Apache",
+   "artists": [
+    "The Sugarhill Gang"
+   ],
+   "album": "8th Wonder",
+   "seconds": 373,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "00QyLmjxaSEE8qIZQjBXBj",
+   "id": "00QyLmjxaSEE8qIZQjBXBj",
+   "title": "We Own It (Fast & Furious)",
+   "artists": [
+    "2 Chainz",
+    "Wiz Khalifa"
+   ],
+   "album": "Fast & Furious 6",
+   "seconds": 227,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "0VjIjW4GlUZAMYd2vXMi3b",
+   "id": "0VjIjW4GlUZAMYd2vXMi3b",
+   "title": "Blinding Lights",
+   "artists": [
+    "The Weeknd"
+   ],
+   "album": "After Hours",
+   "seconds": 200,
+   "genre": "R&B"
+  },
+  {
+   "key": "4nllHILOTFjoMo5RD8IciY",
+   "id": "4nllHILOTFjoMo5RD8IciY",
+   "title": "Hell Yeah",
+   "artists": [
+    "Montgomery Gentry"
+   ],
+   "album": "Something To Be Proud Of: Best Of 1999-2005",
+   "seconds": 290,
+   "genre": "Country"
+  },
+  {
+   "key": "1SAkL1mYNJlaqnBQxVZrRl",
+   "id": "1SAkL1mYNJlaqnBQxVZrRl",
+   "title": "Baby Got Back",
+   "artists": [
+    "Sir Mix-A-Lot"
+   ],
+   "album": "Mack Daddy",
+   "seconds": 262,
+   "genre": "Electro"
+  },
+  {
+   "key": "2V8KvnD5LVeeDChMWEkSzC",
+   "id": "2V8KvnD5LVeeDChMWEkSzC",
+   "title": "Nothin' But A Good Time - Remastered 2006",
+   "artists": [
+    "Poison"
+   ],
+   "album": "Open Up And Say...Ahh! (20th Anniversary Edition)",
+   "seconds": 224,
+   "genre": "Rock"
+  },
+  {
+   "key": "7GonnnalI2s19OCQO1J7Tf",
+   "id": "7GonnnalI2s19OCQO1J7Tf",
+   "title": "Kickstart My Heart",
+   "artists": [
+    "Mötley Crüe"
+   ],
+   "album": "Dr. Feelgood",
+   "seconds": 282,
+   "genre": "Rock"
+  },
+  {
+   "key": "72lnxzSpy950mij59qCYXG",
+   "id": "72lnxzSpy950mij59qCYXG",
+   "title": "All I Do Is Win (feat. T-Pain, Ludacris, Snoop Dogg & Rick Ross)",
+   "artists": [
+    "DJ Khaled",
+    "T-Pain",
+    "Ludacris",
+    "Snoop Dogg",
+    "Rick Ross"
+   ],
+   "album": "Victory",
+   "seconds": 227,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "1w29UTa5uUvIri2tWtZ12Y",
+   "id": "1w29UTa5uUvIri2tWtZ12Y",
+   "title": "Hip Hop Hooray",
+   "artists": [
+    "Naughty By Nature"
+   ],
+   "album": "19 Naughty III",
+   "seconds": 267,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "3ctoHckjyd13eBi2IDw2Ip",
+   "id": "3ctoHckjyd13eBi2IDw2Ip",
+   "title": "Seven Nation Army",
+   "artists": [
+    "The White Stripes"
+   ],
+   "album": "Elephant",
+   "seconds": 231,
+   "genre": "Alternative"
+  },
+  {
+   "key": "0EMmVUYs9ZZRHtlADB88uz",
+   "id": "0EMmVUYs9ZZRHtlADB88uz",
+   "title": "Come On Eileen",
+   "artists": [
+    "Dexys Midnight Runners"
+   ],
+   "album": "Too Rye Ay",
+   "seconds": 287,
+   "genre": "Pop"
+  },
+  {
+   "key": "5SZ6zX4rOrEQferfFC2MfP",
+   "id": "5SZ6zX4rOrEQferfFC2MfP",
+   "title": "Walk This Way",
+   "artists": [
+    "Aerosmith"
+   ],
+   "album": "Toys In The Attic",
+   "seconds": 220,
+   "genre": "Rock"
+  },
+  {
+   "key": "5JlH51YDYsGj2dyEJKKjcN",
+   "id": "5JlH51YDYsGj2dyEJKKjcN",
+   "title": "Alright",
+   "artists": [
+    "Darius Rucker"
+   ],
+   "album": "Learn To Live",
+   "seconds": 231,
+   "genre": "Country"
+  },
+  {
+   "key": "5pgmgHNxiq9w9XuthMKzJS",
+   "id": "5pgmgHNxiq9w9XuthMKzJS",
+   "title": "Beer In Mexico",
+   "artists": [
+    "Kenny Chesney"
+   ],
+   "album": "The Road And The Radio",
+   "seconds": 273,
+   "genre": "Country"
+  },
+  {
+   "key": "5Hroj5K7vLpIG4FNCRIjbP",
+   "id": "5Hroj5K7vLpIG4FNCRIjbP",
+   "title": "Best Day Of My Life",
+   "artists": [
+    "American Authors"
+   ],
+   "album": "Oh, What A Life",
+   "seconds": 194,
+   "genre": "Alternative"
+  },
+  {
+   "key": "6OqVLAgypOneSXvhx6AlYh",
+   "id": "6OqVLAgypOneSXvhx6AlYh",
+   "title": "Right Above It - Edited",
+   "artists": [
+    "Lil Wayne",
+    "Drake"
+   ],
+   "album": "I Am Not A Human Being",
+   "seconds": 280,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "1TwLKNsCnhi1HxbIi4bAW0",
+   "id": "1TwLKNsCnhi1HxbIi4bAW0",
+   "title": "House Party",
+   "artists": [
+    "Sam Hunt"
+   ],
+   "album": "Montevallo",
+   "seconds": 190,
+   "genre": "Country"
+  },
+  {
+   "key": "3KELxFGasKxINHhW3vwRtN",
+   "id": "3KELxFGasKxINHhW3vwRtN",
+   "title": "Only Wanna Be with You",
+   "artists": [
+    "Hootie & The Blowfish"
+   ],
+   "album": "Rhino Hi-Five: Summer Hits",
+   "seconds": 229,
+   "genre": "Pop"
+  },
+  {
+   "key": "1zWZvrk13cL8Sl3VLeG57F",
+   "id": "1zWZvrk13cL8Sl3VLeG57F",
+   "title": "T-Shirt",
+   "artists": [
+    "Thomas Rhett"
+   ],
+   "album": "Tangled Up",
+   "seconds": 227,
+   "genre": "Country"
+  },
+  {
+   "key": "6Knv6wdA0luoMUuuoYi2i1",
+   "id": "6Knv6wdA0luoMUuuoYi2i1",
+   "title": "My House",
+   "artists": [
+    "Flo Rida"
+   ],
+   "album": "My House",
+   "seconds": 192,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "0biUYXBNhibQ0TyWrjb9iF",
+   "id": "0biUYXBNhibQ0TyWrjb9iF",
+   "title": "Somebody's Gotta Feel This",
+   "artists": [
+    "Kid Rock"
+   ],
+   "album": "Devil Without a Cause",
+   "seconds": 188,
+   "genre": "Pop"
+  },
+  {
+   "key": "6c9RCuOBbDhawmqaXYznOl",
+   "id": "6c9RCuOBbDhawmqaXYznOl",
+   "title": "Shake That - Album Version (Edited)- SUPERCLEAN",
+   "artists": [
+    "Eminem"
+   ],
+   "album": "Curtain Call: The Hits",
+   "seconds": 274,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "0VU5k3vCrpqDgUygMjiFYj",
+   "id": "0VU5k3vCrpqDgUygMjiFYj",
+   "title": "Copperhead Road",
+   "artists": [
+    "Steve Earle"
+   ],
+   "album": "Copperhead Road",
+   "seconds": 269,
+   "genre": "Films/Games"
+  },
+  {
+   "key": "04aAxqtGp5pv12UXAg4pkq",
+   "id": "04aAxqtGp5pv12UXAg4pkq",
+   "title": "Centuries",
+   "artists": [
+    "Fall Out Boy"
+   ],
+   "album": "American Beauty/American Psycho",
+   "seconds": 228,
+   "genre": "Alternative"
+  },
+  {
+   "key": "5OQsiBsky2k2kDKy2bX2eT",
+   "id": "5OQsiBsky2k2kDKy2bX2eT",
+   "title": "Learn to Fly",
+   "artists": [
+    "Foo Fighters"
+   ],
+   "album": "There Is Nothing Left To Lose",
+   "seconds": 235,
+   "genre": "Alternative"
+  },
+  {
+   "key": "37fDO9kuNi3SuCiksucEFS",
+   "id": "37fDO9kuNi3SuCiksucEFS",
+   "title": "Regulate",
+   "artists": [
+    "Warren G",
+    "Nate Dogg"
+   ],
+   "album": "Rap Classics",
+   "seconds": 251,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "6eN1f9KNmiWEhpE2RhQqB5",
+   "id": "6eN1f9KNmiWEhpE2RhQqB5",
+   "title": "Paradise City",
+   "artists": [
+    "Guns N' Roses"
+   ],
+   "album": "Appetite For Destruction",
+   "seconds": 405,
+   "genre": "Rock"
+  },
+  {
+   "key": "3xdjjKMcMOFgo1eQrfbogM",
+   "id": "3xdjjKMcMOFgo1eQrfbogM",
+   "title": "Wagon Wheel",
+   "artists": [
+    "Darius Rucker"
+   ],
+   "album": "True Believers",
+   "seconds": 298,
+   "genre": "Country"
+  },
+  {
+   "key": "2H7PHVdQ3mXqEHXcvclTB0",
+   "id": "2H7PHVdQ3mXqEHXcvclTB0",
+   "title": "1999",
+   "artists": [
+    "Prince"
+   ],
+   "album": "1999",
+   "seconds": 379,
+   "genre": "Pop"
+  },
+  {
+   "key": "32OlwWuMpZ6b0aN2RZOeMS",
+   "id": "32OlwWuMpZ6b0aN2RZOeMS",
+   "title": "Uptown Funk (feat. Bruno Mars)",
+   "artists": [
+    "Mark Ronson",
+    "Bruno Mars"
+   ],
+   "album": "Uptown Special",
+   "seconds": 269,
+   "genre": "Pop"
+  },
+  {
+   "key": "6QDbGdbJ57Mtkflsg42WV5",
+   "id": "6QDbGdbJ57Mtkflsg42WV5",
+   "title": "Hot for Teacher - 2015 Remaster",
+   "artists": [
+    "Van Halen"
+   ],
+   "album": "1984 (Remastered)",
+   "seconds": 282,
+   "genre": "Rock"
+  },
+  {
+   "key": "7oiEcG81HDmNHI2Ki2FaRv",
+   "id": "7oiEcG81HDmNHI2Ki2FaRv",
+   "title": "Glorious (feat. Skylar Grey)",
+   "artists": [
+    "Macklemore",
+    "Skylar Grey"
+   ],
+   "album": "GEMINI",
+   "seconds": 222,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "6WrI0LAC5M1Rw2MnX2ZvEg",
+   "id": "6WrI0LAC5M1Rw2MnX2ZvEg",
+   "title": "Don't Start Now",
+   "artists": [
+    "Dua Lipa"
+   ],
+   "album": "Don't Start Now",
+   "seconds": 183,
+   "genre": "Pop"
+  },
+  {
+   "key": "2HbVINmehEbPmjlcueXEJJ",
+   "id": "2HbVINmehEbPmjlcueXEJJ",
+   "title": "All My Life",
+   "artists": [
+    "Foo Fighters"
+   ],
+   "album": "Greatest Hits",
+   "seconds": 263,
+   "genre": "Alternative"
+  },
+  {
+   "key": "7s0lDK7y3XLmI7tcsRAbW0",
+   "id": "7s0lDK7y3XLmI7tcsRAbW0",
+   "title": "My Songs Know What You Did In The Dark (Light Em Up)",
+   "artists": [
+    "Fall Out Boy"
+   ],
+   "album": "Save Rock And Roll",
+   "seconds": 186,
+   "genre": "Alternative"
+  },
+  {
+   "key": "6MdqqkQ8sSC0WB4i8PyRuQ",
+   "id": "6MdqqkQ8sSC0WB4i8PyRuQ",
+   "title": "No Diggity",
+   "artists": [
+    "Blackstreet",
+    "Dr. Dre",
+    "Queen Pen"
+   ],
+   "album": "Another Level",
+   "seconds": 304,
+   "genre": "R&B"
+  },
+  {
+   "key": "2zYzyRzz6pRmhPzyfMEC8s",
+   "id": "2zYzyRzz6pRmhPzyfMEC8s",
+   "title": "Highway to Hell",
+   "artists": [
+    "AC/DC"
+   ],
+   "album": "Highway to Hell",
+   "seconds": 208,
+   "genre": "Rock"
+  },
+  {
+   "key": "4BcS4LomxUnQpzx4hCaJTs",
+   "id": "4BcS4LomxUnQpzx4hCaJTs",
+   "title": "Can't Stop",
+   "artists": [
+    "Red Hot Chili Peppers"
+   ],
+   "album": "By the Way",
+   "seconds": 269,
+   "genre": "Alternative"
+  },
+  {
+   "key": "5rb9QrpfcKFHM1EUbSIurX",
+   "id": "5rb9QrpfcKFHM1EUbSIurX",
+   "title": "Yeah! (feat. Lil Jon & Ludacris)",
+   "artists": [
+    "USHER",
+    "Lil Jon",
+    "Ludacris"
+   ],
+   "album": "Confessions (Expanded Edition)",
+   "seconds": 250,
+   "genre": "R&B"
+  },
+  {
+   "key": "2XncSBceg7BwEpbWVI6FLi",
+   "id": "2XncSBceg7BwEpbWVI6FLi",
+   "title": "Mo Money Mo Problems (feat. Mase & Puff Daddy)",
+   "artists": [
+    "The Notorious B.I.G.",
+    "Diddy",
+    "Mase"
+   ],
+   "album": "Life After Death",
+   "seconds": 257,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "1bYZgec19T5gQJAUeIzq9W",
+   "id": "1bYZgec19T5gQJAUeIzq9W",
+   "title": "Hail Purdue",
+   "artists": [
+    "Purdue All American Marching Band"
+   ],
+   "album": "Gameday Faves: Purdue Boilermakers Classics",
+   "seconds": 86,
+   "genre": null
+  },
+  {
+   "key": "5AEs83CYoPApEjYEJGbTuJ",
+   "id": "5AEs83CYoPApEjYEJGbTuJ",
+   "title": "Party Till We Die (feat. Andrew W.K.)",
+   "artists": [
+    "MAKJ",
+    "Timmy Trumpet",
+    "Andrew W.K."
+   ],
+   "album": "Party Till We Die (feat. Andrew W.K.)",
+   "seconds": 158,
+   "genre": "Electro"
+  },
+  {
+   "key": "1bp2IO61zbQrbWNmKKxg3f",
+   "id": "1bp2IO61zbQrbWNmKKxg3f",
+   "title": "The Joker",
+   "artists": [
+    "Steve Miller Band"
+   ],
+   "album": "The Joker",
+   "seconds": 264,
+   "genre": "Rock"
+  },
+  {
+   "key": "0D7L4pBEGv8ni1cRfaTdMJ",
+   "id": "0D7L4pBEGv8ni1cRfaTdMJ",
+   "title": "Play That Funky Music",
+   "artists": [
+    "Wild Cherry"
+   ],
+   "album": "Shaun White Snowboarding: Official Soundtrack",
+   "seconds": 301,
+   "genre": "Rock"
+  },
+  {
+   "key": "0Lavu1rppGgXfiK27cAMyU",
+   "id": "0Lavu1rppGgXfiK27cAMyU",
+   "title": "Minimum Wage",
+   "artists": [
+    "Blake Shelton"
+   ],
+   "album": "Body Language",
+   "seconds": 228,
+   "genre": "Country"
+  },
+  {
+   "key": "1WkMMavIMc4JZ8cfMmxHkI",
+   "id": "1WkMMavIMc4JZ8cfMmxHkI",
+   "title": "CAN'T STOP THE FEELING! (from DreamWorks Animation's \"TROLLS\")",
+   "artists": [
+    "Justin Timberlake"
+   ],
+   "album": "TROLLS (Original Motion Picture Soundtrack)",
+   "seconds": 237,
+   "genre": null
+  },
+  {
+   "key": "06ys56r4SEVJVFFIajdYPV",
+   "id": "06ys56r4SEVJVFFIajdYPV",
+   "title": "Remember the Name (feat. Styles of Beyond)",
+   "artists": [
+    "Fort Minor",
+    "Styles Of Beyond"
+   ],
+   "album": "The Rising Tied",
+   "seconds": 230,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "7aEtlGHoiPAfRB084NiDmx",
+   "id": "7aEtlGHoiPAfRB084NiDmx",
+   "title": "Beer Never Broke My Heart",
+   "artists": [
+    "Luke Combs"
+   ],
+   "album": "What You See Is What You Get",
+   "seconds": 186,
+   "genre": "Country"
+  },
+  {
+   "key": "3tHEJsKdVY8mg7YGDpUIFM",
+   "id": "3tHEJsKdVY8mg7YGDpUIFM",
+   "title": "The Next Episode",
+   "artists": [
+    "Dr. Dre",
+    "Snoop Dogg"
+   ],
+   "album": "2001",
+   "seconds": 161,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "5ddME3ojStqcg5IAMpqv5n",
+   "id": "5ddME3ojStqcg5IAMpqv5n",
+   "title": "Still D.R.E.",
+   "artists": [
+    "Dr. Dre",
+    "Snoop Dogg"
+   ],
+   "album": "2001",
+   "seconds": 270,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "3voxsfqnGr9V74jkkzPhXC",
+   "id": "3voxsfqnGr9V74jkkzPhXC",
+   "title": "O.P.P",
+   "artists": [
+    "Naughty By Nature"
+   ],
+   "album": "Naughty By Nature",
+   "seconds": 271,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "0gFB5H3pHN13ERt2FyMuWi",
+   "id": "0gFB5H3pHN13ERt2FyMuWi",
+   "title": "It Takes Two",
+   "artists": [
+    "Rob Base & DJ EZ Rock"
+   ],
+   "album": "It Takes Two",
+   "seconds": 300,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "4dY4JVC0Q9CwpeZ6JAclIc",
+   "id": "4dY4JVC0Q9CwpeZ6JAclIc",
+   "title": "Rump Shaker",
+   "artists": [
+    "Wreckx-N-Effect"
+   ],
+   "album": "Hard Or Smooth",
+   "seconds": 312,
+   "genre": "R&B"
+  },
+  {
+   "key": "6m59VvDUi0UQsB2eZ9wVbH",
+   "id": "6m59VvDUi0UQsB2eZ9wVbH",
+   "title": "Poison",
+   "artists": [
+    "Bell Biv DeVoe"
+   ],
+   "album": "Poison",
+   "seconds": 261,
+   "genre": "R&B"
+  },
+  {
+   "key": "1lKS7SZQ7r5vOChLwJurmm",
+   "id": "1lKS7SZQ7r5vOChLwJurmm",
+   "title": "Shake Ya Tailfeather (feat. P. Diddy & Murphy Lee) - 2016 Remaster",
+   "artists": [
+    "Nelly",
+    "Murphy Lee",
+    "Diddy"
+   ],
+   "album": "Bad Boy 20th Anniversary Box Set Edition",
+   "seconds": 293,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "7EQGXaVSyEDsCWKmUcfpLk",
+   "id": "7EQGXaVSyEDsCWKmUcfpLk",
+   "title": "Die Young",
+   "artists": [
+    "Kesha"
+   ],
+   "album": "Warrior (Expanded Edition)",
+   "seconds": 211,
+   "genre": "Pop"
+  },
+  {
+   "key": "3pYDZTJM2tVBUhIRifWVzI",
+   "id": "3pYDZTJM2tVBUhIRifWVzI",
+   "title": "Blow",
+   "artists": [
+    "Kesha"
+   ],
+   "album": "Cannibal (Expanded Edition)",
+   "seconds": 219,
+   "genre": "Pop"
+  },
+  {
+   "key": "0B9x2BRHqj3Qer7biM3pU3",
+   "id": "0B9x2BRHqj3Qer7biM3pU3",
+   "title": "You're The One That I Want - From “Grease”",
+   "artists": [
+    "John Travolta",
+    "Olivia Newton-John"
+   ],
+   "album": "Grease (The Original Motion Picture Soundtrack)",
+   "seconds": 169,
+   "genre": "Films/Games"
+  },
+  {
+   "key": "226le7T3p82reYWzsi9Hsz",
+   "id": "226le7T3p82reYWzsi9Hsz",
+   "title": "1, 2 Many",
+   "artists": [
+    "Luke Combs",
+    "Brooks & Dunn"
+   ],
+   "album": "What You See Is What You Get",
+   "seconds": 180,
+   "genre": "Country"
+  },
+  {
+   "key": "6qn9YLKt13AGvpq9jfO8py",
+   "id": "6qn9YLKt13AGvpq9jfO8py",
+   "title": "We Found Love",
+   "artists": [
+    "Rihanna",
+    "Calvin Harris"
+   ],
+   "album": "Talk That Talk",
+   "seconds": 215,
+   "genre": "Pop"
+  },
+  {
+   "key": "61FwUf89hKEIsjUDtIPRoH",
+   "id": "61FwUf89hKEIsjUDtIPRoH",
+   "title": "JUMPIN",
+   "artists": [
+    "Pitbull",
+    "Lil Jon"
+   ],
+   "album": "JUMPIN",
+   "seconds": 144,
+   "genre": "Pop"
+  },
+  {
+   "key": "5aZ9mfnT8jp3ZdrMQaF76j",
+   "id": "5aZ9mfnT8jp3ZdrMQaF76j",
+   "title": "Gimme That Boom",
+   "artists": [
+    "Skindred"
+   ],
+   "album": "Smile",
+   "seconds": 193,
+   "genre": "Rock"
+  },
+  {
+   "key": "2lVDc57IMK6nypg2iuEWVR",
+   "id": "2lVDc57IMK6nypg2iuEWVR",
+   "title": "Tipsy - Radio Mix",
+   "artists": [
+    "J-Kwon"
+   ],
+   "album": "Tipsy",
+   "seconds": 243,
+   "genre": "Pop"
+  },
+  {
+   "key": "3cHyrEgdyYRjgJKSOiOtcS",
+   "id": "3cHyrEgdyYRjgJKSOiOtcS",
+   "title": "Timber",
+   "artists": [
+    "Pitbull",
+    "Kesha"
+   ],
+   "album": "Global Warming: Meltdown (Deluxe Version)",
+   "seconds": 204,
+   "genre": "Electro"
+  },
+  {
+   "key": "3awwqS1q0EnNUNmvpKdYmU",
+   "id": "3awwqS1q0EnNUNmvpKdYmU",
+   "title": "Don't Stop the Party (feat. TJR)",
+   "artists": [
+    "Pitbull",
+    "TJR"
+   ],
+   "album": "Global Warming: Meltdown",
+   "seconds": 206,
+   "genre": "Electro"
+  },
+  {
+   "key": "4Y7XAxTANhu3lmnLAzhWJW",
+   "id": "4Y7XAxTANhu3lmnLAzhWJW",
+   "title": "Fireball (feat. John Ryan)",
+   "artists": [
+    "Pitbull",
+    "John Ryan"
+   ],
+   "album": "Globalization",
+   "seconds": 236,
+   "genre": "Dance"
+  },
+  {
+   "key": "2dpaYNEQHiRxtZbfNsse99",
+   "id": "2dpaYNEQHiRxtZbfNsse99",
+   "title": "Happier",
+   "artists": [
+    "Marshmello",
+    "Bastille"
+   ],
+   "album": "Happier",
+   "seconds": 214,
+   "genre": "Electro"
+  },
+  {
+   "key": "1akgiRM3mN2nxu2AX6ACCW",
+   "id": "1akgiRM3mN2nxu2AX6ACCW",
+   "title": "I Love College",
+   "artists": [
+    "Asher Roth"
+   ],
+   "album": "Asleep In The Bread Aisle",
+   "seconds": 241,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "5sNESr6pQfIhL3krM8CtZn",
+   "id": "5sNESr6pQfIhL3krM8CtZn",
+   "title": "Numb / Encore",
+   "artists": [
+    "JAŸ-Z",
+    "Linkin Park"
+   ],
+   "album": "Numb / Encore: MTV Ultimate Mash-Ups Presents Collision Course",
+   "seconds": 205,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "02jcEwywffn3Tsb48fXmlW",
+   "id": "02jcEwywffn3Tsb48fXmlW",
+   "title": "Get the Party Started",
+   "artists": [
+    "P!nk"
+   ],
+   "album": "M!ssundaztood (Expanded Edition)",
+   "seconds": 192,
+   "genre": "Pop"
+  },
+  {
+   "key": "6OUkQGd1Wt2SuTctHdZPfj",
+   "id": "6OUkQGd1Wt2SuTctHdZPfj",
+   "title": "Blow - Cirkut Remix",
+   "artists": [
+    "Kesha"
+   ],
+   "album": "I Am The Dance Commander + I Command You To Dance: The Remix Album",
+   "seconds": 245,
+   "genre": "Pop"
+  },
+  {
+   "key": "6QHXcb0eFwOKZOZ9bOFmxm",
+   "id": "6QHXcb0eFwOKZOZ9bOFmxm",
+   "title": "Toxic Pony",
+   "artists": [
+    "ALTÉGO",
+    "Britney Spears",
+    "Ginuwine"
+   ],
+   "album": "Toxic Pony",
+   "seconds": 198,
+   "genre": "Pop"
+  },
+  {
+   "key": "2VjrFvthQjw7BS8aS4VdZi",
+   "id": "2VjrFvthQjw7BS8aS4VdZi",
+   "title": "Rattlin' Bog",
+   "artists": [
+    "Carlyle Fraser"
+   ],
+   "album": "Pint of Ale",
+   "seconds": 327,
+   "genre": null
+  },
+  {
+   "key": "003vvx7Niy0yvhvHt4a68B",
+   "id": "003vvx7Niy0yvhvHt4a68B",
+   "title": "Mr. Brightside",
+   "artists": [
+    "The Killers"
+   ],
+   "album": "Hot Fuss",
+   "seconds": 222,
+   "genre": "Alternative"
+  },
+  {
+   "key": "3jDdpx9PMlfMBS5tOBHFm9",
+   "id": "3jDdpx9PMlfMBS5tOBHFm9",
+   "title": "Return of the Mack",
+   "artists": [
+    "Mark Morrison"
+   ],
+   "album": "Return of the Mack",
+   "seconds": 213,
+   "genre": "R&B"
+  },
+  {
+   "key": "3y85oFAR4kRMfP3VxBINeB",
+   "id": "3y85oFAR4kRMfP3VxBINeB",
+   "title": "Hood Go Crazy",
+   "artists": [
+    "Tech N9ne",
+    "2 Chainz",
+    "B.o.B"
+   ],
+   "album": "Special Effects",
+   "seconds": 225,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "3dmqIB2Qxe2XZobw9gXxJ6",
+   "id": "3dmqIB2Qxe2XZobw9gXxJ6",
+   "title": "Mary Jane's Last Dance",
+   "artists": [
+    "Tom Petty and the Heartbreakers"
+   ],
+   "album": "Greatest Hits",
+   "seconds": 273,
+   "genre": "Rock"
+  },
+  {
+   "key": "1rqqCSm0Qe4I9rUvWncaom",
+   "id": "1rqqCSm0Qe4I9rUvWncaom",
+   "title": "High Hopes",
+   "artists": [
+    "Panic! At The Disco"
+   ],
+   "album": "Pray for the Wicked",
+   "seconds": 190,
+   "genre": "Alternative"
+  },
+  {
+   "key": "1gv4xPanImH17bKZ9rOveR",
+   "id": "1gv4xPanImH17bKZ9rOveR",
+   "title": "Raise Your Glass",
+   "artists": [
+    "P!nk"
+   ],
+   "album": "Raise Your Glass",
+   "seconds": 202,
+   "genre": "Pop"
+  },
+  {
+   "key": "3E7dfMvvCLUddWissuqMwr",
+   "id": "3E7dfMvvCLUddWissuqMwr",
+   "title": "Party In The U.S.A.",
+   "artists": [
+    "Miley Cyrus"
+   ],
+   "album": "The Time Of Our Lives (International Version)",
+   "seconds": 202,
+   "genre": "Films/Games"
+  },
+  {
+   "key": "5xTtaWoae3wi06K5WfVUUH",
+   "id": "5xTtaWoae3wi06K5WfVUUH",
+   "title": "Shake It Off",
+   "artists": [
+    "Taylor Swift"
+   ],
+   "album": "1989",
+   "seconds": 219,
+   "genre": "Pop"
+  },
+  {
+   "key": "5RsUlxLto4NZbhJpqJbHfN",
+   "id": "5RsUlxLto4NZbhJpqJbHfN",
+   "title": "Jessie's Girl",
+   "artists": [
+    "Rick Springfield"
+   ],
+   "album": "Working Class Dog",
+   "seconds": 194,
+   "genre": "Rock"
+  },
+  {
+   "key": "6qAcApH8obo8eqatCKUHd9",
+   "id": "6qAcApH8obo8eqatCKUHd9",
+   "title": "Bad Blood (feat. Kendrick Lamar) (Taylor's Version)",
+   "artists": [
+    "Taylor Swift",
+    "Kendrick Lamar"
+   ],
+   "album": "1989 (Taylor's Version) [Deluxe]",
+   "seconds": 199,
+   "genre": null
+  },
+  {
+   "key": "2FQrifJ1N335Ljm3TjTVVf",
+   "id": "2FQrifJ1N335Ljm3TjTVVf",
+   "title": "A Bar Song (Tipsy)",
+   "artists": [
+    "Shaboozey"
+   ],
+   "album": "A Bar Song (Tipsy)",
+   "seconds": 171,
+   "genre": "Country"
+  },
+  {
+   "key": "5Pg4qYTcvCUBBq3jBhKq0t",
+   "id": "5Pg4qYTcvCUBBq3jBhKq0t",
+   "title": "HOT",
+   "artists": [
+    "Daddy Yankee",
+    "Pitbull"
+   ],
+   "album": "LEGENDADDY",
+   "seconds": 154,
+   "genre": "Reggaeton"
+  },
+  {
+   "key": "5qxChyzKLEyoPJ5qGrdurN",
+   "id": "5qxChyzKLEyoPJ5qGrdurN",
+   "title": "No Sleep Till Brooklyn",
+   "artists": [
+    "Beastie Boys"
+   ],
+   "album": "Licensed To Ill",
+   "seconds": 246,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "5IZXB5IKAD2qlvTPJYDCFB",
+   "id": "5IZXB5IKAD2qlvTPJYDCFB",
+   "title": "I Had Some Help (Feat. Morgan Wallen)",
+   "artists": [
+    "Post Malone",
+    "Morgan Wallen"
+   ],
+   "album": "F-1 Trillion",
+   "seconds": 178,
+   "genre": "Country"
+  },
+  {
+   "key": "2VOomzT6VavJOGBeySqaMc",
+   "id": "2VOomzT6VavJOGBeySqaMc",
+   "title": "Disturbia",
+   "artists": [
+    "Rihanna"
+   ],
+   "album": "Good Girl Gone Bad: Reloaded",
+   "seconds": 238,
+   "genre": "Pop"
+  },
+  {
+   "key": "72zZfHPYx43shcP3eKkYi5",
+   "id": "72zZfHPYx43shcP3eKkYi5",
+   "title": "Are You Gonna Be My Girl",
+   "artists": [
+    "Jet"
+   ],
+   "album": "Get Born (Deluxe Edition)",
+   "seconds": 213,
+   "genre": "Rock"
+  },
+  {
+   "key": "1k2pQc5i348DCHwbn5KTdc",
+   "id": "1k2pQc5i348DCHwbn5KTdc",
+   "title": "Pink Pony Club",
+   "artists": [
+    "Chappell Roan"
+   ],
+   "album": "The Rise and Fall of a Midwest Princess",
+   "seconds": 258,
+   "genre": "Pop"
+  },
+  {
+   "key": "73ZTWCuwudUVvvWipRnQnQ",
+   "id": "73ZTWCuwudUVvvWipRnQnQ",
+   "title": "Family Tradition",
+   "artists": [
+    "Hank Williams, Jr."
+   ],
+   "album": "Family Tradition",
+   "seconds": 242,
+   "genre": "Country"
+  },
+  {
+   "key": "1Od5RPOmHmDoZ2HYct1IDg",
+   "id": "1Od5RPOmHmDoZ2HYct1IDg",
+   "title": "USA",
+   "artists": [
+    "FILMORE",
+    "Pitbull"
+   ],
+   "album": "USA",
+   "seconds": 175,
+   "genre": "Country"
+  },
+  {
+   "key": "3clfDJ1mvmbSTg9jw40wan",
+   "id": "3clfDJ1mvmbSTg9jw40wan",
+   "title": "Singles You Up - Ryan Riback Remix",
+   "artists": [
+    "Jordan Davis",
+    "Ryan Riback"
+   ],
+   "album": "Singles You Up (Ryan Riback Remix)",
+   "seconds": 198,
+   "genre": "Country"
+  },
+  {
+   "key": "local:thunderstruck-2",
+   "id": null,
+   "title": "THUNDERSTRUCK 2",
+   "artists": [],
+   "album": null,
+   "seconds": 320,
+   "genre": null
+  },
+  {
+   "key": "35b5jkNrbWMyVARSuqLK1s",
+   "id": "35b5jkNrbWMyVARSuqLK1s",
+   "title": "Beautiful As U - VAVO Remix",
+   "artists": [
+    "Thomas Rhett",
+    "VAVO"
+   ],
+   "album": "Beautiful As U (VAVO Remix)",
+   "seconds": 137,
+   "genre": "Country"
+  },
+  {
+   "key": "6MAdEUilV2p9RQUqE5bMAK",
+   "id": "6MAdEUilV2p9RQUqE5bMAK",
+   "title": "Domino",
+   "artists": [
+    "Jessie J"
+   ],
+   "album": "Who You Are (Platinum Edition)",
+   "seconds": 231,
+   "genre": "Pop"
+  },
+  {
+   "key": "4Tt6GiWS2V9sQjZjS2xjp2",
+   "id": "4Tt6GiWS2V9sQjZjS2xjp2",
+   "title": "Honey, I'm Good",
+   "artists": [
+    "Andy Grammer"
+   ],
+   "album": "Magazines Or Novels",
+   "seconds": 199,
+   "genre": "Pop"
+  },
+  {
+   "key": "18AXbzPzBS8Y3AkgSxzJPb",
+   "id": "18AXbzPzBS8Y3AkgSxzJPb",
+   "title": "In the Air Tonight - 2015 Remaster",
+   "artists": [
+    "Phil Collins"
+   ],
+   "album": "Face Value (Deluxe Editon)",
+   "seconds": 336,
+   "genre": "Pop"
+  },
+  {
+   "key": "0Lpehb4R7VcfpxRpol1s91",
+   "id": "0Lpehb4R7VcfpxRpol1s91",
+   "title": "Drunk (And I Don't Wanna Go Home)",
+   "artists": [
+    "Elle King",
+    "Miranda Lambert"
+   ],
+   "album": "Come Get Your Wife",
+   "seconds": 244,
+   "genre": "Alternative"
+  },
+  {
+   "key": "65G4Ib3w7tgLjUkO5GseN0",
+   "id": "65G4Ib3w7tgLjUkO5GseN0",
+   "title": "Mr. Brownstone",
+   "artists": [
+    "Guns N' Roses"
+   ],
+   "album": "Appetite For Destruction",
+   "seconds": 228,
+   "genre": "Rock"
+  },
+  {
+   "key": "0Puj4YlTm6xNzDDADXHMI9",
+   "id": "0Puj4YlTm6xNzDDADXHMI9",
+   "title": "Sabotage",
+   "artists": [
+    "Beastie Boys"
+   ],
+   "album": "Ill Communication",
+   "seconds": 178,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "5D5Iwi9xI64mqdQOU9lTui",
+   "id": "5D5Iwi9xI64mqdQOU9lTui",
+   "title": "Fuck You",
+   "artists": [
+    "CeeLo Green"
+   ],
+   "album": "The Lady Killer",
+   "seconds": 222,
+   "genre": "Alternative"
+  },
+  {
+   "key": "63rbP24OzfaQCJjsHWZXnY",
+   "id": "63rbP24OzfaQCJjsHWZXnY",
+   "title": "Where Them Girls At (feat. Nicki Minaj & Flo Rida)",
+   "artists": [
+    "David Guetta",
+    "Flo Rida",
+    "Nicki Minaj"
+   ],
+   "album": "Nothing but the Beat 2.0",
+   "seconds": 210,
+   "genre": "Dance"
+  },
+  {
+   "key": "5S6YPFSseYAUNRvAskaEmu",
+   "id": "5S6YPFSseYAUNRvAskaEmu",
+   "title": "Talk Dirty (feat. 2 Chainz)",
+   "artists": [
+    "Jason Derulo",
+    "2 Chainz"
+   ],
+   "album": "Talk Dirty",
+   "seconds": 177,
+   "genre": "Pop"
+  },
+  {
+   "key": "0puf9yIluy9W0vpMEUoAnN",
+   "id": "0puf9yIluy9W0vpMEUoAnN",
+   "title": "Bang Bang",
+   "artists": [
+    "Jessie J",
+    "Ariana Grande",
+    "Nicki Minaj"
+   ],
+   "album": "Sweet Talker (Deluxe Version)",
+   "seconds": 199,
+   "genre": "Pop"
+  },
+  {
+   "key": "0UaMYEvWZi0ZqiDOoHU3YI",
+   "id": "0UaMYEvWZi0ZqiDOoHU3YI",
+   "title": "Lose Control (feat. Ciara & Fat Man Scoop)",
+   "artists": [
+    "Missy Elliott",
+    "Ciara",
+    "Fatman Scoop"
+   ],
+   "album": "The Cookbook",
+   "seconds": 226,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "2NEs3zO3RDh7d8DxMYLTAy",
+   "id": "2NEs3zO3RDh7d8DxMYLTAy",
+   "title": "Get Down Tonight",
+   "artists": [
+    "KC & The Sunshine Band"
+   ],
+   "album": "70's Funk",
+   "seconds": 317,
+   "genre": "Pop"
+  },
+  {
+   "key": "6FMIVQPZg9cmMY8hPxAacD",
+   "id": "6FMIVQPZg9cmMY8hPxAacD",
+   "title": "Let's Go Crazy",
+   "artists": [
+    "Prince"
+   ],
+   "album": "Purple Rain",
+   "seconds": 279,
+   "genre": "Pop"
+  },
+  {
+   "key": "6nTiIhLmQ3FWhvrGafw2zj",
+   "id": "6nTiIhLmQ3FWhvrGafw2zj",
+   "title": "American Idiot",
+   "artists": [
+    "Green Day"
+   ],
+   "album": "American Idiot",
+   "seconds": 176,
+   "genre": "Alternative"
+  },
+  {
+   "key": "48ncRBVLgiu8MY7O70VVw5",
+   "id": "48ncRBVLgiu8MY7O70VVw5",
+   "title": "Ladies And Gentlemen",
+   "artists": [
+    "Saliva"
+   ],
+   "album": "Blood Stained Love Story",
+   "seconds": 217,
+   "genre": "Rock"
+  },
+  {
+   "key": "20XdEFyaUR9C7aDIdq2OAd",
+   "id": "20XdEFyaUR9C7aDIdq2OAd",
+   "title": "Summertime",
+   "artists": [
+    "DJ Jazzy Jeff & The Fresh Prince"
+   ],
+   "album": "Homebase",
+   "seconds": 270,
+   "genre": "Pop"
+  },
+  {
+   "key": "3IeCYkdKI55mNMl2o4vX0k",
+   "id": "3IeCYkdKI55mNMl2o4vX0k",
+   "title": "Bust A Move",
+   "artists": [
+    "Young MC"
+   ],
+   "album": "Stone Cold Rhymin'",
+   "seconds": 263,
+   "genre": "Films/Games"
+  },
+  {
+   "key": "05NYcsjJwOYq4jIiKPVj9p",
+   "id": "05NYcsjJwOYq4jIiKPVj9p",
+   "title": "Hard To Handle",
+   "artists": [
+    "The Black Crowes"
+   ],
+   "album": "Shake Your Money Maker",
+   "seconds": 188,
+   "genre": "Rock"
+  },
+  {
+   "key": "6QgjcU0zLnzq5OrUoSZ3OK",
+   "id": "6QgjcU0zLnzq5OrUoSZ3OK",
+   "title": "Feel It Still",
+   "artists": [
+    "Portugal. The Man"
+   ],
+   "album": "Woodstock",
+   "seconds": 163,
+   "genre": "Alternative"
+  },
+  {
+   "key": "4LJhJ6DQS7NwE7UKtvcM52",
+   "id": "4LJhJ6DQS7NwE7UKtvcM52",
+   "title": "What's My Age Again?",
+   "artists": [
+    "blink-182"
+   ],
+   "album": "Enema Of The State",
+   "seconds": 148,
+   "genre": "Rock"
+  },
+  {
+   "key": "7xQAfvXzm3AkraOtGPWIZg",
+   "id": "7xQAfvXzm3AkraOtGPWIZg",
+   "title": "Wow.",
+   "artists": [
+    "Post Malone"
+   ],
+   "album": "Hollywood's Bleeding",
+   "seconds": 149,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "1rIKgCH4H52lrvDcz50hS8",
+   "id": "1rIKgCH4H52lrvDcz50hS8",
+   "title": "Lush Life",
+   "artists": [
+    "Zara Larsson"
+   ],
+   "album": "So Good",
+   "seconds": 200,
+   "genre": "Pop"
+  },
+  {
+   "key": "7LR85XLWw2yXqKBSI5brbG",
+   "id": "7LR85XLWw2yXqKBSI5brbG",
+   "title": "Run This Town",
+   "artists": [
+    "JAŸ-Z",
+    "Rihanna",
+    "Kanye West"
+   ],
+   "album": "The Blueprint 3",
+   "seconds": 267,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "25pl7kV4OxafIc9wPAggYf",
+   "id": "25pl7kV4OxafIc9wPAggYf",
+   "title": "So What'Cha Want",
+   "artists": [
+    "Beastie Boys"
+   ],
+   "album": "Anthology: The Sounds Of Science",
+   "seconds": 217,
+   "genre": "Rap/Hip Hop"
+  },
+  {
+   "key": "023OVLNzXhX0j7CxswUt6D",
+   "id": "023OVLNzXhX0j7CxswUt6D",
+   "title": "Cheerleader - Felix Jaehn Remix Radio Edit",
+   "artists": [
+    "OMI"
+   ],
+   "album": "Me 4 U",
+   "seconds": 180,
+   "genre": "Christian"
+  },
+  {
+   "key": "1XVqh0dC0PIl72f2mQhsVt",
+   "id": "1XVqh0dC0PIl72f2mQhsVt",
+   "title": "Good Vibes",
+   "artists": [
+    "Chris Janson"
+   ],
+   "album": "Real Friends",
+   "seconds": 165,
+   "genre": "Country"
+  }
+ ]
+}

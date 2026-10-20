@@ -492,6 +492,72 @@ create policy food_ratings_delete on public.food_ratings for delete to authentic
   using ((select public.is_member()) and user_id = (select auth.uid()));
 revoke all on public.food_ratings from anon;
 
+-- ---------------------------------------------------------------------------
+-- Song ratings, 1–10, anonymous, for the songs on the crew's Spotify playlist (src/data/playlist.json).
+-- Same rules as food: one rating per crew member per song, change or clear it any time, and you only ever
+-- see your own row. The totals live in song_scores (id = the song's key from playlist.json), kept by a
+-- trigger, so the average reaches everyone live and never says who gave what.
+-- ---------------------------------------------------------------------------
+create table if not exists public.song_scores (
+  id           text primary key,
+  rating_sum   int not null default 0,
+  rating_count int not null default 0
+);
+alter table public.song_scores enable row level security;
+
+create table if not exists public.song_ratings (
+  song_id text not null check (song_id ~ '^([A-Za-z0-9]{22}|local:[a-z0-9-]{1,60})$'), -- Spotify id, or local:<title>
+  user_id uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  score   smallint not null check (score between 1 and 10),
+  primary key (song_id, user_id)
+);
+alter table public.song_ratings enable row level security;
+
+-- Adjust the totals by the change (not a recount), so two people rating at once can't lose a vote.
+create or replace function public.sync_song_rating()
+returns trigger
+language plpgsql security definer set search_path = public
+as $$
+begin
+  if tg_op in ('UPDATE', 'DELETE') then
+    update public.song_scores set rating_sum = rating_sum - old.score, rating_count = rating_count - 1
+    where id = old.song_id;
+  end if;
+  if tg_op in ('INSERT', 'UPDATE') then
+    insert into public.song_scores (id, rating_sum, rating_count) values (new.song_id, new.score, 1)
+    on conflict (id) do update set rating_sum   = public.song_scores.rating_sum + excluded.rating_sum,
+                                   rating_count = public.song_scores.rating_count + 1;
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists song_ratings_sync on public.song_ratings;
+create trigger song_ratings_sync
+  after insert or update or delete on public.song_ratings
+  for each row execute function public.sync_song_rating();
+
+-- song scores: the crew reads the totals; only the trigger above writes them
+drop policy if exists song_scores_select on public.song_scores;
+create policy song_scores_select on public.song_scores for select to authenticated using ((select public.is_member()));
+revoke insert, update, delete on public.song_scores from anon, authenticated;
+
+-- song ratings: see, add, change and clear only your own
+drop policy if exists song_ratings_select on public.song_ratings;
+drop policy if exists song_ratings_insert on public.song_ratings;
+drop policy if exists song_ratings_update on public.song_ratings;
+drop policy if exists song_ratings_delete on public.song_ratings;
+create policy song_ratings_select on public.song_ratings for select to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()));
+create policy song_ratings_insert on public.song_ratings for insert to authenticated
+  with check ((select public.is_member()) and user_id = (select auth.uid()));
+create policy song_ratings_update on public.song_ratings for update to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+create policy song_ratings_delete on public.song_ratings for delete to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()));
+revoke all on public.song_ratings from anon;
+
 -- messages: post as yourself; delete only your own
 drop policy if exists messages_select on public.messages;
 drop policy if exists messages_insert on public.messages;
@@ -655,7 +721,7 @@ revoke update on public.reactions from anon, authenticated;
 do $$
 declare t text;
 begin
-  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests', 'photo_comments', 'reactions'] loop
+  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests', 'photo_comments', 'reactions', 'song_scores'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

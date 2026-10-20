@@ -108,3 +108,18 @@ export type Reaction = {
   emoji: string
   created_at: string
 }
+
+// The crew's Spotify playlist, snapshotted into src/data/playlist.json by scripts/pull-playlist.py.
+export type PlaylistTrack = {
+  key: string            // what ratings are stored under: the Spotify track id, or local:<title> for uploaded files
+  id: string | null      // Spotify track id (null for local files, which have no Spotify page)
+  title: string
+  artists: string[]
+  album: string | null
+  seconds: number | null
+  genre: string | null   // Deezer's genre for the song's album
+}
+export type PlaylistData = { id: string; name: string; owner: string; pulled: string; tracks: PlaylistTrack[] }
+
+// Song ratings, anonymous: just the total and how many rated, per song key (kept by the database).
+export type SongScore = { id: string; rating_sum: number; rating_count: number }
