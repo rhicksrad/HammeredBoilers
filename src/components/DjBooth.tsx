@@ -1,17 +1,14 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, ExternalLink, Headphones, ListMusic, Plus, Printer, Undo2, X } from 'lucide-react'
+import { Check, ExternalLink, Headphones, Plus, Printer, Undo2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import { gameDay, gameTime, when } from '../lib/format'
-import type { Game, Profile, SongRequest, SongStatus } from '../lib/types'
+import type { Game, PlaylistTrack, Profile, SongRequest, SongStatus } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
-
-// The crew's tailgate playlist on Spotify, shown at the top of every game's DJ Booth.
-const PLAYLIST_ID = '3t5Iw9vyFz2vmcE7XL0d8c'
-const PLAYLIST_URL = `https://open.spotify.com/playlist/${PLAYLIST_ID}`
-const PLAYLIST_EMBED = `https://open.spotify.com/embed/playlist/${PLAYLIST_ID}?utm_source=generator&theme=0`
+import Playlist from './Playlist'
+import { findOnPlaylist, spotifySearchUrl, trackUrl, usePlaylist } from '../lib/playlist'
 
 const byTime = (a: SongRequest, b: SongRequest) => a.created_at.localeCompare(b.created_at)
 // The approved list reads in the order the DJ said yes.
@@ -28,6 +25,7 @@ export default function DjBooth({ game }: { game: Game }) {
   const [djEmails, setDjEmails] = useState<string[]>([])
   const [err, setErr] = useState<string | null>(null)
   const [printing, setPrinting] = useState(false)
+  const playlist = usePlaylist()
 
   const load = useCallback(() => {
     supabase.from('song_requests').select('*').eq('game_id', game.id).then(({ data, error }) => {
@@ -97,9 +95,10 @@ export default function DjBooth({ game }: { game: Game }) {
   const pending = reqs.filter((r) => r.status === 'pending').sort(byTime)
   const approved = reqs.filter((r) => r.status === 'approved').sort(byDecided)
   const denied = reqs.filter((r) => r.status === 'denied').sort(byDecided)
-  const rowProps = { amDj, meId: me?.id, profiles, patch, remove }
+  const rowProps = { amDj, meId: me?.id, profiles, patch, remove, tracks: playlist?.tracks ?? [] }
 
   return (
+    <>
     <section className="dj card">
       <header className="dj-head">
         <div className="stack-sm">
@@ -118,8 +117,6 @@ export default function DjBooth({ game }: { game: Game }) {
         </div>
       </header>
       {err && <p className="error">{err}</p>}
-
-      <Playlist />
 
       <div className="dj-grid">
         <div className="stack">
@@ -145,28 +142,8 @@ export default function DjBooth({ game }: { game: Game }) {
 
       {printing && <PrintSheet game={game} songs={approved} profiles={profiles} djLabel={djLabel} />}
     </section>
-  )
-}
-
-/** The crew playlist. Plays a preview for anyone; signed-in Spotify users get full tracks. */
-function Playlist() {
-  return (
-    <div className="dj-playlist">
-      <div className="dj-playlist-head">
-        <h4 className="dj-sub"><ListMusic size={14} aria-hidden="true" />Tailgate playlist</h4>
-        <a className="link-btn faint" href={PLAYLIST_URL} target="_blank" rel="noopener noreferrer">
-          Open in Spotify<ExternalLink size={13} aria-hidden="true" />
-        </a>
-      </div>
-      <iframe
-        title="Hammered Boilers tailgate playlist on Spotify"
-        src={PLAYLIST_EMBED}
-        width="100%"
-        height="352"
-        loading="lazy"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-      />
-    </div>
+    {playlist && <Playlist data={playlist} />}
+    </>
   )
 }
 
@@ -205,9 +182,10 @@ type RowProps = {
   profiles: Record<string, Profile>
   patch: (id: string, c: Partial<SongRequest>) => void
   remove: (id: string) => void
+  tracks: PlaylistTrack[]
 }
 
-function SongRow({ r, amDj, meId, profiles, patch, remove }: RowProps) {
+function SongRow({ r, amDj, meId, profiles, patch, remove, tracks }: RowProps) {
   const who = profiles[r.requested_by]
   const mine = r.requested_by === meId
   const [djNote, setDjNote] = useState(r.dj_note ?? '')
@@ -233,6 +211,7 @@ function SongRow({ r, amDj, meId, profiles, patch, remove }: RowProps) {
         <div className="item-sub">
           <span className="muted icon-text"><Avatar p={who} size={18} />{mine ? 'You' : nameOf(who)} · {when(r.created_at)}</span>
           {r.note && <span className="note static">“{r.note}”</span>}
+          <SpotifyLink r={r} tracks={tracks} />
         </div>
 
         {amDj && r.status === 'pending' && (
@@ -269,6 +248,19 @@ function SongRow({ r, amDj, meId, profiles, patch, remove }: RowProps) {
       )}
     </li>
   )
+}
+
+/** Already on the crew playlist? Link the song. Otherwise, a Spotify search for it, so the DJ can find it and add it. */
+function SpotifyLink({ r, tracks }: { r: SongRequest; tracks: PlaylistTrack[] }) {
+  const hit = findOnPlaylist(tracks, r.song, r.artist)
+  const url = hit && trackUrl(hit)
+  return url
+    ? <a className="link-btn pl-on" href={url} target="_blank" rel="noopener noreferrer"><Check size={13} aria-hidden="true" />On the playlist</a>
+    : hit
+      ? <span className="link-btn pl-on"><Check size={13} aria-hidden="true" />On the playlist</span>
+      : <a className="link-btn faint" href={spotifySearchUrl(`${r.song} ${r.artist ?? ''}`)} target="_blank" rel="noopener noreferrer">
+          Find on Spotify<ExternalLink size={12} aria-hidden="true" />
+        </a>
 }
 
 /** Black-on-white sheet for the booth. Only exists while printing; print CSS hides everything else. */

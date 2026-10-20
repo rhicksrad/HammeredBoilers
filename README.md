@@ -16,6 +16,12 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   - **DJ Booth:** song requests for that game. Anyone requests a song (with an optional note); the DJ approves or
     denies each one with a note back, then hits **Print the list** for a black-and-white sheet to post in the booth.
     DJ KevDad is the only DJ. That's set in the database (`members.dj`), not on the site, so nobody can hand it off.
+    Each request links to the song on Spotify, or says **On the playlist** when it's already on the crew playlist.
+  - **Tailgate playlist** (under the DJ Booth): Kevin's Spotify playlist plays right on the page. Search it by song,
+    artist, album or genre; the **What's on it** chart breaks it down by genre (tap a genre to see just those songs).
+    Everyone can rate any song 1 to 10, anonymously like food: one rating each, change or clear it any time, and the
+    list sorts by the crew's average. The song list is a snapshot: after Kevin changes the playlist, re-run
+    `python3 scripts/pull-playlist.py` and commit `src/data/playlist.json` (ratings carry over).
   - **Game thread:** chat for that game. It stays with the game, so past tailgates keep their conversations.
   - **Pics:** photos and videos from that game.
   - **Our spot** and **Notes:** lot, meet time, whatever.

@@ -318,7 +318,7 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .game-grid { display: grid; gap: 18px; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); grid-template-areas: 'food asks' 'dj dj' 'chat pics'; }
 .gp-food { grid-area: food; }
 .gp-asks { grid-area: asks; }
-.gp-dj { grid-area: dj; }
+.gp-dj { grid-area: dj; display: flex; flex-direction: column; gap: 14px; }
 .gp-chat { grid-area: chat; }
 .gp-pics { grid-area: pics; display: flex; flex-direction: column; gap: 14px; }
 @media (max-width: 899px) {
@@ -483,12 +483,6 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .dj-grid { display: grid; gap: 24px; grid-template-columns: 1fr 1fr; align-items: start; }
 @media (max-width: 899px) { .dj-grid { grid-template-columns: 1fr; } }
 .dj-sub { margin: 6px 0 0; font-weight: 600; color: var(--text-2); font-size: 12.5px; letter-spacing: 0.06em; text-transform: uppercase; }
-.dj-playlist { display: flex; flex-direction: column; gap: 8px; }
-.dj-playlist-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-.dj-playlist-head .dj-sub { margin: 0; display: inline-flex; align-items: center; gap: 6px; }
-.dj-playlist-head .link-btn { display: inline-flex; align-items: center; gap: 4px; text-decoration: none; }
-.dj-playlist iframe { display: block; width: 100%; height: 352px; border: 0; border-radius: 12px; background: var(--ink); }
-@media (max-width: 480px) { .dj-playlist iframe { height: 232px; } }
 .dj-form { display: flex; flex-direction: column; gap: 8px; padding: 12px; background: var(--ink); border: 1px solid var(--line); border-radius: 12px; }
 .dj-form-row { display: grid; grid-template-columns: 1.3fr 1fr; gap: 8px; }
 @media (max-width: 480px) { .dj-form-row { grid-template-columns: 1fr; } }
@@ -505,6 +499,43 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .btn.ghost.on { background: var(--gold); color: var(--ink); border-color: var(--gold); }
 .dj-denied summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; }
 .dj-denied .items { margin-top: 6px; }
+
+/* Crew playlist: embed, genre chart, search, songs ranked by rating */
+.playlist { display: flex; flex-direction: column; gap: 16px; }
+.playlist .btn svg.lucide { margin-left: 2px; }
+.pl-grid { display: grid; gap: 24px; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); align-items: start; }
+@media (max-width: 899px) { .pl-grid { grid-template-columns: minmax(0, 1fr); } }
+.pl-embed { display: block; width: 100%; height: 352px; border: 0; border-radius: 12px; background: var(--ink); }
+@media (max-width: 480px) { .pl-embed { height: 232px; } }
+
+.genres { display: flex; flex-direction: column; gap: 8px; }
+.genre-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.genre-row { width: 100%; display: grid; grid-template-columns: 96px 1fr 64px; align-items: center; gap: 10px; padding: 6px 4px; border: 0; border-radius: 8px; background: none; color: var(--text); font: inherit; font-size: 13px; text-align: left; cursor: pointer; }
+.genre-row:hover { background: var(--card-2); }
+.genre-row.on { background: var(--gold-soft); }
+.genre-row.off { opacity: 0.45; }
+.genre-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-2); }
+.genre-row.on .genre-name { color: var(--text); font-weight: 600; }
+.genre-track { height: 10px; display: flex; }
+.genre-bar { height: 100%; min-width: 4px; background: var(--gold); border-radius: 0 4px 4px 0; }
+.genre-bar.other { background: var(--line-2); }
+.genre-val { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.genre-pct { margin-left: 6px; color: var(--muted); font-weight: 500; font-size: 12px; }
+
+.pl-search { position: relative; display: flex; align-items: center; }
+.pl-search svg.lucide { position: absolute; left: 12px; color: var(--muted); pointer-events: none; }
+.pl-search .input { padding-left: 36px; width: 100%; }
+.pl-status { gap: 8px; align-items: center; }
+.pl-status .dj-sub { margin: 0; }
+.pl-filter { cursor: pointer; color: var(--text); }
+.pl-song { align-items: baseline; }
+.pl-rank { flex: none; width: 22px; text-align: right; color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pl-title { color: var(--text); }
+.pl-title:hover { color: var(--gold-hi); }
+.pl-genre { font-size: 11.5px; color: var(--text-2); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-2); }
+.pl-more { align-self: center; }
+.pl-on { color: var(--ok); font-weight: 600; }
+.pl-on:hover { color: var(--ok); }
 
 /* ---------- printed DJ list (only while the DJ booth is printing) ---------- */
 .print-sheet { display: none; }
