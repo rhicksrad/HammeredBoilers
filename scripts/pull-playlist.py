@@ -95,7 +95,9 @@ def seconds(d):
 
 
 name, owner, rows = pull()
-tracks = [{'id': r['id'], 'title': r['title'], 'artists': r['artists'], 'album': r['album'],
+slug = lambda t: re.sub(r'[^a-z0-9]+', '-', t.lower()).strip('-')[:60]
+# key: what ratings are stored under. Spotify's track id, or local:<title> for files Kevin uploaded himself.
+tracks = [{'key': r['id'] or f"local:{slug(r['title'])}", 'id': r['id'], 'title': r['title'], 'artists': r['artists'], 'album': r['album'],
            'seconds': seconds(r['duration']), 'genre': None} for r in rows]
 genres(tracks)
 OUT.parent.mkdir(exist_ok=True)
