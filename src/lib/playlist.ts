@@ -4,7 +4,6 @@ import type { PlaylistData, PlaylistTrack } from './types'
 // The crew's tailgate playlist on Spotify. The song list is a snapshot (scripts/pull-playlist.py); ratings are live.
 export const PLAYLIST_ID = '3t5Iw9vyFz2vmcE7XL0d8c'
 export const PLAYLIST_URL = `https://open.spotify.com/playlist/${PLAYLIST_ID}`
-export const PLAYLIST_EMBED = `https://open.spotify.com/embed/playlist/${PLAYLIST_ID}?utm_source=generator&theme=0`
 
 export const trackUrl = (t: PlaylistTrack) => (t.id ? `https://open.spotify.com/track/${t.id}` : null)
 export const spotifySearchUrl = (q: string) => `https://open.spotify.com/search/${encodeURIComponent(q.trim())}`

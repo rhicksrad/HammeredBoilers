@@ -3,14 +3,14 @@ import { ExternalLink, ListMusic, Search, Star, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { useAuth } from '../auth'
-import { PLAYLIST_EMBED, PLAYLIST_URL, matches, trackUrl } from '../lib/playlist'
+import { PLAYLIST_URL, matches, trackUrl } from '../lib/playlist'
 import type { PlaylistData, PlaylistTrack, SongScore } from '../lib/types'
 
 const SHOWN = 20     // songs listed before "Show all"
 const GENRE_ROWS = 7 // genres charted by name; the rest fold into Other
 const OTHER = 'Other'
 
-/** The crew playlist: plays it, charts its genres, and lets everyone rate its songs 1–10, best first. */
+/** The crew playlist: charts its genres, and lets everyone rate its songs 1–10, best first. */
 export default function Playlist({ data }: { data: PlaylistData }) {
   const { me } = useAuth()
   const [scores, setScores] = useState<Record<string, SongScore> | null>(null) // null: ratings not set up yet
@@ -97,13 +97,6 @@ export default function Playlist({ data }: { data: PlaylistData }) {
 
       <div className="pl-grid">
         <div className="stack">
-          <iframe
-            className="pl-embed"
-            title={`${data.name} on Spotify`}
-            src={PLAYLIST_EMBED}
-            loading="lazy"
-            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          />
           <GenreChart genres={genres} total={data.tracks.length} active={genre}
             onPick={(g) => { setGenre((cur) => (cur === g ? null : g)); setShowAll(false) }} />
         </div>
