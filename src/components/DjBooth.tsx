@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, Headphones, Plus, Printer, Undo2, X } from 'lucide-react'
+import { Check, ExternalLink, Headphones, ListMusic, Plus, Printer, Undo2, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable, upsertById } from '../lib/realtime'
 import { gameDay, gameTime, when } from '../lib/format'
 import type { Game, Profile, SongRequest, SongStatus } from '../lib/types'
 import { useAuth } from '../auth'
 import { Avatar, nameOf } from './Avatar'
+
+// The crew's tailgate playlist on Spotify, shown at the top of every game's DJ Booth.
+const PLAYLIST_ID = '3t5Iw9vyFz2vmcE7XL0d8c'
+const PLAYLIST_URL = `https://open.spotify.com/playlist/${PLAYLIST_ID}`
+const PLAYLIST_EMBED = `https://open.spotify.com/embed/playlist/${PLAYLIST_ID}?utm_source=generator&theme=0`
 
 const byTime = (a: SongRequest, b: SongRequest) => a.created_at.localeCompare(b.created_at)
 // The approved list reads in the order the DJ said yes.
@@ -114,6 +119,8 @@ export default function DjBooth({ game }: { game: Game }) {
       </header>
       {err && <p className="error">{err}</p>}
 
+      <Playlist />
+
       <div className="dj-grid">
         <div className="stack">
           <RequestForm amDj={amDj} onAdd={add} />
@@ -138,6 +145,28 @@ export default function DjBooth({ game }: { game: Game }) {
 
       {printing && <PrintSheet game={game} songs={approved} profiles={profiles} djLabel={djLabel} />}
     </section>
+  )
+}
+
+/** The crew playlist. Plays a preview for anyone; signed-in Spotify users get full tracks. */
+function Playlist() {
+  return (
+    <div className="dj-playlist">
+      <div className="dj-playlist-head">
+        <h4 className="dj-sub"><ListMusic size={14} aria-hidden="true" />Tailgate playlist</h4>
+        <a className="link-btn faint" href={PLAYLIST_URL} target="_blank" rel="noopener noreferrer">
+          Open in Spotify<ExternalLink size={13} aria-hidden="true" />
+        </a>
+      </div>
+      <iframe
+        title="Hammered Boilers tailgate playlist on Spotify"
+        src={PLAYLIST_EMBED}
+        width="100%"
+        height="352"
+        loading="lazy"
+        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+      />
+    </div>
   )
 }
 
