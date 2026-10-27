@@ -74,9 +74,9 @@ export default function GamePage() {
     setTab(t)
     const el = tabsRef.current
     if (!el || getComputedStyle(el).display === 'none') return
-    // Where the tabs sit when not stuck: just below the game header, plus the stack's gap.
+    // Where the tabs sit when not stuck: just below the back link (they lead the page on phones), plus the stack's gap.
     const box = scroller()
-    const above = el.previousElementSibling!.getBoundingClientRect().bottom - box.getBoundingClientRect().top + box.scrollTop
+    const above = el.parentElement!.firstElementChild!.getBoundingClientRect().bottom - box.getBoundingClientRect().top + box.scrollTop
     const gap = parseFloat(getComputedStyle(el.parentElement!).rowGap) || 0
     const stuckAt = parseFloat(getComputedStyle(el).top) || 0
     requestAnimationFrame(() => box.scrollTo({ top: Math.max(0, above + gap - stuckAt) }))
@@ -95,7 +95,7 @@ export default function GamePage() {
   const r = result(game)
 
   return (
-    <div className="stack-lg">
+    <div className="stack-lg game-page">
       <Link to="/" className="back"><ArrowLeft size={16} aria-hidden="true" />All games</Link>
 
       <section className="game-head card">

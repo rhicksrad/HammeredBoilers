@@ -325,6 +325,10 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
   .tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; padding: 4px; background: rgba(19, 19, 19, 0.94); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid var(--line); border-radius: 12px; position: sticky; top: calc(var(--topbar-h) + 8px); z-index: 10; }
   .tabs button { min-height: 50px; padding: 4px 2px; white-space: nowrap; font-size: 11.5px; font-weight: 600; line-height: 1.1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; transition: background 0.15s, color 0.15s; }
   .tabs button.on { background: var(--gold-soft); color: var(--gold); }
+  /* Phones: the tabbed card leads and the game info card sits below it. */
+  .game-page > .tabs { order: 1; }
+  .game-page > .game-grid { order: 2; }
+  .game-page > .game-head { order: 3; }
   .game-grid { grid-template-columns: 1fr; grid-template-areas: none; }
   .gp-section { grid-area: auto; }
   .gp-section:not(.active) { display: none; }
