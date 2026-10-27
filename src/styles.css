@@ -291,6 +291,8 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .section-title { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--text); font-size: 20px; margin: 0 0 12px; display: flex; align-items: center; gap: 12px; }
 .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line); }
 .section-sub { margin: -6px 0 12px; }
+.row.spread { justify-content: space-between; }
+.section-sub.row p { margin: 0; }
 .game-list { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 @media (max-width: 760px) { .game-list { grid-template-columns: 1fr; } }
 .game-row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; color: var(--text); transition: border-color 0.15s, background 0.15s; }
@@ -328,7 +330,8 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
   /* Phones: the tabbed card leads and the game info card sits below it. */
   .game-page > .tabs { order: 1; }
   .game-page > .game-grid { order: 2; }
-  .game-page > .game-head { order: 3; }
+  .game-page > .rsvp-card { order: 3; }
+  .game-page > .game-head { order: 4; }
   .game-grid { grid-template-columns: 1fr; grid-template-areas: none; }
   .gp-section { grid-area: auto; }
   .gp-section:not(.active) { display: none; }
@@ -684,3 +687,49 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
   .lightbox.talking .lb-close { right: 12px; }
   .lb-comments-wrap { top: auto; left: 0; width: auto; height: 62dvh; border-left: 0; border-top: 1px solid var(--line-2); border-radius: 16px 16px 0 0; box-shadow: var(--shadow-pop); }
 }
+
+/* ---------- who's coming ---------- */
+.rsvp-card { display: flex; flex-direction: column; gap: 12px; }
+.rsvp-card .panel-head { flex-wrap: wrap; row-gap: 4px; }
+.rsvp-card h3 { display: flex; align-items: center; gap: 8px; margin: 0; white-space: nowrap; }
+.rsvp-total { font-size: 14px; color: var(--text-2); }
+.rsvp-total b { font-family: var(--display); font-size: 22px; color: var(--text); font-variant-numeric: tabular-nums; }
+.rsvp-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.rsvp-seg button { padding: 8px 14px; font-size: 13.5px; }
+.seg button.on.maybe { background: var(--warn); color: var(--ink); }
+.guests { display: inline-flex; align-items: center; gap: 8px; }
+.guests-n { min-width: 52px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rsvp-group { display: flex; flex-direction: column; gap: 6px; }
+.rsvp-label { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.rsvp-group.yes .rsvp-label { color: var(--ok); }
+.rsvp-group.maybe .rsvp-label { color: var(--warn); }
+.rsvp-people { display: flex; flex-wrap: wrap; gap: 6px; }
+.rsvp-person { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 3px; border-radius: 999px; background: var(--card-2); border: 1px solid var(--line); font-size: 13px; font-weight: 500; }
+.rsvp-group.no .rsvp-person { color: var(--muted); }
+.rsvp-plus { font-weight: 700; color: var(--gold); font-size: 12px; }
+.rsvp-quiet { margin: 0; }
+.hero-rsvp { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 480px; }
+.hero-rsvp-q { font-family: var(--display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; font-size: 15px; color: var(--text-2); }
+.hero-rsvp .rsvp-pick { justify-content: center; }
+
+/* ---------- season recap ---------- */
+.season-head { display: flex; flex-direction: column; gap: 10px; }
+.season-head h1 { display: flex; align-items: center; gap: 10px; margin: 0; }
+.season-head h1 svg.lucide { color: var(--gold); }
+.season-head > p { margin: 0; }
+.season-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.season-stats .stat-l { text-align: center; }
+@media (max-width: 600px) { .season-stats { grid-template-columns: repeat(2, 1fr); } }
+.awards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
+.award { display: flex; flex-direction: column; gap: 10px; padding: 14px; color: var(--text); }
+.award-title { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold); }
+.award-who { display: flex; align-items: center; gap: 10px; }
+.award-who > span:last-child { display: flex; flex-direction: column; line-height: 1.3; }
+.award.loved:hover { border-color: var(--line-2); color: var(--text); }
+.loved-img { display: block; aspect-ratio: 4 / 3; border-radius: var(--radius-sm); overflow: hidden; background: var(--card-2); }
+.loved-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.best-list { margin: 0; padding-left: 22px; display: flex; flex-direction: column; gap: 8px; }
+.best-list li { position: relative; padding: 0 64px 0 2px; }
+.best-list li::marker { color: var(--muted); font-weight: 600; }
+.best-score { position: absolute; right: 0; top: 0; }
+.best-score b { font-family: var(--display); font-size: 18px; color: var(--gold); }

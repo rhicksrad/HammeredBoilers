@@ -31,6 +31,19 @@ export type GameStats = {
   food_total: number
   food_claimed: number
   asks_open: number
+  coming?: number // RSVP headcount: yeses plus who they're bringing (missing until the RSVP migration has run)
+  maybe?: number
+}
+
+export type RsvpStatus = 'yes' | 'maybe' | 'no'
+
+export type Rsvp = {
+  id: string
+  game_id: string
+  user_id: string
+  status: RsvpStatus
+  guests: number // people coming with them, not counting themselves
+  updated_at: string
 }
 
 export type ListKind = 'food' | 'ask'

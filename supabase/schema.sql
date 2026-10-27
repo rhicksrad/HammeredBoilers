@@ -340,6 +340,37 @@ grant execute on function public.set_first_password(text, text) to anon, authent
 grant execute on function public.reset_member_password(text) to authenticated;
 
 -- ---------------------------------------------------------------------------
+-- RSVPs: who's coming to each game, and how many people they're bringing along.
+-- One row per crew member per game; change it any time. 'no' stays a row, so "can't make it" shows too.
+-- ---------------------------------------------------------------------------
+create table if not exists public.rsvps (
+  id         uuid primary key default gen_random_uuid(),
+  game_id    uuid not null references public.games(id) on delete cascade,
+  user_id    uuid not null default auth.uid() references public.profiles(id) on delete cascade,
+  status     text not null check (status in ('yes', 'maybe', 'no')),
+  guests     smallint not null default 0 check (guests between 0 and 20), -- people coming with them, not counting themselves
+  updated_at timestamptz not null default now(),
+  unique (game_id, user_id)
+);
+create index if not exists rsvps_user_idx on public.rsvps (user_id);
+alter table public.rsvps enable row level security;
+
+-- rsvps: the crew sees everyone's; you set, change and clear only your own
+drop policy if exists rsvps_select on public.rsvps;
+drop policy if exists rsvps_insert on public.rsvps;
+drop policy if exists rsvps_update on public.rsvps;
+drop policy if exists rsvps_delete on public.rsvps;
+create policy rsvps_select on public.rsvps for select to authenticated using ((select public.is_member()));
+create policy rsvps_insert on public.rsvps for insert to authenticated
+  with check ((select public.is_member()) and user_id = (select auth.uid()));
+create policy rsvps_update on public.rsvps for update to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
+create policy rsvps_delete on public.rsvps for delete to authenticated
+  using ((select public.is_member()) and user_id = (select auth.uid()));
+revoke all on public.rsvps from anon;
+
+-- ---------------------------------------------------------------------------
 -- Per-game rollup for the schedule cards.
 -- ---------------------------------------------------------------------------
 create or replace view public.game_stats
@@ -351,7 +382,10 @@ select
   (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'food')               as food_total,
   (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'food'
      and (i.owner_id is not null or i.owner_name is not null))                                       as food_claimed,
-  (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'ask' and i.status = 'open')       as asks_open
+  (select count(*) from public.list_items i where i.game_id = g.id and i.kind = 'ask' and i.status = 'open')       as asks_open,
+  -- Headcount: everyone who said yes plus the people they're bringing.
+  (select coalesce(sum(1 + r.guests), 0) from public.rsvps r where r.game_id = g.id and r.status = 'yes')::int  as coming,
+  (select count(*) from public.rsvps r where r.game_id = g.id and r.status = 'maybe')                 as maybe
 from public.games g;
 
 -- ---------------------------------------------------------------------------
@@ -377,7 +411,7 @@ create policy members_select on public.members for select to authenticated using
 create policy members_insert on public.members for insert to authenticated with check ((select public.is_member()));
 revoke update on public.members from anon, authenticated;
 create policy members_delete on public.members for delete to authenticated
-  using ((select public.is_member()) and email <> lower(coalesce(auth.jwt() ->> 'email', '')));
+  using ((select public.is_member()) and email <> lower(coalesce((select auth.jwt()) ->> 'email', '')));
 
 -- profiles: crew can see everyone; you edit only yourself
 drop policy if exists profiles_select on public.profiles;
@@ -455,7 +489,7 @@ create trigger food_ratings_sync
 -- Anyone can edit list items, so only the trigger above may touch the totals.
 create or replace function public.guard_rating_totals()
 returns trigger
-language plpgsql
+language plpgsql set search_path = public
 as $$
 begin
   if tg_op = 'INSERT' then
@@ -716,12 +750,45 @@ create policy reactions_delete on public.reactions for delete to authenticated
 revoke update on public.reactions from anon, authenticated;
 
 -- ---------------------------------------------------------------------------
+-- Function access (Supabase's security advisor).
+-- Trigger functions run when their trigger fires no matter who holds EXECUTE, so nobody needs to call them
+-- through the API. is_member/is_dj back the signed-in policies; reset is for signed-in crew only.
+-- email_status and set_first_password stay open to signed-out visitors: the sign-in page needs them.
+-- ---------------------------------------------------------------------------
+revoke execute on function public.handle_new_user()     from public, anon, authenticated;
+revoke execute on function public.seed_game_list()      from public, anon, authenticated;
+revoke execute on function public.song_request_guard()  from public, anon, authenticated;
+revoke execute on function public.only_crew_signups()   from public, anon, authenticated;
+revoke execute on function public.sync_food_rating()    from public, anon, authenticated;
+revoke execute on function public.guard_rating_totals() from public, anon, authenticated;
+revoke execute on function public.sync_song_rating()    from public, anon, authenticated;
+revoke execute on function public.reaction_owner()      from public, anon, authenticated;
+revoke execute on function public.drop_reactions()      from public, anon, authenticated;
+revoke execute on function public.is_member()           from public, anon;
+revoke execute on function public.is_dj()               from public, anon;
+revoke execute on function public.reset_member_password(text) from anon;
+grant  execute on function public.is_member() to authenticated;
+grant  execute on function public.is_dj()     to authenticated;
+
+-- Indexes on the "who" columns, so deleting a crew member (and these lookups) don't scan whole tables.
+create index if not exists food_ratings_user_idx       on public.food_ratings (user_id);
+create index if not exists song_ratings_user_idx       on public.song_ratings (user_id);
+create index if not exists list_items_owner_idx        on public.list_items (owner_id);
+create index if not exists list_items_created_by_idx   on public.list_items (created_by);
+create index if not exists members_invited_by_idx      on public.members (invited_by);
+create index if not exists messages_author_idx         on public.messages (author_id);
+create index if not exists photo_comments_author_idx   on public.photo_comments (author_id);
+create index if not exists photos_uploader_idx         on public.photos (uploader_id);
+create index if not exists reactions_user_idx          on public.reactions (user_id);
+create index if not exists song_requests_requester_idx on public.song_requests (requested_by);
+
+-- ---------------------------------------------------------------------------
 -- Realtime: push changes to everyone's screen live.
 -- ---------------------------------------------------------------------------
 do $$
 declare t text;
 begin
-  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests', 'photo_comments', 'reactions', 'song_scores'] loop
+  foreach t in array array['messages', 'list_items', 'photos', 'games', 'profiles', 'song_requests', 'photo_comments', 'reactions', 'song_scores', 'rsvps'] loop
     if not exists (
       select 1 from pg_publication_tables
       where pubname = 'supabase_realtime' and schemaname = 'public' and tablename = t

@@ -28,6 +28,7 @@ const GamePage = page(() => import('./pages/GamePage'))
 const Playground = page(() => import('./pages/Playground'))
 const Gallery = page(() => import('./pages/Gallery'))
 const Crew = page(() => import('./pages/Crew'))
+const Season = page(() => import('./pages/Season'))
 
 export default function App() {
   if (!isConfigured) return <SetupNeeded />
@@ -54,6 +55,7 @@ function Gate() {
           <Route path="/playground" element={<Playground />} />
           <Route path="/gallery" element={<Gallery />} />
           <Route path="/crew" element={<Crew />} />
+          <Route path="/season" element={<Season />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>

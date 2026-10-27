@@ -25,6 +25,9 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   - **Game thread:** chat for that game. It stays with the game, so past tailgates keep their conversations.
   - **Pics:** photos and videos from that game.
   - **Our spot** and **Notes:** lot, meet time, whatever.
+  - **Who's coming:** everyone says **I'm in**, **Maybe** or **Can't make it**, and how many people they're bringing.
+    The headcount (yeses plus their guests) shows on the game and on Gameday, where you can answer right from the
+    next-game card. It lists who hasn't answered yet, too.
 - **What's new:** the bell in the top bar lists what everyone else has been up to, with a count of new ones: new crew
   members, chat posts, food and asks added to a game's lists, photos, and song requests. Tap one to jump there.
   Edits like name changes don't show up as new.
@@ -40,6 +43,8 @@ Tailgate HQ for the Hammered Boilers. Boiler Up. Bottoms Up.
   for quick picks, a bigger set, or any emoji off your keyboard. Tap a reaction to add or take back yours; the smiley
   also shows who reacted with what. Every photo and video has its own comment thread (**Comment** in the photo
   viewer); pics with comments show a speech bubble and count on their thumbnail. Reactions to your things and comments on pics show up in the bell.
+- **Season recap** (Gameday → Past tailgates → **Season recap**): the home record, pics, messages and biggest crowd,
+  game by game, crew awards (most pics, most chat, never misses, most-loved pic), and the top-rated food and songs.
 - **Crew:** your name and avatar: upload a photo, or pick a badge (hammer, train, beer…). Add buddies by email here.
 
 Everything updates live for everyone. Sign in with your email and a password; only emails on the crew list get in.

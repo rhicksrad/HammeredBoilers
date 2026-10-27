@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { ArrowRight, Camera, ChevronRight, ClipboardList, MapPin, MessageCircle, Plus, RefreshCw, UtensilsCrossed } from 'lucide-react'
+import { ArrowRight, Camera, ChevronRight, ClipboardList, MapPin, MessageCircle, Plus, RefreshCw, Trophy, Users, UtensilsCrossed } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { lastSync, syncHomeGames } from '../lib/schedule'
 import { gameDay, gameTime, isGameday, isPast, result, when } from '../lib/format'
@@ -8,6 +8,7 @@ import { useLiveTable, upsertById } from '../lib/realtime'
 import type { Game, GameStats } from '../lib/types'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
 import { InstallBanner } from '../components/Install'
+import { headcount, RsvpPicker, useRsvps } from '../components/Rsvp'
 
 export default function Home() {
   const [games, setGames] = useState<Game[] | null>(null)
@@ -75,7 +76,10 @@ export default function Home() {
       {past.length > 0 && (
         <section>
           <h2 className="section-title">Past tailgates</h2>
-          <p className="muted small section-sub">Every game keeps its lists, chat, and photos.</p>
+          <div className="section-sub row wrap spread">
+            <p className="muted small">Every game keeps its lists, chat, and photos.</p>
+            <Link to="/season" className="link-btn"><Trophy size={14} aria-hidden="true" />Season recap<ArrowRight size={14} aria-hidden="true" /></Link>
+          </div>
           <div className="game-list">
             {past.map((g) => <GameRow key={g.id} game={g} stats={stats[g.id]} />)}
           </div>
@@ -99,6 +103,7 @@ export default function Home() {
 
 function Hero({ game, stats }: { game: Game; stats?: GameStats }) {
   const today = isGameday(game)
+  const [rsvps, setRsvps] = useRsvps(game.id)
   return (
     <section className="hero card">
       <div className="hero-kicker">
@@ -119,11 +124,17 @@ function Hero({ game, stats }: { game: Game; stats?: GameStats }) {
       {game.lot && <div className="hero-lot"><MapPin size={15} aria-hidden="true" />{game.lot}</div>}
       <TempStrip game={game} />
       <Countdown game={game} />
+      {rsvps && (
+        <div className="hero-rsvp">
+          <span className="hero-rsvp-q">Are you coming?</span>
+          <RsvpPicker game={game} rows={rsvps} setRows={setRsvps} />
+        </div>
+      )}
       {stats && (
         <div className="hero-stats">
+          <Stat n={String(rsvps ? headcount(rsvps) : stats.coming ?? 0)} label="Coming" />
           <Stat n={`${stats.food_claimed}/${stats.food_total}`} label="Food covered" ok={stats.food_claimed >= stats.food_total} />
           <Stat n={String(stats.asks_open)} label="Open asks" ok={stats.asks_open === 0} />
-          <Stat n={String(stats.message_count)} label="Messages" />
         </div>
       )}
       <Link to={`/game/${game.id}`} className="btn gold big">Open the gameday board<ArrowRight size={18} aria-hidden="true" /></Link>
@@ -158,6 +169,7 @@ function GameRow({ game, stats }: { game: Game; stats?: GameStats }) {
               <span title="Messages"><MessageCircle size={13} aria-hidden="true" />{stats.message_count}</span>
               <span title="Photos"><Camera size={13} aria-hidden="true" />{stats.photo_count}</span>
             </> : <>
+              {stats.coming != null && <span title="Coming"><Users size={13} aria-hidden="true" />{stats.coming}</span>}
               <span title="Food covered"><UtensilsCrossed size={13} aria-hidden="true" />{stats.food_claimed}/{stats.food_total}</span>
               <span title="Open asks"><ClipboardList size={13} aria-hidden="true" />{stats.asks_open}</span>
             </>}

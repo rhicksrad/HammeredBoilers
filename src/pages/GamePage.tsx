@@ -11,6 +11,7 @@ import type { Game, Photo } from '../lib/types'
 import GameList from '../components/GameLists'
 import Chat from '../components/Chat'
 import DjBooth from '../components/DjBooth'
+import RsvpCard from '../components/Rsvp'
 import { Countdown, PURDUE_LOGO, TeamLogo, TempStrip, WeatherChip } from '../components/GameBits'
 import { byShot, Lightbox, PhotoGrid, stackDupes, Uploader, useStackKeys } from '../components/Photos'
 import { scroller } from '../lib/scroller'
@@ -125,6 +126,8 @@ export default function GamePage() {
           <EditableField game={game} field="notes" Icon={StickyNote} label="Notes" placeholder="Meet time, who's driving, anything else" />
         </div>
       </section>
+
+      <RsvpCard game={game} />
 
       <div className="tabs" ref={tabsRef}>
         {TABS.map((t) => (
