@@ -533,12 +533,36 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .pl-status { gap: 8px; align-items: center; }
 .pl-status .dj-sub { margin: 0; }
 .pl-filter { cursor: pointer; color: var(--text); }
-.pl-song { align-items: baseline; }
-.pl-rank { flex: none; width: 22px; text-align: right; color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
-.pl-title { color: var(--text); }
-.pl-title:hover { color: var(--gold-hi); }
-.pl-link { font-size: 12px; }
-.pl-genre { font-size: 11.5px; color: var(--text-2); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-2); }
+.pl-list { list-style: none; margin: 0; padding: 0; }
+.pl-song { display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; align-items: center; gap: 4px 12px; padding: 10px 2px; border-bottom: 1px solid var(--line); }
+.pl-song:last-child { border-bottom: 0; }
+.pl-rank { text-align: right; color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pl-info { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.pl-title { font-weight: 600; font-size: 15px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-meta { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 13px; color: var(--muted); }
+.pl-artist { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-len { flex: none; font-variant-numeric: tabular-nums; }
+.pl-len::before { content: '·'; margin-right: 8px; }
+.pl-genre { flex: none; font-size: 11.5px; color: var(--text-2); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-2); }
+.pl-side { display: flex; align-items: center; gap: 12px; }
+.pl-side .rating-avg { min-width: 64px; justify-content: flex-end; }
+.pl-play { display: inline-flex; gap: 6px; }
+.pl-app { display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-2); transition: transform .12s, border-color .12s; }
+.pl-app:hover { transform: scale(1.08); }
+.pl-app.spotify { color: #1ed760; }
+.pl-app.spotify:hover { border-color: #1ed760; }
+.pl-app.apple { color: #fa2d48; }
+.pl-app.apple:hover { border-color: #fa2d48; }
+@media (max-width: 560px) {
+  .pl-song { grid-template-columns: 24px minmax(0, 1fr); }
+  .pl-side { grid-column: 2; justify-content: space-between; }
+  .pl-side { gap: 8px; }
+  .pl-side .rating { min-width: 0; }
+  .pl-side .rating-avg { min-width: 0; justify-content: flex-start; }
+  .pl-side .rating-avg.none { display: none; }
+  .pl-side .rate-pick { min-width: 0; max-width: 120px; }
+  .pl-play { flex: none; }
+}
 .pl-more { align-self: center; }
 .pl-on { color: var(--ok); font-weight: 600; }
 .pl-on:hover { color: var(--ok); }
