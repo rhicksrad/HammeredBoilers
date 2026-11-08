@@ -131,6 +131,7 @@ export type PlaylistTrack = {
   album: string | null
   seconds: number | null
   genre: string | null   // Deezer's genre for the song's album
+  apple?: string | null  // the song's Apple Music page (scripts/apple-links.py); null when Apple has no match
 }
 export type PlaylistData = { id: string; name: string; owner: string; pulled: string; tracks: PlaylistTrack[] }
 

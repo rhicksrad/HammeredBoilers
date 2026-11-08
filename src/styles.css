@@ -537,6 +537,7 @@ select.input { appearance: none; cursor: pointer; background-image: linear-gradi
 .pl-rank { flex: none; width: 22px; text-align: right; color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
 .pl-title { color: var(--text); }
 .pl-title:hover { color: var(--gold-hi); }
+.pl-link { font-size: 12px; }
 .pl-genre { font-size: 11.5px; color: var(--text-2); padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line-2); }
 .pl-more { align-self: center; }
 .pl-on { color: var(--ok); font-weight: 600; }

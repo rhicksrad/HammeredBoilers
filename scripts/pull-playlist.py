@@ -2,12 +2,12 @@
 
 Spotify's API only shows a playlist's songs to its owner, and the public embed stops at 100, so this opens the
 normal playlist page in a headless browser, scrolls the whole list, and reads every row. Genres come from Deezer's
-open API (each song's album genre). Re-run it whenever the playlist changes, then commit the JSON:
+open API (each song's album genre), and Apple Music links from Apple's iTunes Search API (scripts/apple-links.py). Re-run it whenever the playlist changes, then commit the JSON:
 
     pip install playwright && playwright install chromium
     python3 scripts/pull-playlist.py
 """
-import json, os, re, sys, time, urllib.parse, urllib.request
+import importlib.util, json, os, re, sys, time, urllib.parse, urllib.request
 from datetime import date
 from pathlib import Path
 from playwright.sync_api import sync_playwright
@@ -100,6 +100,10 @@ slug = lambda t: re.sub(r'[^a-z0-9]+', '-', t.lower()).strip('-')[:60]
 tracks = [{'key': r['id'] or f"local:{slug(r['title'])}", 'id': r['id'], 'title': r['title'], 'artists': r['artists'], 'album': r['album'],
            'seconds': seconds(r['duration']), 'genre': None} for r in rows]
 genres(tracks)
+# Each song's Apple Music page, from scripts/apple-links.py.
+_spec = importlib.util.spec_from_file_location('apple_links', Path(__file__).with_name('apple-links.py'))
+_apple = importlib.util.module_from_spec(_spec); _spec.loader.exec_module(_apple)
+_apple.add_links(tracks)
 OUT.parent.mkdir(exist_ok=True)
 OUT.write_text(json.dumps({'id': PLAYLIST_ID, 'name': name, 'owner': owner, 'pulled': date.today().isoformat(),
                            'tracks': tracks}, ensure_ascii=False, indent=1) + '\n')

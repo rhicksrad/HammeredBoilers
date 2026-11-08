@@ -3,7 +3,7 @@ import { ExternalLink, ListMusic, Search, Star, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { useAuth } from '../auth'
-import { PLAYLIST_URL, matches, trackUrl } from '../lib/playlist'
+import { PLAYLIST_URL, appleUrl, matches, trackUrl } from '../lib/playlist'
 import type { PlaylistData, PlaylistTrack, SongScore } from '../lib/types'
 
 const SHOWN = 20     // songs listed before "Show all"
@@ -181,6 +181,7 @@ function SongRow({ t, rank, avg, count, ratingsOn, myScore, rate }: {
   myScore?: number; rate: (key: string, score: number | null) => void
 }) {
   const url = trackUrl(t)
+  const apple = appleUrl(t)
   return (
     <li className="item pl-song">
       <span className="pl-rank" aria-label={rank ? `Number ${rank}` : undefined}>{rank ?? ''}</span>
@@ -191,6 +192,8 @@ function SongRow({ t, rank, avg, count, ratingsOn, myScore, rate }: {
         <div className="item-sub">
           <span className="muted">{t.artists.length ? t.artists.join(', ') : 'Local file'}</span>
           {t.genre && <span className="pl-genre">{t.genre}</span>}
+          {url && <a className="link-btn faint pl-link" href={url} target="_blank" rel="noopener noreferrer" title={`${t.title} on Spotify`}>Spotify</a>}
+          {apple && <a className="link-btn faint pl-link" href={apple} target="_blank" rel="noopener noreferrer" title={`${t.title} on Apple Music`}>Apple Music</a>}
           {ratingsOn && (
             <span className="rating">
               {avg !== null && (
