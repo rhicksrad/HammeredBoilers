@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase'
 import { useLiveTable } from '../lib/realtime'
 import { useAuth } from '../auth'
 import { PLAYLIST_URL, appleUrl, matches, trackUrl } from '../lib/playlist'
+import { AppleMusicIcon, SpotifyIcon } from './BrandIcons'
 import type { PlaylistData, PlaylistTrack, SongScore } from '../lib/types'
 
 const SHOWN = 20     // songs listed before "Show all"
@@ -119,7 +120,7 @@ export default function Playlist({ data }: { data: PlaylistData }) {
           </div>
           {err && <p className="error">{err}</p>}
           {shown.length
-            ? <ol className="items pl-list">
+            ? <ol className="pl-list">
                 {shown.map(({ t, avg, count, rank }) => (
                   <SongRow key={t.key} t={t} rank={rank} avg={avg} count={count} ratingsOn={scores !== null}
                     myScore={myScores[t.key]} rate={rate} />
@@ -176,45 +177,55 @@ function GenreChart({ genres, total, active, onPick }: {
   )
 }
 
+const time = (s: number | null) => (s ? `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}` : null)
+
+/** One song: rank, title and artist on the left; rating and the Spotify / Apple Music buttons on the right. */
 function SongRow({ t, rank, avg, count, ratingsOn, myScore, rate }: {
   t: PlaylistTrack; rank: number | null; avg: number | null; count: number; ratingsOn: boolean
   myScore?: number; rate: (key: string, score: number | null) => void
 }) {
   const url = trackUrl(t)
   const apple = appleUrl(t)
+  const artist = t.artists.length ? t.artists.join(', ') : 'Local file'
+  const length = time(t.seconds)
   return (
-    <li className="item pl-song">
+    <li className="pl-song">
       <span className="pl-rank" aria-label={rank ? `Number ${rank}` : undefined}>{rank ?? ''}</span>
-      <div className="item-main">
-        <div className="item-label">
-          {url ? <a className="pl-title" href={url} target="_blank" rel="noopener noreferrer">{t.title}</a> : t.title}
-        </div>
-        <div className="item-sub">
-          <span className="muted">{t.artists.length ? t.artists.join(', ') : 'Local file'}</span>
+      <div className="pl-info">
+        <div className="pl-title" title={t.title}>{t.title}</div>
+        <div className="pl-meta">
+          <span className="pl-artist" title={t.album ? `${artist} · ${t.album}` : artist}>{artist}</span>
+          {length && <span className="pl-len">{length}</span>}
           {t.genre && <span className="pl-genre">{t.genre}</span>}
-          {url && <a className="link-btn faint pl-link" href={url} target="_blank" rel="noopener noreferrer" title={`${t.title} on Spotify`}>Spotify</a>}
-          {apple && <a className="link-btn faint pl-link" href={apple} target="_blank" rel="noopener noreferrer" title={`${t.title} on Apple Music`}>Apple Music</a>}
-          {ratingsOn && (
-            <span className="rating">
-              {avg !== null && (
-                <span className="rating-avg" title={`Average of ${count} anonymous rating${count === 1 ? '' : 's'}`}>
+        </div>
+      </div>
+      <div className="pl-side">
+        {ratingsOn && (
+          <span className="rating">
+            {avg !== null
+              ? <span className="rating-avg" title={`Average of ${count} anonymous rating${count === 1 ? '' : 's'}`}>
                   <Star size={13} aria-hidden="true" />{avg.toFixed(1)}<span className="rating-count">({count})</span>
                 </span>
-              )}
-              <select
-                className={`who-pick rate-pick ${myScore ? 'set' : ''}`}
-                value={myScore ?? ''}
-                title="Your rating is anonymous: the crew only sees the average"
-                aria-label={`Rate ${t.title}, 1 to 10`}
-                onChange={(e) => rate(t.key, e.target.value === 'clear' || e.target.value === '' ? null : Number(e.target.value))}
-              >
-                <option value="">Rate it</option>
-                {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{myScore === n ? `You: ${n}/10` : `${n}/10`}</option>)}
-                {myScore && <option value="clear">Clear my rating</option>}
-              </select>
-            </span>
-          )}
-        </div>
+              : <span className="rating-avg none" aria-hidden="true" />}
+            <select
+              className={`who-pick rate-pick ${myScore ? 'set' : ''}`}
+              value={myScore ?? ''}
+              title="Your rating is anonymous: the crew only sees the average"
+              aria-label={`Rate ${t.title}, 1 to 10`}
+              onChange={(e) => rate(t.key, e.target.value === 'clear' || e.target.value === '' ? null : Number(e.target.value))}
+            >
+              <option value="">Rate it</option>
+              {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{myScore === n ? `You: ${n}/10` : `${n}/10`}</option>)}
+              {myScore && <option value="clear">Clear my rating</option>}
+            </select>
+          </span>
+        )}
+        <span className="pl-play">
+          {url && <a className="pl-app spotify" href={url} target="_blank" rel="noopener noreferrer"
+            title={`Play ${t.title} on Spotify`} aria-label={`Play ${t.title} on Spotify`}><SpotifyIcon /></a>}
+          {apple && <a className="pl-app apple" href={apple} target="_blank" rel="noopener noreferrer"
+            title={`Play ${t.title} on Apple Music`} aria-label={`Play ${t.title} on Apple Music`}><AppleMusicIcon /></a>}
+        </span>
       </div>
     </li>
   )
