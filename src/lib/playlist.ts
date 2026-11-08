@@ -5,7 +5,12 @@ import type { PlaylistData, PlaylistTrack } from './types'
 export const PLAYLIST_ID = '3t5Iw9vyFz2vmcE7XL0d8c'
 export const PLAYLIST_URL = `https://open.spotify.com/playlist/${PLAYLIST_ID}`
 
+// Plain https links on purpose: on a phone with the app installed, iOS and Android hand open.spotify.com and
+// music.apple.com links straight to Spotify / Apple Music; without the app they open the web player.
 export const trackUrl = (t: PlaylistTrack) => (t.id ? `https://open.spotify.com/track/${t.id}` : null)
+export const appleSearchUrl = (q: string) => `https://music.apple.com/us/search?term=${encodeURIComponent(q.trim())}`
+/** The song on Apple Music: its own page when the snapshot has one, else an Apple Music search for it. Null for local files. */
+export const appleUrl = (t: PlaylistTrack) => t.apple ?? (t.id ? appleSearchUrl(`${t.title.replace(/\s+-\s+.*$/, '')} ${t.artists[0] ?? ''}`) : null)
 export const spotifySearchUrl = (q: string) => `https://open.spotify.com/search/${encodeURIComponent(q.trim())}`
 
 let cached: Promise<PlaylistData> | null = null
